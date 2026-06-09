@@ -1,0 +1,71 @@
+services:
+
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: mimo_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mimo
+      POSTGRES_PASSWORD: mimo_dev
+      POSTGRES_DB: mimo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mimo -d mimo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mimo_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mimo-api:
+    build:
+      context: .
+      dockerfile: src/Mimo.Api/Dockerfile
+    container_name: mimo_api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=mimo;Username=mimo;Password=mimo_dev"
+      Redis__ConnectionString: "redis:6379"
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  mimo-admin-api:
+    build:
+      context: .
+      dockerfile: src/Mimo.Admin.Api/Dockerfile
+    container_name: mimo_admin_api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=mimo;Username=mimo;Password=mimo_dev"
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

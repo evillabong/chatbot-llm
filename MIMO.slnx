@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Mimo.Admin.Api/Mimo.Admin.Api.csproj" />
+    <Project Path="src/Mimo.Api/Mimo.Api.csproj" />
+    <Project Path="src/Mimo.Core/Mimo.Core.csproj" />
+    <Project Path="src/Mimo.Infrastructure/Mimo.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Mimo.IntegrationTests/Mimo.IntegrationTests.csproj" />
+    <Project Path="tests/Mimo.UnitTests/Mimo.UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,117 @@
+using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
+using Mimo.Infrastructure.Data;
+
+namespace Mimo.Api.Middleware;
+
+/// <summary>
+/// Resuelve el tenant de cada petición y establece el search_path de PostgreSQL
+/// para que todas las consultas subsiguientes operen sobre el esquema correcto.
+///
+/// Orden de resolución:
+///   1. Header X-Tenant-Slug
+///   2. Subdominio del host (ej: municipio.mimo.app → slug = "municipio")
+///   3. Claim TenantId del JWT
+///
+/// Si no se puede resolver el tenant, retorna 400. Si el tenant no existe o está
+/// inactivo, retorna 404 / 403.
+/// </summary>
+public partial class TenantResolutionMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<TenantResolutionMiddleware> _logger;
+
+    // Rutas que no requieren tenant (health check, etc.)
+    private static readonly HashSet<string> _bypassPaths =
+    [
+        "/health",
+        "/ready"
+    ];
+
+    public TenantResolutionMiddleware(RequestDelegate next, ILogger<TenantResolutionMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context, MimoDbContext db)
+    {
+        var path = context.Request.Path.Value ?? string.Empty;
+
+        // Rutas exentas de resolución de tenant
+        if (_bypassPaths.Contains(path.ToLowerInvariant()))
+        {
+            await _next(context);
+            return;
+        }
+
+        var slug = ResolveSlug(context);
+
+        if (string.IsNullOrWhiteSpace(slug))
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new { error = "No se pudo determinar el tenant de la solicitud." });
+            return;
+        }
+
+        var tenant = await db.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Slug == slug, context.RequestAborted);
+
+        if (tenant is null)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            await context.Response.WriteAsJsonAsync(new { error = "Tenant no encontrado." });
+            return;
+        }
+
+        if (!tenant.IsActive)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new { error = "Tenant inactivo." });
+            return;
+        }
+
+        // Establecer search_path para aislar las consultas al esquema del tenant.
+        // El slug ya fue validado contra la BD; se sanitiza adicionalmente para evitar inyección.
+        var schema = $"tenant_{SlugRegex().Replace(slug, "")}";
+        await db.Database.ExecuteSqlAsync($"SET search_path TO {schema}, public", context.RequestAborted);
+
+        // Exponer el tenant resuelto al resto del pipeline
+        context.Items["TenantId"] = tenant.Id;
+        context.Items["TenantSlug"] = tenant.Slug;
+        context.Items["TenantConfiguration"] = tenant.Configuration;
+
+        _logger.LogDebug("Tenant resuelto: {Slug} (schema: {Schema})", slug, schema);
+
+        await _next(context);
+    }
+
+    /// <summary>Expresión regular para sanitizar el slug: solo letras, números y guiones.</summary>
+    [System.Text.RegularExpressions.GeneratedRegex(@"[^a-z0-9\-]")]
+    private static partial Regex SlugRegex();
+
+    /// <summary>
+    /// Intenta extraer el slug del tenant usando los mecanismos disponibles.
+    /// </summary>
+    private static string? ResolveSlug(HttpContext context)
+    {
+        // 1. Header explícito
+        if (context.Request.Headers.TryGetValue("X-Tenant-Slug", out var headerSlug) &&
+            !string.IsNullOrWhiteSpace(headerSlug))
+            return headerSlug.ToString().ToLowerInvariant();
+
+        // 2. Subdominio (ej: municipio.mimo.app)
+        var host = context.Request.Host.Host;
+        var parts = host.Split('.');
+        if (parts.Length >= 3)
+            return parts[0].ToLowerInvariant();
+
+        // 3. Claim del JWT
+        var tenantClaim = context.User?.FindFirst("tenant_slug")?.Value;
+        if (!string.IsNullOrWhiteSpace(tenantClaim))
+            return tenantClaim.ToLowerInvariant();
+
+        return null;
+    }
+}
