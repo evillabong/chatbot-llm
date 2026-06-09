@@ -1,3 +1,7 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Mimo.Admin.Api.Endpoints;
 using Mimo.Infrastructure;
 using Mimo.Infrastructure.Data;
@@ -13,7 +17,28 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAdminInfrastructure(builder.Configuration);
 
 // ── Autenticación JWT ────────────────────────────────────────────────────────
-builder.Services.AddAuthentication().AddJwtBearer();
+var jwtSection  = builder.Configuration.GetSection("Jwt");
+var jwtKey      = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key no configurado.");
+var jwtIssuer   = jwtSection["Issuer"]   ?? "mimo-admin-api";
+var jwtAudience = jwtSection["Audience"] ?? "mimo-admin-clients";
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer           = true,
+            ValidateAudience         = true,
+            ValidateLifetime         = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer              = jwtIssuer,
+            ValidAudience            = jwtAudience,
+            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew                = TimeSpan.FromSeconds(30)
+        };
+    });
+
 builder.Services.AddAuthorization(options =>
 {
     // Solo SuperAdmin puede acceder a esta API
@@ -29,6 +54,13 @@ builder.Services.AddHealthChecks()
     .AddDbContextCheck<GlobalDbContext>("postgres-global");
 
 var app = builder.Build();
+
+// ── Migrar esquema global al arrancar ────────────────────────────────────────
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var globalDb = scope.ServiceProvider.GetRequiredService<GlobalDbContext>();
+    await globalDb.Database.MigrateAsync();
+}
 
 if (app.Environment.IsDevelopment())
     app.MapOpenApi();

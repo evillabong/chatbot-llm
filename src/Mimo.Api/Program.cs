@@ -1,7 +1,13 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Mimo.Api.Channels;
 using Mimo.Api.Endpoints;
 using Mimo.Api.Hubs;
 using Mimo.Api.Middleware;
 using Mimo.Api.Services;
+using Mimo.Api.Workers;
 using Mimo.Core.Interfaces;
 using Mimo.Infrastructure;
 using Mimo.Infrastructure.Data;
@@ -11,17 +17,61 @@ var builder = WebApplication.CreateBuilder(args);
 // ── Infraestructura ──────────────────────────────────────────────────────────
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// ── Notificaciones en tiempo real (SignalR) ───────────────────────────────────
-// INotificationService se implementa con SignalR desde esta capa (Api), ya que
-// la infraestructura no debe referenciar ASP.NET Core SignalR directamente.
+// ── Notificaciones en tiempo real ────────────────────────────────────────────
+// INotificationService se implementa en esta capa (Mimo.Api) porque usa SignalR
+// de ASP.NET Core, que no debe referenciar desde Mimo.Infrastructure.
 builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 
+// ── Conector WebChat (keyed DI) ───────────────────────────────────────────────
+// WebChatConnector vive en Mimo.Api porque requiere IHubContext<ChatHub>.
+// Los conectores de canales externos (Facebook, WhatsApp, Telegram, Instagram)
+// se registran en Mimo.Infrastructure/DependencyInjection.cs.
+builder.Services.AddKeyedScoped<IChannelConnector, WebChatConnector>("webchat");
+
 // ── Autenticación JWT ────────────────────────────────────────────────────────
-builder.Services.AddAuthentication().AddJwtBearer();
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var jwtKey     = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key no configurado.");
+var jwtIssuer  = jwtSection["Issuer"] ?? "mimo-api";
+var jwtAudience = jwtSection["Audience"] ?? "mimo-clients";
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer           = true,
+            ValidateAudience         = true,
+            ValidateLifetime         = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer              = jwtIssuer,
+            ValidAudience            = jwtAudience,
+            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew                = TimeSpan.FromSeconds(30)
+        };
+
+        // Permitir que SignalR envíe el token como query param para WebSockets
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = ctx =>
+            {
+                var accessToken = ctx.Request.Query["access_token"];
+                var path        = ctx.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                    ctx.Token = accessToken;
+                return Task.CompletedTask;
+            }
+        };
+    });
+
 builder.Services.AddAuthorization();
 
 // ── SignalR ──────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
+
+// ── Workers de background ─────────────────────────────────────────────────────
+builder.Services.AddHostedService<InactivityTimeoutWorker>();
+builder.Services.AddHostedService<QueueNotificationWorker>();
 
 // ── OpenAPI ──────────────────────────────────────────────────────────────────
 builder.Services.AddOpenApi();
@@ -32,6 +82,14 @@ builder.Services.AddHealthChecks()
     .AddDbContextCheck<TenantDbContext>("postgres-tenant");
 
 var app = builder.Build();
+
+// ── Migrar esquema global al arrancar ────────────────────────────────────────
+// Asegura que la tabla de tenants exista en el esquema public antes de aceptar tráfico.
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var globalDb = scope.ServiceProvider.GetRequiredService<GlobalDbContext>();
+    await globalDb.Database.MigrateAsync();
+}
 
 if (app.Environment.IsDevelopment())
     app.MapOpenApi();
@@ -51,6 +109,8 @@ app.MapDocumentEndpoints();
 app.MapConversationEndpoints();
 app.MapTicketEndpoints();
 app.MapInternalChatEndpoints();
+app.MapSurveyEndpoints();
+app.MapWebhookEndpoints();
 
 // ── SignalR Hubs ──────────────────────────────────────────────────────────────
 app.MapHub<ChatHub>("/hubs/chat");       // ciudadanos

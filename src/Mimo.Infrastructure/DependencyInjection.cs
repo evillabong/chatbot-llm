@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Mimo.Core.Interfaces;
 using Mimo.Infrastructure.AI;
 using Mimo.Infrastructure.Assignment;
+using Mimo.Infrastructure.Channels;
 using Mimo.Infrastructure.Chat;
 using Mimo.Infrastructure.Data;
 using Mimo.Infrastructure.Data.Repositories;
@@ -72,6 +73,13 @@ public static class DependencyInjection
             http.BaseAddress = new Uri(baseUrl);
             http.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
         });
+
+        // ── Conectores de canales externos (keyed DI) ─────────────────────────
+        // WebChatConnector se registra en Mimo.Api (requiere IHubContext<ChatHub>).
+        services.AddKeyedScoped<IChannelConnector, FacebookConnector>("facebook");
+        services.AddKeyedScoped<IChannelConnector, WhatsAppConnector>("whatsapp");
+        services.AddKeyedScoped<IChannelConnector, TelegramConnector>("telegram");
+        services.AddKeyedScoped<IChannelConnector, InstagramConnector>("instagram");
 
         return services;
     }
