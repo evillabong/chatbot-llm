@@ -1,4 +1,5 @@
 using Mimo.Core.Enums;
+using Pgvector;
 
 namespace Mimo.Core.Models;
 
@@ -30,7 +31,7 @@ public class Document
     public int PriorityLevel { get; set; } = 0;
 
     /// <summary>Vector de embeddings para búsqueda semántica con pgvector. Dimensión: 1536.</summary>
-    public float[]? Embedding { get; set; }
+    public Vector? Embedding { get; set; }
 
     public bool IsActive { get; set; } = true;
 

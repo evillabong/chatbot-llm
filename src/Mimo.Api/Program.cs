@@ -2,6 +2,7 @@ using Mimo.Api.Endpoints;
 using Mimo.Api.Hubs;
 using Mimo.Api.Middleware;
 using Mimo.Infrastructure;
+using Mimo.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,8 @@ builder.Services.AddOpenApi();
 
 // ── Health checks ────────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<Mimo.Infrastructure.Data.MimoDbContext>("postgres");
+    .AddDbContextCheck<GlobalDbContext>("postgres-global")
+    .AddDbContextCheck<TenantDbContext>("postgres-tenant");
 
 var app = builder.Build();
 

@@ -8,14 +8,10 @@ namespace Mimo.Infrastructure.Data.Repositories;
 /// <summary>
 /// Repositorio de documentos de conocimiento de un tenant.
 /// </summary>
-public class DocumentRepository : IDocumentRepository
+public class DocumentRepository(TenantDbContext db) : IDocumentRepository
 {
-    private readonly MimoDbContext _db;
-
-    public DocumentRepository(MimoDbContext db) => _db = db;
-
     public Task<Document?> GetByIdAsync(Guid id, CancellationToken ct = default)
-        => _db.Documents.FirstOrDefaultAsync(d => d.Id == id, ct);
+        => db.Documents.FirstOrDefaultAsync(d => d.Id == id, ct);
 
     public async Task<IReadOnlyList<Document>> ListAsync(
         bool? isActive = null,
@@ -23,7 +19,7 @@ public class DocumentRepository : IDocumentRepository
         Guid? roleId = null,
         CancellationToken ct = default)
     {
-        var q = _db.Documents.AsQueryable();
+        var q = db.Documents.AsQueryable();
 
         if (isActive.HasValue)   q = q.Where(d => d.IsActive == isActive.Value);
         if (categoryId.HasValue) q = q.Where(d => d.CategoryId == categoryId);
@@ -42,7 +38,7 @@ public class DocumentRepository : IDocumentRepository
     public async Task<IReadOnlyList<Document>> GetVisibleAsync(
         bool isAuthenticated, Guid? roleId, CancellationToken ct = default)
     {
-        var q = _db.Documents.Where(d => d.IsActive);
+        var q = db.Documents.Where(d => d.IsActive);
 
         if (!isAuthenticated)
             q = q.Where(d => d.Visibility == VisibilityLevel.Public);
@@ -54,21 +50,21 @@ public class DocumentRepository : IDocumentRepository
     }
 
     public Task<bool> TitleExistsAsync(string title, CancellationToken ct = default)
-        => _db.Documents.AnyAsync(d => d.Title == title, ct);
+        => db.Documents.AnyAsync(d => d.Title == title, ct);
 
     public async Task<Document> AddAsync(Document document, CancellationToken ct = default)
     {
-        _db.Documents.Add(document);
-        await _db.SaveChangesAsync(ct);
+        db.Documents.Add(document);
+        await db.SaveChangesAsync(ct);
         return document;
     }
 
     public Task UpdateAsync(Document document, CancellationToken ct = default)
     {
-        _db.Documents.Update(document);
+        db.Documents.Update(document);
         return Task.CompletedTask;
     }
 
     public Task SaveChangesAsync(CancellationToken ct = default)
-        => _db.SaveChangesAsync(ct);
+        => db.SaveChangesAsync(ct);
 }

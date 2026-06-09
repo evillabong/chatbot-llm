@@ -1,14 +1,13 @@
-using Microsoft.EntityFrameworkCore;
 using Mimo.Core.DTOs.Tenant;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
-using Mimo.Infrastructure.Data;
 
 namespace Mimo.Admin.Api.Endpoints;
 
 /// <summary>
 /// Endpoints CRUD de tenants. Solo accesibles con política SuperAdmin.
-/// Al crear un tenant se aprovisiona automáticamente su esquema en PostgreSQL.
+/// Al crear un tenant se aprovisiona automáticamente su esquema en PostgreSQL
+/// mediante TenantProvisioningService (EF Core migrations, sin SQL manual).
 /// </summary>
 public static class TenantEndpoints
 {
@@ -81,7 +80,7 @@ public static class TenantEndpoints
     private static async Task<IResult> CreateTenantAsync(
         CreateTenantRequest request,
         ITenantRepository repo,
-        MimoDbContext db,
+        ITenantProvisioningService provisioning,
         CancellationToken ct = default)
     {
         // Validar unicidad del slug
@@ -98,12 +97,11 @@ public static class TenantEndpoints
             CreatedAt = DateTime.UtcNow
         };
 
+        // 1. Persistir el registro del tenant en el esquema public
         await repo.AddAsync(tenant, ct);
 
-        // Aprovisionar el esquema del tenant en PostgreSQL
-        await db.Database.ExecuteSqlAsync(
-            $"SELECT create_tenant_schema({tenant.Slug})",
-            ct);
+        // 2. Provisionar el esquema PostgreSQL del tenant y aplicar migraciones (EF Core)
+        await provisioning.ProvisionAsync(tenant, ct);
 
         return Results.Created($"/tenants/{tenant.Id}", ToResponse(tenant));
     }

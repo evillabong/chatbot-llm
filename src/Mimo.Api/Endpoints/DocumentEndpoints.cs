@@ -1,7 +1,7 @@
 using Mimo.Core.DTOs.Document;
-using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
+using Pgvector;
 
 namespace Mimo.Api.Endpoints;
 
@@ -77,11 +77,12 @@ public static class DocumentEndpoints
         var tenantId = (Guid)context.Items["TenantId"]!;
 
         // Generar embedding del contenido para búsqueda semántica
-        float[]? embedding = null;
+        Vector? embedding = null;
         try
         {
-            embedding = await vectorSearch.GetEmbeddingAsync(
+            var raw = await vectorSearch.GetEmbeddingAsync(
                 $"{request.Title}\n{request.Content}", ct);
+            embedding = new Vector(raw);
         }
         catch (Exception ex)
         {
@@ -137,8 +138,9 @@ public static class DocumentEndpoints
         {
             try
             {
-                doc.Embedding = await vectorSearch.GetEmbeddingAsync(
+                var raw = await vectorSearch.GetEmbeddingAsync(
                     $"{doc.Title}\n{doc.Content}", ct);
+                doc.Embedding = new Vector(raw);
             }
             catch { /* mantener embedding anterior si falla */ }
         }
@@ -172,8 +174,10 @@ public static class DocumentEndpoints
         if (doc is null)
             return Results.NotFound(new { error = "Documento no encontrado." });
 
-        doc.Embedding = await vectorSearch.GetEmbeddingAsync(
+        var raw = await vectorSearch.GetEmbeddingAsync(
             $"{doc.Title}\n{doc.Content}", ct);
+
+        doc.Embedding = new Vector(raw);
         doc.UpdatedAt = DateTime.UtcNow;
 
         await repo.UpdateAsync(doc, ct);
@@ -187,6 +191,6 @@ public static class DocumentEndpoints
         new(d.Id, d.Title, d.Content, d.Visibility,
             d.CategoryId, d.RelatedRoleId, d.Tags,
             d.PriorityLevel, d.IsActive,
-            HasEmbedding: d.Embedding is { Length: > 0 },
+            HasEmbedding: d.Embedding is not null,
             d.CreatedAt, d.UpdatedAt);
 }

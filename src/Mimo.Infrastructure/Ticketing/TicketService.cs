@@ -9,12 +9,8 @@ namespace Mimo.Infrastructure.Ticketing;
 /// <summary>
 /// Implementación del servicio de ciclo de vida de tickets.
 /// </summary>
-public class TicketService : ITicketService
+public class TicketService(TenantDbContext db) : ITicketService
 {
-    private readonly MimoDbContext _db;
-
-    public TicketService(MimoDbContext db) => _db = db;
-
     public async Task<Ticket> CreateAsync(
         Guid conversationId, Guid roleId, string? escalationReason, CancellationToken ct = default)
     {
@@ -28,8 +24,8 @@ public class TicketService : ITicketService
             EscalationReason = escalationReason,
             CreatedAt        = DateTime.UtcNow
         };
-        _db.Tickets.Add(ticket);
-        await _db.SaveChangesAsync(ct);
+        db.Tickets.Add(ticket);
+        await db.SaveChangesAsync(ct);
         return ticket;
     }
 
@@ -39,7 +35,7 @@ public class TicketService : ITicketService
         ticket.AssignedAgentId = agentId;
         ticket.Status          = TicketStatus.Assigned;
         ticket.AssignedAt      = DateTime.UtcNow;
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
         return ticket;
     }
 
@@ -49,7 +45,7 @@ public class TicketService : ITicketService
         ticket.Status        = TicketStatus.Resolved;
         ticket.InternalNotes = internalNotes;
         ticket.ResolvedAt    = DateTime.UtcNow;
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
         return ticket;
     }
 
@@ -57,7 +53,7 @@ public class TicketService : ITicketService
     {
         var ticket = await GetRequiredAsync(ticketId, ct);
         ticket.Status = TicketStatus.Closed;
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
         return ticket;
     }
 
@@ -66,24 +62,24 @@ public class TicketService : ITicketService
         var ticket = await GetRequiredAsync(ticketId, ct);
         ticket.Status     = TicketStatus.Reopened;
         ticket.ResolvedAt = null;
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
         return ticket;
     }
 
     public Task<Ticket?> GetByIdAsync(Guid ticketId, CancellationToken ct = default)
-        => _db.Tickets
+        => db.Tickets
             .Include(t => t.TransferRecords)
             .FirstOrDefaultAsync(t => t.Id == ticketId, ct);
 
     public async Task<IReadOnlyList<Ticket>> GetByRoleAsync(
         Guid roleId, TicketStatus? status, CancellationToken ct = default)
     {
-        var q = _db.Tickets.Where(t => t.AssignedRoleId == roleId);
+        var q = db.Tickets.Where(t => t.AssignedRoleId == roleId);
         if (status.HasValue) q = q.Where(t => t.Status == status.Value);
         return await q.OrderBy(t => t.CreatedAt).ToListAsync(ct);
     }
 
     private async Task<Ticket> GetRequiredAsync(Guid id, CancellationToken ct)
-        => await _db.Tickets.FindAsync([id], ct)
+        => await db.Tickets.FindAsync([id], ct)
            ?? throw new InvalidOperationException($"Ticket {id} no encontrado.");
 }

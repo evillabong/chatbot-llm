@@ -3,27 +3,21 @@ using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
 using Mimo.Infrastructure.Data;
+using Pgvector;
+using Pgvector.EntityFrameworkCore;
 
 namespace Mimo.Infrastructure.AI;
 
 /// <summary>
 /// Búsqueda semántica de documentos usando pgvector (cosine similarity).
-/// El sistema filtra visibilidad y tenant ANTES de ordenar por similitud.
+/// Utiliza LINQ con CosineDistance() de Pgvector.EntityFrameworkCore en lugar de SQL crudo,
+/// lo que permite que EF Core genere la consulta con el operador &lt;=&gt; de manera segura.
 /// </summary>
-public class VectorSearchService : IVectorSearchService
+public class VectorSearchService(TenantDbContext db, ILlmClient llm) : IVectorSearchService
 {
-    private readonly MimoDbContext _db;
-    private readonly ILlmClient _llm;
-
-    public VectorSearchService(MimoDbContext db, ILlmClient llm)
-    {
-        _db  = db;
-        _llm = llm;
-    }
-
     /// <summary>
     /// Genera el embedding para la consulta y recupera los documentos más similares
-    /// visibles para el ciudadano (filtrado por visibilidad y rol).
+    /// visibles para el ciudadano (filtrado por visibilidad y rol antes de ordenar).
     /// </summary>
     public async Task<IReadOnlyList<Document>> SearchAsync(
         string query,
@@ -33,36 +27,26 @@ public class VectorSearchService : IVectorSearchService
         int topK = 5,
         CancellationToken ct = default)
     {
-        var queryEmbedding = await _llm.GetEmbeddingAsync(query, ct);
+        var rawEmbedding = await llm.GetEmbeddingAsync(query, ct);
+        var queryVector = new Vector(rawEmbedding);
 
-        // Construir el string del vector para la consulta pgvector
-        var vectorLiteral = $"[{string.Join(",", queryEmbedding)}]";
-
-        // Filtro de visibilidad: ciudadanos no autenticados solo ven documentos públicos.
-        // La restricción se aplica en SQL antes de ordenar por similitud.
-        var visibilityFilter = isAuthenticated
-            ? ""
-            : "AND d.visibility = 'Public'";
-
-        var roleFilter = roleId.HasValue
-            ? $"AND (d.related_role_id IS NULL OR d.related_role_id = '{roleId}')"
-            : "";
-
-        // Búsqueda por cosine distance (<=>). Menor distancia = mayor similitud.
-        // Requiere índice HNSW creado por create_tenant_schema().
-        var sql = $"""
-            SELECT * FROM documents d
-            WHERE d.is_active = true
-              AND d.embedding IS NOT NULL
-              {visibilityFilter}
-              {roleFilter}
-            ORDER BY d.embedding <=> '{vectorLiteral}'::vector
-            LIMIT {topK}
-            """;
-
-        return await _db.Documents
-            .FromSqlRaw(sql)
+        // Filtrado previo al ordenamiento: visibilidad y rol se aplican en la cláusula WHERE
+        // para reducir el espacio de búsqueda antes del cálculo de distancia coseno.
+        var queryable = db.Documents
             .AsNoTracking()
+            .Where(d => d.IsActive && d.Embedding != null);
+
+        if (!isAuthenticated)
+            queryable = queryable.Where(d => d.Visibility == VisibilityLevel.Public);
+
+        if (roleId.HasValue)
+            queryable = queryable.Where(d => d.RelatedRoleId == null || d.RelatedRoleId == roleId.Value);
+
+        // CosineDistance() traduce al operador <=> de pgvector.
+        // Requiere el índice HNSW definido en la migración de TenantDbContext.
+        return await queryable
+            .OrderBy(d => d.Embedding!.CosineDistance(queryVector))
+            .Take(topK)
             .ToListAsync(ct);
     }
 
@@ -71,5 +55,5 @@ public class VectorSearchService : IVectorSearchService
     /// Delegado al cliente LLM configurado.
     /// </summary>
     public Task<float[]> GetEmbeddingAsync(string text, CancellationToken ct = default)
-        => _llm.GetEmbeddingAsync(text, ct);
+        => llm.GetEmbeddingAsync(text, ct);
 }

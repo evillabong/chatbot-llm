@@ -16,32 +16,21 @@ namespace Mimo.Api.Middleware;
 /// Si no se puede resolver el tenant, retorna 400. Si el tenant no existe o está
 /// inactivo, retorna 404 / 403.
 /// </summary>
-public partial class TenantResolutionMiddleware
+public partial class TenantResolutionMiddleware(
+    RequestDelegate next,
+    ILogger<TenantResolutionMiddleware> logger)
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<TenantResolutionMiddleware> _logger;
-
     // Rutas que no requieren tenant (health check, etc.)
-    private static readonly HashSet<string> _bypassPaths =
-    [
-        "/health",
-        "/ready"
-    ];
+    private static readonly HashSet<string> BypassPaths = ["/health", "/ready"];
 
-    public TenantResolutionMiddleware(RequestDelegate next, ILogger<TenantResolutionMiddleware> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
-
-    public async Task InvokeAsync(HttpContext context, MimoDbContext db)
+    public async Task InvokeAsync(HttpContext context, GlobalDbContext globalDb, TenantDbContext tenantDb)
     {
         var path = context.Request.Path.Value ?? string.Empty;
 
         // Rutas exentas de resolución de tenant
-        if (_bypassPaths.Contains(path.ToLowerInvariant()))
+        if (BypassPaths.Contains(path.ToLowerInvariant()))
         {
-            await _next(context);
+            await next(context);
             return;
         }
 
@@ -54,7 +43,8 @@ public partial class TenantResolutionMiddleware
             return;
         }
 
-        var tenant = await db.Tenants
+        // Consultar en GlobalDbContext (esquema public — no depende del tenant)
+        var tenant = await globalDb.Tenants
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Slug == slug, context.RequestAborted);
 
@@ -72,23 +62,25 @@ public partial class TenantResolutionMiddleware
             return;
         }
 
-        // Establecer search_path para aislar las consultas al esquema del tenant.
+        // Establecer search_path en TenantDbContext para aislar las consultas al esquema del tenant.
         // El slug ya fue validado contra la BD; se sanitiza adicionalmente para evitar inyección.
-        var schema = $"tenant_{SlugRegex().Replace(slug, "")}";
-        await db.Database.ExecuteSqlAsync($"SET search_path TO {schema}, public", context.RequestAborted);
+        var schemaName = $"tenant_{SlugRegex().Replace(slug.Replace("-", "_"), "")}";
+        await tenantDb.Database.ExecuteSqlAsync(
+            $"SET search_path TO {schemaName}, public",
+            context.RequestAborted);
 
         // Exponer el tenant resuelto al resto del pipeline
-        context.Items["TenantId"] = tenant.Id;
-        context.Items["TenantSlug"] = tenant.Slug;
+        context.Items["TenantId"]            = tenant.Id;
+        context.Items["TenantSlug"]          = tenant.Slug;
         context.Items["TenantConfiguration"] = tenant.Configuration;
 
-        _logger.LogDebug("Tenant resuelto: {Slug} (schema: {Schema})", slug, schema);
+        logger.LogDebug("Tenant resuelto: {Slug} (schema: {Schema})", slug, schemaName);
 
-        await _next(context);
+        await next(context);
     }
 
-    /// <summary>Expresión regular para sanitizar el slug: solo letras, números y guiones.</summary>
-    [System.Text.RegularExpressions.GeneratedRegex(@"[^a-z0-9\-]")]
+    /// <summary>Expresión regular para sanitizar el schema: solo letras minúsculas y dígitos.</summary>
+    [GeneratedRegex(@"[^a-z0-9_]")]
     private static partial Regex SlugRegex();
 
     /// <summary>
@@ -102,7 +94,7 @@ public partial class TenantResolutionMiddleware
             return headerSlug.ToString().ToLowerInvariant();
 
         // 2. Subdominio (ej: municipio.mimo.app)
-        var host = context.Request.Host.Host;
+        var host  = context.Request.Host.Host;
         var parts = host.Split('.');
         if (parts.Length >= 3)
             return parts[0].ToLowerInvariant();

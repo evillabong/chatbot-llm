@@ -1,5 +1,6 @@
 using Mimo.Admin.Api.Endpoints;
 using Mimo.Infrastructure;
+using Mimo.Infrastructure.Data;
 
 /// <summary>
 /// API exclusiva de administración de la plataforma MIMO.
@@ -8,7 +9,7 @@ using Mimo.Infrastructure;
 /// </summary>
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Infraestructura (solo repositorios del esquema public) ───────────────────
+// ── Infraestructura (esquema public + aprovisionamiento de tenants) ───────────
 builder.Services.AddAdminInfrastructure(builder.Configuration);
 
 // ── Autenticación JWT ────────────────────────────────────────────────────────
@@ -25,7 +26,7 @@ builder.Services.AddOpenApi();
 
 // ── Health checks ────────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<Mimo.Infrastructure.Data.MimoDbContext>("postgres");
+    .AddDbContextCheck<GlobalDbContext>("postgres-global");
 
 var app = builder.Build();
 

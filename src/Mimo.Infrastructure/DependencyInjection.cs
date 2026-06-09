@@ -6,6 +6,7 @@ using Mimo.Infrastructure.AI;
 using Mimo.Infrastructure.Data;
 using Mimo.Infrastructure.Data.Repositories;
 using Mimo.Infrastructure.Orchestration;
+using Mimo.Infrastructure.Services;
 using Mimo.Infrastructure.Ticketing;
 
 namespace Mimo.Infrastructure;
@@ -16,30 +17,40 @@ namespace Mimo.Infrastructure;
 public static class DependencyInjection
 {
     /// <summary>
-    /// Registra DbContext (con pgvector), repositorios, cliente LLM y servicios de dominio.
+    /// Registra ambos DbContext, repositorios, cliente LLM y servicios de dominio.
     /// Usado por Mimo.Api (tenant-facing).
     /// </summary>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Base de datos con soporte pgvector
-        services.AddDbContext<MimoDbContext>(options =>
-            options.UseNpgsql(
-                configuration.GetConnectionString("Default"),
-                npgsql => npgsql.UseVector()));
+        var connectionString = configuration.GetConnectionString("Default");
+
+        // Contexto global: solo esquema public (tabla tenants)
+        services.AddDbContext<GlobalDbContext>(options =>
+            options.UseNpgsql(connectionString));
+
+        // Contexto de tenant: todas las entidades del tenant activo; requiere pgvector
+        services.AddDbContext<TenantDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()));
+
+        // Factory para TenantProvisioningService (necesita crear instancias en background)
+        services.AddDbContextFactory<TenantDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()),
+            ServiceLifetime.Scoped);
 
         // Repositorios
-        services.AddScoped<ITenantRepository,      TenantRepository>();
-        services.AddScoped<IAgentRepository,       AgentRepository>();
-        services.AddScoped<IRoleRepository,        RoleRepository>();
-        services.AddScoped<IDocumentRepository,    DocumentRepository>();
-        services.AddScoped<IConversationRepository, ConversationRepository>();
+        services.AddScoped<ITenantRepository,          TenantRepository>();
+        services.AddScoped<IAgentRepository,           AgentRepository>();
+        services.AddScoped<IRoleRepository,            RoleRepository>();
+        services.AddScoped<IDocumentRepository,        DocumentRepository>();
+        services.AddScoped<IConversationRepository,    ConversationRepository>();
 
         // Servicios de dominio
-        services.AddScoped<ITicketService,              TicketService>();
-        services.AddScoped<IVectorSearchService,        VectorSearchService>();
-        services.AddScoped<IConversationOrchestrator,   ConversationOrchestrator>();
+        services.AddScoped<ITicketService,             TicketService>();
+        services.AddScoped<IVectorSearchService,       VectorSearchService>();
+        services.AddScoped<IConversationOrchestrator,  ConversationOrchestrator>();
+        services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 
         // Cliente LLM (DeepSeek — compatible con OpenAI)
         services.AddHttpClient<ILlmClient, DeepSeekClient>(http =>
@@ -54,16 +65,27 @@ public static class DependencyInjection
     }
 
     /// <summary>
-    /// Variante reducida sin pgvector para Mimo.Admin.Api (opera solo sobre esquema public).
+    /// Variante reducida para Mimo.Admin.Api.
+    /// Registra GlobalDbContext (esquema public) y TenantDbContext (para provisionamiento).
     /// </summary>
     public static IServiceCollection AddAdminInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddDbContext<MimoDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("Default")));
+        var connectionString = configuration.GetConnectionString("Default");
 
-        services.AddScoped<ITenantRepository, TenantRepository>();
+        services.AddDbContext<GlobalDbContext>(options =>
+            options.UseNpgsql(connectionString));
+
+        services.AddDbContext<TenantDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()));
+
+        services.AddDbContextFactory<TenantDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()),
+            ServiceLifetime.Scoped);
+
+        services.AddScoped<ITenantRepository,          TenantRepository>();
+        services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 
         return services;
     }
