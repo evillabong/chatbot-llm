@@ -1,102 +1,118 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
 using Mimo.Infrastructure.Data;
-using StackExchange.Redis;
 
 namespace Mimo.Infrastructure.Queuing;
 
 /// <summary>
-/// Implementación de la cola de tickets por rol usando Redis Sorted Sets.
+/// Implementación de la cola de tickets por rol usando PostgreSQL.
 ///
-/// Diseño de clave:   mimo:queue:{roleId}
-/// Score de elemento: (4 - priority) * 1e13 + unixTimeSecs
-///   → ZPOPMIN extrae siempre el ticket de mayor prioridad, y el más antiguo en caso de empate.
+/// La "cola" no es una estructura separada: es simplemente el conjunto de tickets
+/// con Status = InQueue, ordenados por Priority DESC (Urgent primero) y CreatedAt ASC
+/// (más antiguo primero en caso de empate).
+///
+/// DequeueAsync usa una transacción Serializable para garantizar que dos agentes
+/// no puedan reclamar el mismo ticket simultáneamente, de forma completamente EF Core.
 /// </summary>
-public class TicketQueueService(
-    IConnectionMultiplexer redis,
-    TenantDbContext db) : ITicketQueueService
+public class TicketQueueService(TenantDbContext db) : ITicketQueueService
 {
-    private static readonly string KeyPrefix = "mimo:queue";
-
     // ── Escritura ─────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Valida que el ticket exista y esté en estado InQueue.
+    /// Con PostgreSQL la "encola" es implícita: el ticket ya vive en la BD.
+    /// </summary>
     public async Task EnqueueAsync(Guid ticketId, Guid roleId, CancellationToken ct = default)
     {
-        var ticket = await db.Tickets.AsNoTracking().FirstOrDefaultAsync(t => t.Id == ticketId, ct)
-            ?? throw new InvalidOperationException($"Ticket {ticketId} no encontrado.");
+        var exists = await db.Tickets
+            .AsNoTracking()
+            .AnyAsync(t => t.Id == ticketId
+                        && t.AssignedRoleId == roleId
+                        && t.Status == TicketStatus.InQueue, ct);
 
-        var score  = ComputeScore(ticket.Priority, ticket.CreatedAt);
-        var rdb    = redis.GetDatabase();
-        await rdb.SortedSetAddAsync(BuildKey(roleId), ticketId.ToString("N"), score);
+        if (!exists)
+            throw new InvalidOperationException(
+                $"Ticket {ticketId} no encontrado o no está en estado InQueue para el rol {roleId}.");
     }
 
+    /// <summary>
+    /// Retira atómicamente el siguiente ticket de la cola de un rol.
+    ///
+    /// Usa una transacción Serializable: si dos agentes llaman simultáneamente,
+    /// uno obtiene el ticket y el otro reintenta y recibe el siguiente (o null).
+    /// El ticket queda con Status = Assigned al retornar.
+    /// </summary>
     public async Task<Ticket?> DequeueAsync(Guid roleId, CancellationToken ct = default)
     {
-        var rdb    = redis.GetDatabase();
-        var result = await rdb.SortedSetPopAsync(BuildKey(roleId), Order.Ascending);
+        // CreateExecutionStrategy gestiona reintentos ante fallos de serialización
+        var strategy = db.Database.CreateExecutionStrategy();
 
-        // SortedSetPopAsync retorna null si la cola está vacía
-        if (result is null)
-            return null;
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await db.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable, ct);
 
-        if (!Guid.TryParse(result.Value.Element.ToString(), out var ticketId))
-            return null;
+            var ticket = await db.Tickets
+                .Where(t => t.Status == TicketStatus.InQueue
+                         && t.AssignedRoleId == roleId)
+                .OrderByDescending(t => t.Priority)   // Urgent (3) primero
+                .ThenBy(t => t.CreatedAt)              // más antiguo primero en empate
+                .FirstOrDefaultAsync(ct);
 
-        return await db.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId, ct);
+            if (ticket is null)
+            {
+                await tx.CommitAsync(ct);
+                return null;
+            }
+
+            // Marcar como Assigned dentro de la misma transacción
+            ticket.Status     = TicketStatus.Assigned;
+            ticket.AssignedAt = DateTime.UtcNow;
+
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+
+            return ticket;
+        });
     }
 
     // ── Lectura ───────────────────────────────────────────────────────────────
 
-    public async Task<IReadOnlyList<Ticket>> GetQueueAsync(Guid roleId, CancellationToken ct = default)
-    {
-        var rdb      = redis.GetDatabase();
-        var elements = await rdb.SortedSetRangeByRankAsync(BuildKey(roleId), 0, -1, Order.Ascending);
-
-        if (elements.Length == 0)
-            return [];
-
-        // Preservar el orden de la cola (índice en la lista)
-        var orderedIds = elements
-            .Select((v, i) => (Id: Guid.TryParse(v.ToString(), out var g) ? g : (Guid?)null, Index: i))
-            .Where(x => x.Id.HasValue)
-            .ToDictionary(x => x.Id!.Value, x => x.Index);
-
-        var tickets = await db.Tickets
+    /// <summary>
+    /// Devuelve los tickets en cola para un rol, ordenados por prioridad y tiempo de llegada.
+    /// </summary>
+    public Task<IReadOnlyList<Ticket>> GetQueueAsync(Guid roleId, CancellationToken ct = default)
+        => db.Tickets
             .AsNoTracking()
-            .Where(t => orderedIds.Keys.Contains(t.Id))
-            .ToListAsync(ct);
-
-        return tickets
-            .OrderBy(t => orderedIds.TryGetValue(t.Id, out var idx) ? idx : int.MaxValue)
-            .ToList();
-    }
-
-    public async Task<int> GetPositionAsync(Guid ticketId, CancellationToken ct = default)
-    {
-        // Buscar en qué cola está el ticket
-        var ticket = await db.Tickets.AsNoTracking().FirstOrDefaultAsync(t => t.Id == ticketId, ct);
-        if (ticket is null) return -1;
-
-        var rdb   = redis.GetDatabase();
-        var rank  = await rdb.SortedSetRankAsync(BuildKey(ticket.AssignedRoleId), ticketId.ToString("N"), Order.Ascending);
-        return rank.HasValue ? (int)rank.Value + 1 : -1;
-    }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
+            .Where(t => t.Status == TicketStatus.InQueue && t.AssignedRoleId == roleId)
+            .OrderByDescending(t => t.Priority)
+            .ThenBy(t => t.CreatedAt)
+            .ToListAsync(ct)
+            .ContinueWith<IReadOnlyList<Ticket>>(t => t.Result, ct);
 
     /// <summary>
-    /// Calcula el score del sorted set.
-    /// Menor score = mayor prioridad + llegó antes (ZPOPMIN lo extrae primero).
+    /// Retorna la posición 1-based del ticket en la cola de su rol.
+    /// Cuenta cuántos tickets están delante (mayor prioridad, o igual prioridad pero más antiguos).
+    /// Devuelve -1 si el ticket no existe o ya no está en cola.
     /// </summary>
-    private static double ComputeScore(TicketPriority priority, DateTime enqueuedAt)
+    public async Task<int> GetPositionAsync(Guid ticketId, CancellationToken ct = default)
     {
-        // factor: Urgent=1, High=2, Normal=3, Low=4
-        var factor    = 4 - (int)priority;
-        var timePart  = new DateTimeOffset(enqueuedAt).ToUnixTimeSeconds();
-        return factor * 1e13 + timePart;
-    }
+        var ticket = await db.Tickets
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == ticketId && t.Status == TicketStatus.InQueue, ct);
 
-    private static string BuildKey(Guid roleId) => $"{KeyPrefix}:{roleId:N}";
+        if (ticket is null) return -1;
+
+        var ahead = await db.Tickets.CountAsync(t =>
+            t.Status == TicketStatus.InQueue
+         && t.AssignedRoleId == ticket.AssignedRoleId
+         && t.Id != ticketId
+         && (t.Priority > ticket.Priority
+             || (t.Priority == ticket.Priority && t.CreatedAt < ticket.CreatedAt)), ct);
+
+        return ahead + 1;
+    }
 }

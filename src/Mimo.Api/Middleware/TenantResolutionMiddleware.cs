@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Mimo.Infrastructure.Data;
 
 namespace Mimo.Api.Middleware;
@@ -11,23 +12,27 @@ namespace Mimo.Api.Middleware;
 /// Orden de resolución:
 ///   1. Header X-Tenant-Slug
 ///   2. Subdominio del host (ej: municipio.mimo.app → slug = "municipio")
-///   3. Claim TenantId del JWT
+///   3. Claim tenant_slug del JWT
 ///
-/// Si no se puede resolver el tenant, retorna 400. Si el tenant no existe o está
-/// inactivo, retorna 404 / 403.
+/// El tenant resuelto se cachea en IMemoryCache durante 5 minutos para evitar
+/// una consulta a GlobalDbContext en cada request.
+///
+/// Si no se puede resolver el tenant → 400.
+/// Si el tenant no existe → 404.
+/// Si está inactivo → 403.
 /// </summary>
 public partial class TenantResolutionMiddleware(
     RequestDelegate next,
+    IMemoryCache cache,
     ILogger<TenantResolutionMiddleware> logger)
 {
-    // Rutas que no requieren tenant (health check, etc.)
     private static readonly HashSet<string> BypassPaths = ["/health", "/ready"];
+    private static readonly TimeSpan        CacheTtl    = TimeSpan.FromMinutes(5);
 
     public async Task InvokeAsync(HttpContext context, GlobalDbContext globalDb, TenantDbContext tenantDb)
     {
         var path = context.Request.Path.Value ?? string.Empty;
 
-        // Rutas exentas de resolución de tenant
         if (BypassPaths.Contains(path.ToLowerInvariant()))
         {
             await next(context);
@@ -43,13 +48,21 @@ public partial class TenantResolutionMiddleware(
             return;
         }
 
-        // Consultar en GlobalDbContext (esquema public — no depende del tenant)
-        var tenant = await globalDb.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Slug == slug, context.RequestAborted);
+        // Cachear el tenant para evitar una consulta a GlobalDbContext en cada request.
+        // TTL corto (5 min) para reflejar cambios de estado (desactivación de tenant) con rapidez.
+        var cacheKey = $"mimo:tenant:{slug}";
+        var tenant   = await cache.GetOrCreateAsync(cacheKey, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = CacheTtl;
+            return await globalDb.Tenants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Slug == slug, context.RequestAborted);
+        });
 
         if (tenant is null)
         {
+            // Evitar que un slug inválido quede cacheado como null indefinidamente
+            cache.Remove(cacheKey);
             context.Response.StatusCode = StatusCodes.Status404NotFound;
             await context.Response.WriteAsJsonAsync(new { error = "Tenant no encontrado." });
             return;
@@ -57,13 +70,14 @@ public partial class TenantResolutionMiddleware(
 
         if (!tenant.IsActive)
         {
+            // Forzar re-consulta en el próximo request para detectar reactivación
+            cache.Remove(cacheKey);
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             await context.Response.WriteAsJsonAsync(new { error = "Tenant inactivo." });
             return;
         }
 
         // Establecer search_path en TenantDbContext para aislar las consultas al esquema del tenant.
-        // El slug ya fue validado contra la BD; se sanitiza adicionalmente para evitar inyección.
         var schemaName = $"tenant_{SlugRegex().Replace(slug.Replace("-", "_"), "")}";
         await tenantDb.Database.ExecuteSqlAsync(
             $"SET search_path TO {schemaName}, public",
@@ -79,13 +93,10 @@ public partial class TenantResolutionMiddleware(
         await next(context);
     }
 
-    /// <summary>Expresión regular para sanitizar el schema: solo letras minúsculas y dígitos.</summary>
+    /// <summary>Solo letras minúsculas y dígitos (ya reemplazados los guiones por _).</summary>
     [GeneratedRegex(@"[^a-z0-9_]")]
     private static partial Regex SlugRegex();
 
-    /// <summary>
-    /// Intenta extraer el slug del tenant usando los mecanismos disponibles.
-    /// </summary>
     private static string? ResolveSlug(HttpContext context)
     {
         // 1. Header explícito

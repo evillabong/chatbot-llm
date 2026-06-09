@@ -13,8 +13,6 @@ using Mimo.Infrastructure.Orchestration;
 using Mimo.Infrastructure.Queuing;
 using Mimo.Infrastructure.Services;
 using Mimo.Infrastructure.Ticketing;
-using StackExchange.Redis;
-
 namespace Mimo.Infrastructure;
 
 /// <summary>
@@ -43,10 +41,10 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()),
             ServiceLifetime.Scoped);
 
-        // ── Redis ──────────────────────────────────────────────────────────────
-        var redisConnectionString = configuration.GetConnectionString("Redis") ?? "localhost:6379";
-        services.AddSingleton<IConnectionMultiplexer>(
-            ConnectionMultiplexer.Connect(redisConnectionString));
+        // ── Caché en memoria ──────────────────────────────────────────────────
+        // Usado para cachear lookups frecuentes (tenant por slug, configuración).
+        // No requiere persistencia; se invalida al reiniciar el proceso.
+        services.AddMemoryCache();
 
         // ── Repositorios ───────────────────────────────────────────────────────
         services.AddScoped<ITenantRepository,          TenantRepository>();
