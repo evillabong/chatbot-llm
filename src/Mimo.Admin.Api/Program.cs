@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
-using Mimo.Infrastructure.Data;
+using Mimo.Admin.Api.Endpoints;
+using Mimo.Infrastructure;
 
 /// <summary>
 /// API exclusiva de administración de la plataforma MIMO.
@@ -8,9 +8,8 @@ using Mimo.Infrastructure.Data;
 /// </summary>
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Base de datos (esquema public únicamente) ────────────────────────────────
-builder.Services.AddDbContext<MimoDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+// ── Infraestructura (solo repositorios del esquema public) ───────────────────
+builder.Services.AddAdminInfrastructure(builder.Configuration);
 
 // ── Autenticación JWT ────────────────────────────────────────────────────────
 builder.Services.AddAuthentication().AddJwtBearer();
@@ -21,20 +20,24 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("role", "SuperAdmin"));
 });
 
+// ── OpenAPI ──────────────────────────────────────────────────────────────────
+builder.Services.AddOpenApi();
+
 // ── Health checks ────────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<MimoDbContext>("postgres");
+    .AddDbContextCheck<Mimo.Infrastructure.Data.MimoDbContext>("postgres");
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+    app.MapOpenApi();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHealthChecks("/health");
 
-// ── Endpoints (se registrarán en archivos separados) ─────────────────────────
-// app.MapTenantEndpoints();
-// app.MapPlanEndpoints();
-// app.MapMonitoringEndpoints();
+// ── Endpoints ────────────────────────────────────────────────────────────────
+app.MapTenantEndpoints();
 
 app.Run();

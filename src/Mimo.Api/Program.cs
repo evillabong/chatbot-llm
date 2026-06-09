@@ -1,14 +1,11 @@
-using Microsoft.EntityFrameworkCore;
+using Mimo.Api.Endpoints;
 using Mimo.Api.Middleware;
-using Mimo.Infrastructure.Data;
+using Mimo.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Base de datos ────────────────────────────────────────────────────────────
-builder.Services.AddDbContext<MimoDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("Default"),
-        npgsql => npgsql.UseVector()));
+// ── Infraestructura ──────────────────────────────────────────────────────────
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // ── Autenticación JWT ────────────────────────────────────────────────────────
 builder.Services.AddAuthentication().AddJwtBearer();
@@ -17,11 +14,17 @@ builder.Services.AddAuthorization();
 // ── SignalR ──────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
 
+// ── OpenAPI ──────────────────────────────────────────────────────────────────
+builder.Services.AddOpenApi();
+
 // ── Health checks ────────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<MimoDbContext>("postgres");
+    .AddDbContextCheck<Mimo.Infrastructure.Data.MimoDbContext>("postgres");
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+    app.MapOpenApi();
 
 // ── Middleware ───────────────────────────────────────────────────────────────
 app.UseAuthentication();
@@ -31,9 +34,8 @@ app.UseMiddleware<TenantResolutionMiddleware>();
 // ── Health check ─────────────────────────────────────────────────────────────
 app.MapHealthChecks("/health");
 
-// ── Endpoints (se registrarán en archivos separados) ─────────────────────────
-// app.MapWebhookEndpoints();
-// app.MapTicketEndpoints();
-// app.MapDocumentEndpoints();
+// ── Endpoints ────────────────────────────────────────────────────────────────
+app.MapAgentEndpoints();
+app.MapRoleEndpoints();
 
 app.Run();
