@@ -103,6 +103,7 @@ app.UseMiddleware<TenantResolutionMiddleware>();
 app.MapHealthChecks("/health");
 
 // ── REST Endpoints ────────────────────────────────────────────────────────────
+app.MapAuthEndpoints();
 app.MapAgentEndpoints();
 app.MapRoleEndpoints();
 app.MapDocumentEndpoints();

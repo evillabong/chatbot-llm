@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Mimo.Core.Interfaces;
+using Mimo.Core.Models.Configuration;
 using Mimo.Infrastructure.AI;
 using Mimo.Infrastructure.Assignment;
 using Mimo.Infrastructure.Channels;
@@ -45,6 +46,11 @@ public static class DependencyInjection
         // Usado para cachear lookups frecuentes (tenant por slug, configuración).
         // No requiere persistencia; se invalida al reiniciar el proceso.
         services.AddMemoryCache();
+
+        // ── Autenticación ───────────────────────────────────────────────────────
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
         // ── Repositorios ───────────────────────────────────────────────────────
         services.AddScoped<ITenantRepository,          TenantRepository>();
@@ -101,7 +107,13 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()),
             ServiceLifetime.Scoped);
 
+        // ── Autenticación ───────────────────────────────────────────────────────
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
+
         services.AddScoped<ITenantRepository,          TenantRepository>();
+        services.AddScoped<ISuperAdminRepository,      SuperAdminRepository>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 
         return services;

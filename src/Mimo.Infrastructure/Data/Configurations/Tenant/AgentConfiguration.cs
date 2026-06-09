@@ -27,6 +27,11 @@ public class AgentConfiguration : IEntityTypeConfiguration<Agent>
             .IsUnique()
             .HasDatabaseName("ix_agents_email");
 
+        b.Property(a => a.PasswordHash)
+            .HasColumnName("password_hash")
+            .HasMaxLength(200)
+            .IsRequired();
+
         b.Property(a => a.FullName)
             .HasColumnName("full_name")
             .HasMaxLength(200)

@@ -63,6 +63,7 @@ public static class AgentEndpoints
         CreateAgentRequest request,
         IAgentRepository repo,
         IRoleRepository roleRepo,
+        IPasswordHasher passwordHasher,
         HttpContext context,
         CancellationToken ct = default)
     {
@@ -76,6 +77,7 @@ public static class AgentEndpoints
             Id                    = Guid.NewGuid(),
             TenantId              = tenantId,
             Email                 = request.Email,
+            PasswordHash          = passwordHasher.Hash(request.Password),
             FullName              = request.FullName,
             Alias                 = request.Alias,
             MaxConcurrentSessions = request.MaxConcurrentSessions,

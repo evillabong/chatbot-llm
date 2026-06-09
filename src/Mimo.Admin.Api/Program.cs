@@ -71,6 +71,7 @@ app.UseAuthorization();
 app.MapHealthChecks("/health");
 
 // ── Endpoints ────────────────────────────────────────────────────────────────
+app.MapAuthEndpoints();
 app.MapTenantEndpoints();
 
 app.Run();
