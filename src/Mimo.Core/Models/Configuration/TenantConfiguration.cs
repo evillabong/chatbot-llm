@@ -38,6 +38,12 @@ public class SessionAssignmentConfig
     public bool NotifyPendingByEmail { get; set; } = false;
     public int NotificationFrequencyMinutes { get; set; } = 5;
     public int MaxConcurrentSessionsPerAgent { get; set; } = 5;
+
+    /// <summary>
+    /// Rol al que se escalan los tickets cuando el bot no puede resolver la consulta.
+    /// Si es null, se usa el rol con mayor PriorityLevel del tenant.
+    /// </summary>
+    public Guid? DefaultEscalationRoleId { get; set; }
 }
 
 /// <summary>Parámetros de transferencia de sesiones.</summary>

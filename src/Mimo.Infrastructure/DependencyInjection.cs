@@ -3,11 +3,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Mimo.Core.Interfaces;
 using Mimo.Infrastructure.AI;
+using Mimo.Infrastructure.Assignment;
+using Mimo.Infrastructure.Chat;
 using Mimo.Infrastructure.Data;
 using Mimo.Infrastructure.Data.Repositories;
+using Mimo.Infrastructure.Mcp;
 using Mimo.Infrastructure.Orchestration;
+using Mimo.Infrastructure.Queuing;
 using Mimo.Infrastructure.Services;
 using Mimo.Infrastructure.Ticketing;
+using StackExchange.Redis;
 
 namespace Mimo.Infrastructure;
 
@@ -17,7 +22,7 @@ namespace Mimo.Infrastructure;
 public static class DependencyInjection
 {
     /// <summary>
-    /// Registra ambos DbContext, repositorios, cliente LLM y servicios de dominio.
+    /// Registra DbContexts, Redis, repositorios, cliente LLM y todos los servicios de dominio.
     /// Usado por Mimo.Api (tenant-facing).
     /// </summary>
     public static IServiceCollection AddInfrastructure(
@@ -26,33 +31,40 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("Default");
 
-        // Contexto global: solo esquema public (tabla tenants)
+        // ── Base de datos ──────────────────────────────────────────────────────
         services.AddDbContext<GlobalDbContext>(options =>
             options.UseNpgsql(connectionString));
 
-        // Contexto de tenant: todas las entidades del tenant activo; requiere pgvector
         services.AddDbContext<TenantDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()));
 
-        // Factory para TenantProvisioningService (necesita crear instancias en background)
         services.AddDbContextFactory<TenantDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()),
             ServiceLifetime.Scoped);
 
-        // Repositorios
+        // ── Redis ──────────────────────────────────────────────────────────────
+        var redisConnectionString = configuration.GetConnectionString("Redis") ?? "localhost:6379";
+        services.AddSingleton<IConnectionMultiplexer>(
+            ConnectionMultiplexer.Connect(redisConnectionString));
+
+        // ── Repositorios ───────────────────────────────────────────────────────
         services.AddScoped<ITenantRepository,          TenantRepository>();
         services.AddScoped<IAgentRepository,           AgentRepository>();
         services.AddScoped<IRoleRepository,            RoleRepository>();
         services.AddScoped<IDocumentRepository,        DocumentRepository>();
         services.AddScoped<IConversationRepository,    ConversationRepository>();
 
-        // Servicios de dominio
+        // ── Servicios de dominio ───────────────────────────────────────────────
         services.AddScoped<ITicketService,             TicketService>();
+        services.AddScoped<ITicketQueueService,        TicketQueueService>();
+        services.AddScoped<IAgentAssignmentService,    AgentAssignmentService>();
         services.AddScoped<IVectorSearchService,       VectorSearchService>();
+        services.AddScoped<IInternalChatService,       InternalChatService>();
+        services.AddScoped<IMcpToolProvider,           McpToolProvider>();
         services.AddScoped<IConversationOrchestrator,  ConversationOrchestrator>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 
-        // Cliente LLM (DeepSeek — compatible con OpenAI)
+        // ── Cliente LLM (DeepSeek — compatible con OpenAI) ────────────────────
         services.AddHttpClient<ILlmClient, DeepSeekClient>(http =>
         {
             var baseUrl = configuration["DeepSeek:BaseUrl"] ?? "https://api.deepseek.com";
@@ -65,8 +77,7 @@ public static class DependencyInjection
     }
 
     /// <summary>
-    /// Variante reducida para Mimo.Admin.Api.
-    /// Registra GlobalDbContext (esquema public) y TenantDbContext (para provisionamiento).
+    /// Variante reducida para Mimo.Admin.Api (esquema public + aprovisionamiento).
     /// </summary>
     public static IServiceCollection AddAdminInfrastructure(
         this IServiceCollection services,
