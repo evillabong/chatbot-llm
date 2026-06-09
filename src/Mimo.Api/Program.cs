@@ -1,4 +1,5 @@
 using Mimo.Api.Endpoints;
+using Mimo.Api.Hubs;
 using Mimo.Api.Middleware;
 using Mimo.Infrastructure;
 
@@ -34,8 +35,13 @@ app.UseMiddleware<TenantResolutionMiddleware>();
 // ── Health check ─────────────────────────────────────────────────────────────
 app.MapHealthChecks("/health");
 
-// ── Endpoints ────────────────────────────────────────────────────────────────
+// ── REST Endpoints ────────────────────────────────────────────────────────────
 app.MapAgentEndpoints();
 app.MapRoleEndpoints();
+app.MapDocumentEndpoints();
+app.MapConversationEndpoints();
+
+// ── SignalR Hubs ──────────────────────────────────────────────────────────────
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();
