@@ -81,6 +81,7 @@ public static class TenantEndpoints
         CreateTenantRequest request,
         ITenantRepository repo,
         ITenantProvisioningService provisioning,
+        IPasswordHasher passwordHasher,
         CancellationToken ct = default)
     {
         // Validar unicidad del slug
@@ -100,8 +101,15 @@ public static class TenantEndpoints
         // 1. Persistir el registro del tenant en el esquema public
         await repo.AddAsync(tenant, ct);
 
-        // 2. Provisionar el esquema PostgreSQL del tenant y aplicar migraciones (EF Core)
-        await provisioning.ProvisionAsync(tenant, ct);
+        // 2. Provisionar el esquema PostgreSQL del tenant, aplicar migraciones (EF Core) y
+        //    crear el rol "Administrador" + el funcionario administrador inicial.
+        var adminSeed = new TenantAdminSeed(
+            request.AdminEmail,
+            passwordHasher.Hash(request.AdminPassword),
+            request.AdminFullName,
+            request.AdminAlias);
+
+        await provisioning.ProvisionAsync(tenant, adminSeed, ct);
 
         return Results.Created($"/tenants/{tenant.Id}", ToResponse(tenant));
     }
