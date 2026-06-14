@@ -6,6 +6,10 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+Sin cambios sin publicar.
+
+## [0.1.0] - 2026-06-14
+
 ### Added
 
 - Documentación de fundación: `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md` y `docs/PLAN.md`.
@@ -22,7 +26,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 - Gateway de IA in-process con entitlements y cuotas por plan y medición de uso por tenant.
 - Catálogo de planes (`plans`) con integridad referencial: FK desde `tenants` y `ai_plan_policies` por código; validación al crear tenant y siembra por defecto (`free`, `pro`).
 - Primera red de pruebas (xUnit): hashing de contraseñas, emisión de JWT, paginación y gateway de IA (entitlements/cuotas) sobre EF InMemory.
-- Architecture Decision Records en `docs/adr/` (0001–0007).
+- Architecture Decision Records en `docs/adr/` (0001–0008).
 
 ### Changed
 
@@ -39,18 +43,6 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 ### Security
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
-
-## [0.1.0] - Próximamente
-
-### Planned
-
-- Crear solución .NET 10 base.
-- Crear proyectos `Mimo.Core`, `Mimo.Infrastructure` y `Mimo.Api`.
-- Agregar `docker-compose.yml` con PostgreSQL, pgvector y Redis.
-- Implementar resolución inicial de tenant.
-- Definir modelo base de `Tenant`, `Agent`, `Role`, `Document`, `Conversation`, `Message` y `Ticket`.
-- Implementar WebChat mínimo con SignalR.
-- Implementar búsqueda documental semántica inicial.
 
 [Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/evillabong/chatbot-llm/releases/tag/v0.1.0
