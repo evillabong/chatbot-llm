@@ -19,8 +19,8 @@ CRM omnicanal multi-tenant para atención ciudadana, con bot de IA, escalación 
 | Frontend Administrativo | Blazor WebAssembly |
 | Comunicación en tiempo real | SignalR |
 | Base de datos principal | PostgreSQL + pgvector |
-| Caché y sesiones | Redis |
-| Modelo de lenguaje | DeepSeek API |
+| Caché efímera | `IMemoryCache` en proceso (sin Redis, ver ADR 0001) |
+| Modelo de lenguaje | Conectores de IA configurables en BD, vía gateway de plataforma (DeepSeek inicial, ver ADR 0004 y 0005) |
 | MCP Server | .NET (integrado en el backend) |
 | Canales externos | Facebook Messenger, WhatsApp, Telegram, Instagram DM |
 | Plugin web | WebChat embebible (Blazor WASM standalone) |
@@ -239,7 +239,7 @@ MIMO/
 │           ├── chat-widget.js               # Script de inicialización
 │           └── chat-widget.css              # Estilos del widget
 │
-└── docker-compose.yml                       # PostgreSQL + pgvector + Redis
+└── docker-compose.yml                       # PostgreSQL + pgvector (sin Redis, ver ADR 0001)
 ```
 
 ---
@@ -534,6 +534,39 @@ El Model Context Protocol permite que el LLM invoque herramientas del sistema:
 | `check_business_hours` | Verifica si está en horario de atención |
 | `request_human_agent` | Crea un ticket para atención humana |
 | `check_queue_status` | Consulta estado de la cola de atención |
+
+---
+
+## 11.bis. Gateway de IA multi-tenant
+
+Todas las consultas al LLM de los tenants pasan por un **gateway de plataforma
+in-process** dentro de `Mimo.Api` (`IAiGatewayService`). Decisión registrada en
+[ADR 0005](adr/0005-gateway-de-ia-in-process-con-entitlements-y-cuotas-por-plan.md);
+la configuración de proveedores en BD, en [ADR 0004](adr/0004-configuracion-de-conectores-de-ia-en-base-de-datos.md).
+
+Responsabilidades del gateway, por cada operación (chat/embedding) y `tenantId`:
+
+1. **Aislamiento de credenciales:** las claves del proveedor viven en `ai_connectors`
+   (esquema `public`, JSONB) y nunca se exponen al tenant.
+2. **Opacidad del modelo:** el tenant no sabe qué proveedor/modelo se usa; los usuarios
+   solo hablan con `Mimo.Api`.
+3. **Entitlement por plan:** el plan del tenant (`ai_plan_policies.allowed_providers`)
+   determina qué modelos puede usar.
+4. **Cuota por plan:** solicitudes y/o tokens mensuales (`monthly_request_quota`,
+   `monthly_token_quota`; `0` = ilimitado).
+5. **Medición de uso:** cada llamada registra consumo en `ai_usage_records` (append-only),
+   base de las estadísticas del SuperAdmin.
+
+Tablas (esquema `public`, gestionadas por el SuperAdmin):
+
+| Tabla | Propósito |
+|-------|-----------|
+| `ai_connectors` | Proveedores de IA configurables; uno activo a la vez; config en JSONB |
+| `ai_plan_policies` | Modelos permitidos y cuota por código de plan |
+| `ai_usage_records` | Consumo por tenant (proveedor, modelo, operación, tokens) |
+
+Pendiente (incremento siguiente): endpoints en `Mimo.Admin.Api` para administrar
+conectores y políticas de plan, y para consultar las estadísticas de uso.
 
 ---
 

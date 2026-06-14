@@ -39,8 +39,8 @@ Premisas principales:
 | Frontend administrativo | Blazor WebAssembly |
 | Tiempo real | SignalR |
 | Base principal | PostgreSQL + pgvector |
-| Caché y sesiones | Redis |
-| LLM | DeepSeek API |
+| Caché efímera | `IMemoryCache` en proceso (sin Redis, ver [ADR 0001](docs/adr/0001-eliminar-redis-usar-ef-y-memorycache.md)) |
+| LLM | Conectores configurables en BD vía gateway de plataforma (DeepSeek inicial, ver [ADR 0004](docs/adr/0004-configuracion-de-conectores-de-ia-en-base-de-datos.md) y [ADR 0005](docs/adr/0005-gateway-de-ia-in-process-con-entitlements-y-cuotas-por-plan.md)) |
 | Herramientas LLM | MCP Server integrado en .NET |
 | Canales externos | Facebook Messenger, WhatsApp, Telegram, Instagram DM |
 | WebChat | Blazor WASM standalone embebible |
@@ -74,8 +74,8 @@ Mimo.Api (.NET 10 Minimal APIs) [tenant-facing]
   |-- InternalChatHub
   |
   +--> PostgreSQL + pgvector
-  +--> Redis
-  +--> DeepSeek API
+  +--> IMemoryCache (estado efímero)
+  +--> Gateway de IA (entitlements + cuotas por plan) --> conector activo (DeepSeek)
   +--> MCP tools
 
 Mimo.Admin.Api (.NET 10 Minimal APIs) [host separado]
@@ -96,7 +96,8 @@ Frontends Blazor WASM
 ```text
 /
 ├── docs/
-│   └── PLAN.md
+│   ├── PLAN.md
+│   └── adr/                # Architecture Decision Records
 ├── src/
 │   ├── Mimo.Core/
 │   ├── Mimo.Infrastructure/
@@ -115,7 +116,7 @@ Frontends Blazor WASM
 └── CHANGELOG.md
 ```
 
-La estructura anterior está descrita en detalle en [docs/PLAN.md](docs/PLAN.md). El repositorio todavía está en fase de planificación/fundación.
+La estructura anterior está descrita en detalle en [docs/PLAN.md](docs/PLAN.md). El backend (`Mimo.Core`, `Mimo.Infrastructure`, `Mimo.Api`, `Mimo.Admin.Api`) ya está implementado; los frontends Blazor siguen pendientes.
 
 ## Flujo de sesión
 
@@ -163,28 +164,22 @@ Estrategia objetivo:
 
 ## Inicio de desarrollo
 
-Cuando se inicialice la solución .NET:
+Infraestructura local (PostgreSQL + pgvector):
 
 ```bash
-dotnet new sln -n MIMO
-dotnet new classlib -n Mimo.Core -o src/Mimo.Core
-dotnet new classlib -n Mimo.Infrastructure -o src/Mimo.Infrastructure
-dotnet new web -n Mimo.Api -o src/Mimo.Api
-dotnet new web -n Mimo.Admin.Api -o src/Mimo.Admin.Api
+docker compose up postgres -d
 ```
 
-Infraestructura local objetivo:
+Build y pruebas:
 
 ```bash
-docker compose up postgres redis -d
+dotnet build MIMO.slnx
+dotnet test MIMO.slnx
 ```
 
-Comandos esperados una vez creada la solución:
-
-```bash
-dotnet build
-dotnet test
-```
+Las migraciones de EF Core (esquema global y por tenant) se aplican automáticamente
+al arrancar `Mimo.Api` / `Mimo.Admin.Api`. La configuración de IA inicial se siembra
+desde la sección `DeepSeek` de `appsettings` a la tabla `ai_connectors`.
 
 ## Documentación
 
@@ -192,6 +187,7 @@ dotnet test
 |---|---|
 | [memory.md](memory.md) | Contexto rápido del proyecto, decisiones y próximos pasos. |
 | [docs/PLAN.md](docs/PLAN.md) | Arquitectura canónica, actores, flujo, modelo de datos y fases. |
+| [docs/adr/](docs/adr/README.md) | Architecture Decision Records: decisiones de arquitectura y su justificación. |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Reglas de colaboración, commits, branches y documentación. |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de cambios del proyecto. |
 
@@ -219,6 +215,15 @@ fix: jvillarreal corregir-resolucion-tenant
 
 ## Estado actual
 
-Fase actual: planificación y documentación inicial.
+Backend en desarrollo activo. Implementado:
 
-Próximo paso recomendado: crear la solución .NET base, `docker-compose.yml` con PostgreSQL/Redis y los proyectos `Mimo.Core`, `Mimo.Infrastructure` y `Mimo.Api`.
+- Solución .NET 10 (`Mimo.Core`, `Mimo.Infrastructure`, `Mimo.Api`, `Mimo.Admin.Api`) + tests base.
+- Multi-tenant con esquema por tenant y resolución por middleware.
+- Autenticación JWT (agentes y SuperAdmin) y autorización por roles.
+- Cola de tickets, asignación, transferencias, chat interno y hubs SignalR.
+- Conectores de canales y pipeline de webhooks; encuestas de satisfacción.
+- Búsqueda semántica con pgvector y orquestación RAG con escalada.
+- Conectores de IA configurables en BD y gateway de plataforma con entitlements/cuotas por plan.
+
+Próximos pasos: endpoints de administración de IA (conectores, políticas de plan, estadísticas
+de uso) en `Mimo.Admin.Api`, frontends Blazor y suite de pruebas.
