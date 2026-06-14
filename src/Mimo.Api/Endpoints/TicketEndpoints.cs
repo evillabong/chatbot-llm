@@ -35,6 +35,11 @@ public static class TicketEndpoints
             .WithName("GetMyTickets")
             .WithSummary("Lista los tickets asignados al funcionario autenticado.");
 
+        // GET /tickets/visible
+        group.MapGet("/visible", GetVisibleTicketsAsync)
+            .WithName("GetVisibleTickets")
+            .WithSummary("Lista los tickets visibles para el funcionario según sus roles (todos si tiene CanViewAllTickets).");
+
         // POST /tickets/{id}/claim
         group.MapPost("/{id:guid}/claim", ClaimTicketAsync)
             .WithName("ClaimTicket")
@@ -101,16 +106,29 @@ public static class TicketEndpoints
     private static async Task<IResult> GetMyTicketsAsync(
         HttpContext context,
         ITicketService service,
+        TicketStatus? status = null,
         CancellationToken ct = default)
     {
         var agentId = GetAgentId(context);
         if (agentId is null)
             return Results.Unauthorized();
 
-        var tickets = await service.GetByRoleAsync(Guid.Empty, null, ct); // se filtra en servicio por agentId
-        var mine    = tickets.Where(t => t.AssignedAgentId == agentId).ToList();
+        var tickets = await service.GetByAgentAsync(agentId.Value, status, ct);
+        return Results.Ok(tickets.Select(t => ToResponse(t, 0)).ToList());
+    }
 
-        return Results.Ok(mine.Select(t => ToResponse(t, 0)).ToList());
+    private static async Task<IResult> GetVisibleTicketsAsync(
+        HttpContext context,
+        ITicketService service,
+        TicketStatus? status = null,
+        CancellationToken ct = default)
+    {
+        var agentId = GetAgentId(context);
+        if (agentId is null)
+            return Results.Unauthorized();
+
+        var tickets = await service.GetVisibleForAgentAsync(agentId.Value, status, ct);
+        return Results.Ok(tickets.Select(t => ToResponse(t, 0)).ToList());
     }
 
     private static async Task<IResult> ClaimTicketAsync(

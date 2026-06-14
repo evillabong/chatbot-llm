@@ -79,6 +79,41 @@ public class TicketService(TenantDbContext db) : ITicketService
         return await q.OrderBy(t => t.CreatedAt).ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<Ticket>> GetByAgentAsync(
+        Guid agentId, TicketStatus? status, CancellationToken ct = default)
+    {
+        var q = db.Tickets.Where(t => t.AssignedAgentId == agentId);
+        if (status.HasValue) q = q.Where(t => t.Status == status.Value);
+        return await q
+            .OrderByDescending(t => t.Priority)
+            .ThenBy(t => t.CreatedAt)
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<Ticket>> GetVisibleForAgentAsync(
+        Guid agentId, TicketStatus? status, CancellationToken ct = default)
+    {
+        // Roles del funcionario y si alguno permite ver todos los tickets del tenant.
+        var roles = await db.AgentRoles
+            .Where(ar => ar.AgentId == agentId)
+            .Select(ar => new { ar.RoleId, ar.Role.CanViewAllTickets })
+            .ToListAsync(ct);
+
+        var canViewAll = roles.Any(r => r.CanViewAllTickets);
+        var roleIds    = roles.Select(r => r.RoleId).ToList();
+
+        var q = db.Tickets.AsQueryable();
+        if (!canViewAll)
+            q = q.Where(t => roleIds.Contains(t.AssignedRoleId));
+        if (status.HasValue)
+            q = q.Where(t => t.Status == status.Value);
+
+        return await q
+            .OrderByDescending(t => t.Priority)
+            .ThenBy(t => t.CreatedAt)
+            .ToListAsync(ct);
+    }
+
     private async Task<Ticket> GetRequiredAsync(Guid id, CancellationToken ct)
         => await db.Tickets.FindAsync([id], ct)
            ?? throw new InvalidOperationException($"Ticket {id} no encontrado.");
