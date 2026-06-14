@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Mimo.Api.Hubs;
+using Mimo.Core.Authorization;
 using Mimo.Core.DTOs.Ticket;
 using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
@@ -17,7 +18,7 @@ public static class TicketEndpoints
     {
         var group = app.MapGroup("/tickets")
             .WithTags("Tickets")
-            .RequireAuthorization();
+            .RequireAuthorization(MimoAuthorization.Policies.Agent);
 
         // GET /tickets/queue/{roleId}
         group.MapGet("/queue/{roleId:guid}", GetRoleQueueAsync)

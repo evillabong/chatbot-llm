@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Mimo.Core.Authorization;
 using Mimo.Core.DTOs.Conversation;
 using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
@@ -25,7 +26,7 @@ namespace Mimo.Api.Hubs;
 ///   - "InternalMessage"   (InternalMessageResponse) — chat interno recibido
 ///   - "QueueUpdated"      (int pendingCount)       — cambio en el tamaño de la cola
 /// </summary>
-[Authorize]
+[Authorize(Policy = MimoAuthorization.Policies.Agent)]
 public class TicketHub(
     ITicketService ticketService,
     IConversationRepository conversations,

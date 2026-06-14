@@ -1,3 +1,4 @@
+using Mimo.Core.Authorization;
 using Mimo.Core.DTOs.Agent;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
@@ -5,7 +6,7 @@ using Mimo.Core.Models;
 namespace Mimo.Api.Endpoints;
 
 /// <summary>
-/// Endpoints de gestión de funcionarios. Requieren autenticación de TenantAdmin.
+/// Endpoints de gestión de funcionarios. Requieren el rol Administrador (política TenantAdmin).
 /// Operan sobre el esquema del tenant resuelto por TenantResolutionMiddleware.
 /// </summary>
 public static class AgentEndpoints
@@ -14,7 +15,7 @@ public static class AgentEndpoints
     {
         var group = app.MapGroup("/agents")
             .WithTags("Agents")
-            .RequireAuthorization();
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
 
         group.MapGet("/", ListAgentsAsync)
             .WithName("ListAgents")

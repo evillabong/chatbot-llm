@@ -1,3 +1,4 @@
+using Mimo.Core.Authorization;
 using Mimo.Core.DTOs.Auth;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
@@ -42,7 +43,8 @@ public static class AuthEndpoints
         var token = jwtTokenService.GenerateSuperAdminToken(superAdmin);
 
         return Results.Ok(new LoginResponse(
-            token.Token, token.ExpiresAtUtc, superAdmin.Id, superAdmin.Email, superAdmin.FullName, ["SuperAdmin"]));
+            token.Token, token.ExpiresAtUtc, superAdmin.Id, superAdmin.Email, superAdmin.FullName,
+            [MimoAuthorization.Roles.SuperAdmin]));
     }
 
     private static async Task<IResult> SetupAsync(

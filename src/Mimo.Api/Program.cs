@@ -8,6 +8,7 @@ using Mimo.Api.Hubs;
 using Mimo.Api.Middleware;
 using Mimo.Api.Services;
 using Mimo.Api.Workers;
+using Mimo.Core.Authorization;
 using Mimo.Core.Interfaces;
 using Mimo.Infrastructure;
 using Mimo.Infrastructure.Data;
@@ -64,7 +65,17 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+// ── Políticas de autorización por rol ─────────────────────────────────────────
+// TenantAdmin: gestión de funcionarios, roles y administración del conocimiento.
+// Agent:       operaciones de atención (tickets, chat interno, lectura de conocimiento).
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(MimoAuthorization.Policies.TenantAdmin, policy =>
+        policy.RequireClaim("role", MimoAuthorization.Roles.Administrator));
+
+    options.AddPolicy(MimoAuthorization.Policies.Agent, policy =>
+        policy.RequireClaim("agent_id"));
+});
 
 // ── SignalR ──────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();

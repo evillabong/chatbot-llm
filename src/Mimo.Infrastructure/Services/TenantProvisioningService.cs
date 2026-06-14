@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Mimo.Core.Authorization;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
 using Mimo.Infrastructure.Data;
@@ -36,7 +37,7 @@ public partial class TenantProvisioningService(
         {
             Id                = Guid.NewGuid(),
             TenantId          = tenant.Id,
-            Name              = "Administrador",
+            Name              = MimoAuthorization.Roles.Administrator,
             Description       = "Rol con acceso total a la configuración y a todos los tickets del tenant.",
             PriorityLevel     = 100,
             CanViewAllTickets = true,

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Mimo.Admin.Api.Endpoints;
+using Mimo.Core.Authorization;
 using Mimo.Infrastructure;
 using Mimo.Infrastructure.Data;
 
@@ -42,8 +43,8 @@ builder.Services
 builder.Services.AddAuthorization(options =>
 {
     // Solo SuperAdmin puede acceder a esta API
-    options.AddPolicy("SuperAdmin", policy =>
-        policy.RequireClaim("role", "SuperAdmin"));
+    options.AddPolicy(MimoAuthorization.Policies.SuperAdmin, policy =>
+        policy.RequireClaim("role", MimoAuthorization.Roles.SuperAdmin));
 });
 
 // ── OpenAPI ──────────────────────────────────────────────────────────────────

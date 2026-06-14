@@ -1,3 +1,4 @@
+using Mimo.Core.Authorization;
 using Mimo.Core.DTOs.Role;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
@@ -6,7 +7,7 @@ namespace Mimo.Api.Endpoints;
 
 /// <summary>
 /// Endpoints de gestión de roles/departamentos del tenant.
-/// Requieren autenticación de TenantAdmin.
+/// Requieren el rol Administrador (política TenantAdmin).
 /// </summary>
 public static class RoleEndpoints
 {
@@ -14,7 +15,7 @@ public static class RoleEndpoints
     {
         var group = app.MapGroup("/roles")
             .WithTags("Roles")
-            .RequireAuthorization();
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
 
         group.MapGet("/", ListRolesAsync)
             .WithName("ListRoles")

@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Mimo.Core.Authorization;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
 using Mimo.Core.Models.Configuration;
@@ -42,7 +43,7 @@ public class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
             new("super_admin_id", superAdmin.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, superAdmin.Email),
             new("name", superAdmin.FullName),
-            new("role", "SuperAdmin"),
+            new("role", MimoAuthorization.Roles.SuperAdmin),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

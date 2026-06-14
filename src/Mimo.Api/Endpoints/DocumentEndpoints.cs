@@ -1,3 +1,4 @@
+using Mimo.Core.Authorization;
 using Mimo.Core.DTOs.Document;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
@@ -7,6 +8,9 @@ namespace Mimo.Api.Endpoints;
 
 /// <summary>
 /// Endpoints CRUD de documentos de conocimiento.
+/// La lectura está disponible para cualquier funcionario (política Agent);
+/// la administración (crear, actualizar, desactivar, reindexar) requiere el
+/// rol Administrador (política TenantAdmin).
 /// Al crear o actualizar con contenido nuevo se regenera el embedding automáticamente.
 /// </summary>
 public static class DocumentEndpoints
@@ -15,7 +19,7 @@ public static class DocumentEndpoints
     {
         var group = app.MapGroup("/documents")
             .WithTags("Documents")
-            .RequireAuthorization();
+            .RequireAuthorization(MimoAuthorization.Policies.Agent);
 
         group.MapGet("/", ListDocumentsAsync)
             .WithName("ListDocuments")
@@ -27,20 +31,24 @@ public static class DocumentEndpoints
 
         group.MapPost("/", CreateDocumentAsync)
             .WithName("CreateDocument")
-            .WithSummary("Crea un documento y genera su embedding para búsqueda semántica.");
+            .WithSummary("Crea un documento y genera su embedding para búsqueda semántica.")
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
 
         group.MapPut("/{id:guid}", UpdateDocumentAsync)
             .WithName("UpdateDocument")
-            .WithSummary("Actualiza un documento. Regenera embedding si cambia el contenido.");
+            .WithSummary("Actualiza un documento. Regenera embedding si cambia el contenido.")
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
 
         group.MapDelete("/{id:guid}", DeactivateDocumentAsync)
             .WithName("DeactivateDocument")
-            .WithSummary("Desactiva un documento (borrado lógico).");
+            .WithSummary("Desactiva un documento (borrado lógico).")
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
 
         // Endpoint para regenerar el embedding manualmente
         group.MapPost("/{id:guid}/reindex", ReindexDocumentAsync)
             .WithName("ReindexDocument")
-            .WithSummary("Regenera el embedding de un documento existente.");
+            .WithSummary("Regenera el embedding de un documento existente.")
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
 
         return app;
     }

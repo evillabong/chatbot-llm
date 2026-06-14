@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Mimo.Api.Hubs;
+using Mimo.Core.Authorization;
 using Mimo.Core.DTOs.InternalChat;
 using Mimo.Core.Interfaces;
 
@@ -15,7 +16,7 @@ public static class InternalChatEndpoints
     {
         var group = app.MapGroup("/internal-chat")
             .WithTags("InternalChat")
-            .RequireAuthorization();
+            .RequireAuthorization(MimoAuthorization.Policies.Agent);
 
         // GET /internal-chat/{agentId}/history
         group.MapGet("/{agentId:guid}/history", GetHistoryAsync)

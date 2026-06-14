@@ -1,3 +1,4 @@
+using Mimo.Core.Authorization;
 using Mimo.Core.DTOs.Tenant;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
@@ -15,7 +16,7 @@ public static class TenantEndpoints
     {
         var group = app.MapGroup("/tenants")
             .WithTags("Tenants")
-            .RequireAuthorization("SuperAdmin");
+            .RequireAuthorization(MimoAuthorization.Policies.SuperAdmin);
 
         // GET /tenants
         group.MapGet("/", ListTenantsAsync)
