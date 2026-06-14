@@ -76,6 +76,7 @@ public static class TenantEndpoints
     private static async Task<IResult> CreateTenantAsync(
         CreateTenantRequest request,
         ITenantRepository repo,
+        IPlanRepository planRepo,
         ITenantProvisioningService provisioning,
         IPasswordHasher passwordHasher,
         CancellationToken ct = default)
@@ -84,12 +85,17 @@ public static class TenantEndpoints
         if (await repo.SlugExistsAsync(request.Slug, ct))
             return Results.Conflict(new { error = $"El slug '{request.Slug}' ya está en uso." });
 
+        // Validar que el plan exista en el catálogo (código canónico en minúsculas).
+        var planCode = Plan.NormalizeCode(request.Plan);
+        if (!await planRepo.ExistsAsync(planCode, ct))
+            return Results.BadRequest(new { error = $"El plan '{request.Plan}' no existe o está inactivo." });
+
         var tenant = new Tenant
         {
             Id        = Guid.NewGuid(),
             Name      = request.Name,
             Slug      = request.Slug,
-            Plan      = request.Plan,
+            Plan      = planCode,
             IsActive  = true,
             CreatedAt = DateTime.UtcNow
         };

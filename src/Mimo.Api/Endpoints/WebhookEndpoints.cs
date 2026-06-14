@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Mimo.Api.Middleware;
 using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
@@ -79,7 +80,7 @@ public static class WebhookEndpoints
         if (!Enum.TryParse<Channel>(channel, ignoreCase: true, out var channelEnum))
             return Results.BadRequest("Canal no reconocido.");
 
-        var tenantId = (Guid)context.Items["TenantId"]!;
+        var tenantId = context.GetTenantId();
 
         // Obtener o crear la conversación para este usuario externo
         var conversation = await repo.GetByExternalUserAsync(incoming.ExternalUserId, channelEnum, ct);

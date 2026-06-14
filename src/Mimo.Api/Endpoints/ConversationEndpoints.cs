@@ -1,3 +1,4 @@
+using Mimo.Api.Middleware;
 using Mimo.Core.DTOs.Conversation;
 using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
@@ -46,7 +47,7 @@ public static class ConversationEndpoints
         HttpContext context,
         CancellationToken ct = default)
     {
-        var tenantId = (Guid)context.Items["TenantId"]!;
+        var tenantId = context.GetTenantId();
 
         // Buscar conversación activa existente para el mismo usuario y canal
         var existing = await repo.GetByExternalUserAsync(request.ExternalUserId, request.Channel, ct);

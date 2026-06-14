@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Mimo.Core.MultiTenancy;
 using Mimo.Infrastructure.Data;
 
 namespace Mimo.Api.Middleware;
@@ -9,15 +10,15 @@ namespace Mimo.Api.Middleware;
 /// Resuelve el tenant de cada petición y establece el search_path de PostgreSQL
 /// para que todas las consultas subsiguientes operen sobre el esquema correcto.
 ///
-/// Orden de resolución:
-///   1. Header X-Tenant-Slug
-///   2. Subdominio del host (ej: municipio.mimo.app → slug = "municipio")
-///   3. Claim tenant_slug del JWT
+/// Resolución (ver ADR 0008): en peticiones AUTENTICADAS el tenant lo dicta el token
+/// (claim tenant_slug); el slug provisto por el cliente (header X-Tenant-Slug o subdominio)
+/// solo aplica en flujos anónimos. Si una petición autenticada pide un tenant distinto al
+/// de su token → 403 (intento de acceso cross-tenant).
 ///
-/// El tenant resuelto se cachea en IMemoryCache durante 5 minutos para evitar
-/// una consulta a GlobalDbContext en cada request.
+/// El tenant resuelto se cachea en IMemoryCache durante 5 minutos.
 ///
 /// Si no se puede resolver el tenant → 400.
+/// Si hay conflicto token vs cliente → 403.
 /// Si el tenant no existe → 404.
 /// Si está inactivo → 403.
 /// </summary>
@@ -39,7 +40,20 @@ public partial class TenantResolutionMiddleware(
             return;
         }
 
-        var slug = ResolveSlug(context);
+        var tokenSlug  = context.User?.FindFirst("tenant_slug")?.Value;
+        var clientSlug = ResolveClientSlug(context);
+        var resolution = TenantResolver.Resolve(tokenSlug, clientSlug);
+
+        if (resolution.Conflict)
+        {
+            logger.LogWarning(
+                "Intento cross-tenant: token={TokenSlug} cliente={ClientSlug}", tokenSlug, clientSlug);
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new { error = "El tenant solicitado no coincide con el de tu sesión." });
+            return;
+        }
+
+        var slug = resolution.Slug;
 
         if (string.IsNullOrWhiteSpace(slug))
         {
@@ -83,10 +97,10 @@ public partial class TenantResolutionMiddleware(
             $"SET search_path TO {schemaName}, public",
             context.RequestAborted);
 
-        // Exponer el tenant resuelto al resto del pipeline
-        context.Items["TenantId"]            = tenant.Id;
-        context.Items["TenantSlug"]          = tenant.Slug;
-        context.Items["TenantConfiguration"] = tenant.Configuration;
+        // Exponer el tenant resuelto al resto del pipeline (leído vía TenantHttpContextExtensions)
+        context.Items[TenantHttpContextExtensions.TenantIdKey]            = tenant.Id;
+        context.Items[TenantHttpContextExtensions.TenantSlugKey]          = tenant.Slug;
+        context.Items[TenantHttpContextExtensions.TenantConfigurationKey] = tenant.Configuration;
 
         logger.LogDebug("Tenant resuelto: {Slug} (schema: {Schema})", slug, schemaName);
 
@@ -97,23 +111,20 @@ public partial class TenantResolutionMiddleware(
     [GeneratedRegex(@"[^a-z0-9_]")]
     private static partial Regex SlugRegex();
 
-    private static string? ResolveSlug(HttpContext context)
+    /// <summary>
+    /// Slug provisto por el cliente: header X-Tenant-Slug y, en su defecto, el subdominio.
+    /// La decisión de si este slug se usa o se rechaza la toma <see cref="TenantResolver"/>
+    /// según haya o no un token (binding al principal).
+    /// </summary>
+    private static string? ResolveClientSlug(HttpContext context)
     {
-        // 1. Header explícito
         if (context.Request.Headers.TryGetValue("X-Tenant-Slug", out var headerSlug) &&
             !string.IsNullOrWhiteSpace(headerSlug))
-            return headerSlug.ToString().ToLowerInvariant();
+            return headerSlug.ToString();
 
-        // 2. Subdominio (ej: municipio.mimo.app)
-        var host  = context.Request.Host.Host;
-        var parts = host.Split('.');
+        var parts = context.Request.Host.Host.Split('.');
         if (parts.Length >= 3)
-            return parts[0].ToLowerInvariant();
-
-        // 3. Claim del JWT
-        var tenantClaim = context.User?.FindFirst("tenant_slug")?.Value;
-        if (!string.IsNullOrWhiteSpace(tenantClaim))
-            return tenantClaim.ToLowerInvariant();
+            return parts[0];
 
         return null;
     }

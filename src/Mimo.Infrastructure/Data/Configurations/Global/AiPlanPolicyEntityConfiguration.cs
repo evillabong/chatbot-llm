@@ -27,6 +27,13 @@ public class AiPlanPolicyEntityConfiguration : IEntityTypeConfiguration<AiPlanPo
             .IsUnique()
             .HasDatabaseName("ix_ai_plan_policies_plan_code");
 
+        // FK al catálogo de planes por código (una política referencia a un plan existente).
+        b.HasOne<Mimo.Core.Models.Plan>()
+            .WithMany()
+            .HasForeignKey(p => p.PlanCode)
+            .HasPrincipalKey(p => p.Code)
+            .OnDelete(DeleteBehavior.Cascade);
+
         b.Property(p => p.AllowedProviders)
             .HasColumnName("allowed_providers")
             .HasColumnType("jsonb")

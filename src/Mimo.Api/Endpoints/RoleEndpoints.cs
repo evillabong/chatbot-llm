@@ -1,3 +1,4 @@
+using Mimo.Api.Middleware;
 using Mimo.Core.Authorization;
 using Mimo.Core.DTOs.Role;
 using Mimo.Core.Interfaces;
@@ -69,7 +70,7 @@ public static class RoleEndpoints
         if (await repo.NameExistsAsync(request.Name, ct))
             return Results.Conflict(new { error = $"Ya existe un rol con el nombre '{request.Name}'." });
 
-        var tenantId = (Guid)context.Items["TenantId"]!;
+        var tenantId = context.GetTenantId();
 
         var role = new Role
         {
