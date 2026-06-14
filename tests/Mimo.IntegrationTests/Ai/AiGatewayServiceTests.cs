@@ -181,12 +181,11 @@ public class AiGatewayServiceTests
     }
 
     /// <summary>
-    /// Documenta una limitación conocida (análisis #4): el match de plan es sensible a
-    /// mayúsculas. Un tenant con plan "Pro" no coincide con una política "pro" y cae en
-    /// el modo permisivo. Si esto cambia, esta prueba debe actualizarse.
+    /// Verifica el fix del análisis #4: el match de plan es insensible a mayúsculas, de modo
+    /// que un tenant con plan "Pro" SÍ aplica la política "pro" (antes caía en modo permisivo).
     /// </summary>
     [Fact]
-    public async Task ChatAsync_MatchDePlanEsSensibleAMayusculas_CaeEnModoPermisivo()
+    public async Task ChatAsync_MatchDePlanEsInsensibleAMayusculas_AplicaLaPolitica()
     {
         using var db = NewDb();
         var tenantId = SeedTenant(db, plan: "Pro"); // mayúscula
@@ -199,8 +198,8 @@ public class AiGatewayServiceTests
 
         var gateway = NewGateway(db);
 
-        // Si el match fuese insensible, esto lanzaría AiAccessDeniedException.
-        var respuesta = await gateway.ChatAsync(tenantId, "sys", []);
-        Assert.Equal("respuesta-fija", respuesta);
+        // La política "pro" aplica pese a la diferencia de mayúsculas y deniega deepseek.
+        await Assert.ThrowsAsync<AiAccessDeniedException>(
+            () => gateway.ChatAsync(tenantId, "sys", []));
     }
 }

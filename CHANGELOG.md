@@ -20,7 +20,9 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 - Paginación reutilizable (`PagedResult<T>` + extensión `ToPagedResultAsync`).
 - Conectores de IA configurables en base de datos (JSONB) con abstracción `ILlmClient` y fábrica por proveedor.
 - Gateway de IA in-process con entitlements y cuotas por plan y medición de uso por tenant.
-- Architecture Decision Records en `docs/adr/` (0001–0005).
+- Catálogo de planes (`plans`) con integridad referencial: FK desde `tenants` y `ai_plan_policies` por código; validación al crear tenant y siembra por defecto (`free`, `pro`).
+- Primera red de pruebas (xUnit): hashing de contraseñas, emisión de JWT, paginación y gateway de IA (entitlements/cuotas) sobre EF InMemory.
+- Architecture Decision Records en `docs/adr/` (0001–0007).
 
 ### Changed
 
@@ -32,6 +34,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 ### Fixed
 
 - `GET /tickets/my` devolvía siempre vacío (consultaba un rol inexistente y filtraba en memoria); ahora filtra por funcionario en la consulta.
+- El control de IA por plan caía en silencio a modo permisivo cuando el código de plan no coincidía por mayúsculas; ahora el catálogo de planes con FK y el match insensible a mayúsculas lo evitan (ADR 0007).
 
 ## [0.1.0] - Próximamente
 

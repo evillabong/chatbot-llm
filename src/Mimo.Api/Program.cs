@@ -102,6 +102,9 @@ await using (var scope = app.Services.CreateAsyncScope())
     var globalDb = scope.ServiceProvider.GetRequiredService<GlobalDbContext>();
     await globalDb.Database.MigrateAsync();
 
+    // Sembrar el catálogo de planes por defecto (requerido por el aprovisionamiento de tenants).
+    await PlanSeeder.SeedDefaultAsync(globalDb);
+
     // Migrar la configuración de IA de appsettings a la BD si aún no existe ningún conector.
     await AiConnectorSeeder.SeedDefaultAsync(globalDb, app.Configuration);
 }

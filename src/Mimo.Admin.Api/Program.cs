@@ -6,6 +6,7 @@ using Mimo.Admin.Api.Endpoints;
 using Mimo.Core.Authorization;
 using Mimo.Infrastructure;
 using Mimo.Infrastructure.Data;
+using Mimo.Infrastructure.Data.Seeding;
 
 /// <summary>
 /// API exclusiva de administración de la plataforma MIMO.
@@ -61,6 +62,9 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     var globalDb = scope.ServiceProvider.GetRequiredService<GlobalDbContext>();
     await globalDb.Database.MigrateAsync();
+
+    // Catálogo de planes por defecto: necesario para crear tenants desde este API.
+    await PlanSeeder.SeedDefaultAsync(globalDb);
 }
 
 if (app.Environment.IsDevelopment())

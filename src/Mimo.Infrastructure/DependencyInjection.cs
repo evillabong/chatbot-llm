@@ -54,6 +54,7 @@ public static class DependencyInjection
 
         // ── Repositorios ───────────────────────────────────────────────────────
         services.AddScoped<ITenantRepository,          TenantRepository>();
+        services.AddScoped<IPlanRepository,            PlanRepository>();
         services.AddScoped<IAgentRepository,           AgentRepository>();
         services.AddScoped<IRoleRepository,            RoleRepository>();
         services.AddScoped<IDocumentRepository,        DocumentRepository>();
@@ -113,6 +114,7 @@ public static class DependencyInjection
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
         services.AddScoped<ITenantRepository,          TenantRepository>();
+        services.AddScoped<IPlanRepository,            PlanRepository>();
         services.AddScoped<ISuperAdminRepository,      SuperAdminRepository>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 

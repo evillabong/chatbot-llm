@@ -45,6 +45,14 @@ public class TenantEntityConfiguration : IEntityTypeConfiguration<TenantModel>
             .HasMaxLength(50)
             .IsRequired();
 
+        // FK al catálogo de planes por código (integridad referencial: el plan debe existir).
+        // Sin propiedad de navegación: Tenant.Plan sigue siendo el código del plan.
+        b.HasOne<Mimo.Core.Models.Plan>()
+            .WithMany()
+            .HasForeignKey(t => t.Plan)
+            .HasPrincipalKey(p => p.Code)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Configuración serializada como JSONB
         b.Property(t => t.Configuration)
             .HasColumnName("configuration")

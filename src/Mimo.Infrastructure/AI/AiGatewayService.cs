@@ -60,8 +60,10 @@ public class AiGatewayService(
         var connector = await db.AiConnectors.AsNoTracking().FirstOrDefaultAsync(c => c.IsActive, ct)
             ?? throw new InvalidOperationException("No hay un conector de IA activo configurado.");
 
+        // Comparación por código canónico en minúsculas para evitar desajustes por mayúsculas.
+        var planCode = Plan.NormalizeCode(tenant.Plan);
         var policy = await db.AiPlanPolicies.AsNoTracking()
-            .FirstOrDefaultAsync(p => p.PlanCode == tenant.Plan && p.IsActive, ct);
+            .FirstOrDefaultAsync(p => p.PlanCode.ToLower() == planCode && p.IsActive, ct);
 
         // Sin política => permisivo (no romper tenants existentes); ver ADR 0005.
         if (policy is null)

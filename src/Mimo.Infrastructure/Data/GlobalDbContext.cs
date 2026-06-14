@@ -25,9 +25,13 @@ public class GlobalDbContext(DbContextOptions<GlobalDbContext> options) : DbCont
 
     public DbSet<AiUsageRecord> AiUsageRecords => Set<AiUsageRecord>();
 
+    public DbSet<Plan> Plans => Set<Plan>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        // Plan debe configurarse antes de quienes lo referencian (Tenant, AiPlanPolicy).
+        modelBuilder.ApplyConfiguration(new PlanEntityConfiguration());
         modelBuilder.ApplyConfiguration(new TenantEntityConfiguration());
         modelBuilder.ApplyConfiguration(new SuperAdminEntityConfiguration());
         modelBuilder.ApplyConfiguration(new AiConnectorEntityConfiguration());
