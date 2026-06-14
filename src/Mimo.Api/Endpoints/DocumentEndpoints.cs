@@ -1,3 +1,4 @@
+using Mimo.Api.Middleware;
 using Mimo.Core.Authorization;
 using Mimo.Core.DTOs.Document;
 using Mimo.Core.Interfaces;
@@ -82,7 +83,7 @@ public static class DocumentEndpoints
         HttpContext context,
         CancellationToken ct = default)
     {
-        var tenantId = (Guid)context.Items["TenantId"]!;
+        var tenantId = context.GetTenantId();
 
         // Generar embedding del contenido para búsqueda semántica
         Vector? embedding = null;
@@ -130,7 +131,7 @@ public static class DocumentEndpoints
         if (doc is null)
             return Results.NotFound(new { error = "Documento no encontrado." });
 
-        var tenantId       = (Guid)context.Items["TenantId"]!;
+        var tenantId       = context.GetTenantId();
         var contentChanged = doc.Content != request.Content || doc.Title != request.Title;
 
         doc.Title         = request.Title;
@@ -185,7 +186,7 @@ public static class DocumentEndpoints
         if (doc is null)
             return Results.NotFound(new { error = "Documento no encontrado." });
 
-        var tenantId = (Guid)context.Items["TenantId"]!;
+        var tenantId = context.GetTenantId();
         var raw = await vectorSearch.GetEmbeddingAsync(
             tenantId, $"{doc.Title}\n{doc.Content}", ct);
 

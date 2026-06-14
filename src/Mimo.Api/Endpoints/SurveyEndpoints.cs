@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Mimo.Api.Middleware;
 using Mimo.Core.DTOs.Survey;
 using Mimo.Core.Enums;
 using Mimo.Core.Models;
@@ -38,7 +39,7 @@ public static class SurveyEndpoints
         if (request.Rating is < 1 or > 5)
             return Results.BadRequest("La calificación debe estar entre 1 y 5.");
 
-        var tenantId = (Guid)context.Items["TenantId"]!;
+        var tenantId = context.GetTenantId();
 
         // Verificar configuración del survey en el tenant
         var tenant = await globalDb.Tenants.FindAsync(new object[] { tenantId }, ct);

@@ -1,3 +1,4 @@
+using Mimo.Api.Middleware;
 using Mimo.Core.DTOs.Auth;
 using Mimo.Core.Interfaces;
 
@@ -36,9 +37,8 @@ public static class AuthEndpoints
         if (agent is null || !agent.IsActive || !passwordHasher.Verify(request.Password, agent.PasswordHash))
             return Results.Unauthorized();
 
-        var tenantSlug = context.Items["TenantSlug"] as string;
-        if (string.IsNullOrEmpty(tenantSlug))
-            return Results.BadRequest(new { error = "No se pudo determinar el tenant de la solicitud." });
+        // El middleware ya garantizó la resolución del tenant para esta ruta (no bypass).
+        var tenantSlug = context.GetTenantSlug();
 
         var roleNames = agent.AgentRoles
             .Select(ar => ar.Role?.Name)

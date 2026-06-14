@@ -1,3 +1,4 @@
+using Mimo.Api.Middleware;
 using Mimo.Core.Authorization;
 using Mimo.Core.DTOs.Agent;
 using Mimo.Core.Interfaces;
@@ -71,7 +72,7 @@ public static class AgentEndpoints
         if (await repo.EmailExistsAsync(request.Email, ct))
             return Results.Conflict(new { error = $"El email '{request.Email}' ya está registrado." });
 
-        var tenantId = (Guid)context.Items["TenantId"]!;
+        var tenantId = context.GetTenantId();
 
         var agent = new Agent
         {

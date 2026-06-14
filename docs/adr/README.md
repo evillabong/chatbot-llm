@@ -27,3 +27,4 @@ decisión se revierte o cambia, se crea un ADR nuevo que marca al anterior como
 | [0005](0005-gateway-de-ia-in-process-con-entitlements-y-cuotas-por-plan.md) | Gateway de IA in-process con entitlements y cuotas por plan | Aceptado |
 | [0006](0006-convencion-de-endpoints-sin-parametros-en-la-ruta.md) | Convención de endpoints sin parámetros en la ruta | Aceptado |
 | [0007](0007-catalogo-de-planes-con-integridad-referencial.md) | Catálogo de planes con integridad referencial | Aceptado |
+| [0008](0008-binding-de-tenant-al-principal-autenticado.md) | Binding del tenant al principal autenticado | Aceptado |
