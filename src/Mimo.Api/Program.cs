@@ -12,6 +12,7 @@ using Mimo.Core.Authorization;
 using Mimo.Core.Interfaces;
 using Mimo.Infrastructure;
 using Mimo.Infrastructure.Data;
+using Mimo.Infrastructure.Data.Seeding;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,6 +101,9 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     var globalDb = scope.ServiceProvider.GetRequiredService<GlobalDbContext>();
     await globalDb.Database.MigrateAsync();
+
+    // Migrar la configuración de IA de appsettings a la BD si aún no existe ningún conector.
+    await AiConnectorSeeder.SeedDefaultAsync(globalDb, app.Configuration);
 }
 
 if (app.Environment.IsDevelopment())

@@ -19,10 +19,13 @@ public class GlobalDbContext(DbContextOptions<GlobalDbContext> options) : DbCont
 
     public DbSet<SuperAdmin> SuperAdmins => Set<SuperAdmin>();
 
+    public DbSet<AiConnector> AiConnectors => Set<AiConnector>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfiguration(new TenantEntityConfiguration());
         modelBuilder.ApplyConfiguration(new SuperAdminEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new AiConnectorEntityConfiguration());
     }
 }

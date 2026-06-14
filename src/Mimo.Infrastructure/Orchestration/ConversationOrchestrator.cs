@@ -27,7 +27,7 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
 {
     private readonly IConversationRepository _conversations;
     private readonly IVectorSearchService    _vectorSearch;
-    private readonly ILlmClient             _llm;
+    private readonly ILlmClientFactory       _llmFactory;
     private readonly ITicketService         _tickets;
     private readonly IMcpToolProvider       _mcp;
     private readonly ILogger<ConversationOrchestrator> _logger;
@@ -39,14 +39,14 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
     public ConversationOrchestrator(
         IConversationRepository conversations,
         IVectorSearchService    vectorSearch,
-        ILlmClient              llm,
+        ILlmClientFactory       llmFactory,
         ITicketService          tickets,
         IMcpToolProvider        mcp,
         ILogger<ConversationOrchestrator> logger)
     {
         _conversations = conversations;
         _vectorSearch  = vectorSearch;
-        _llm           = llm;
+        _llmFactory    = llmFactory;
         _tickets       = tickets;
         _mcp           = mcp;
         _logger        = logger;
@@ -106,7 +106,8 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
         string rawResponse;
         try
         {
-            rawResponse = await _llm.ChatAsync(systemPrompt, llmHistory, ct);
+            var llm = await _llmFactory.GetActiveClientAsync(ct);
+            rawResponse = await llm.ChatAsync(systemPrompt, llmHistory, ct);
         }
         catch (Exception ex)
         {

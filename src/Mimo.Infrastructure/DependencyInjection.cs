@@ -69,14 +69,12 @@ public static class DependencyInjection
         services.AddScoped<IConversationOrchestrator,  ConversationOrchestrator>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 
-        // ── Cliente LLM (DeepSeek — compatible con OpenAI) ────────────────────
-        services.AddHttpClient<ILlmClient, DeepSeekClient>(http =>
-        {
-            var baseUrl = configuration["DeepSeek:BaseUrl"] ?? "https://api.deepseek.com";
-            var apiKey  = configuration["DeepSeek:ApiKey"]  ?? string.Empty;
-            http.BaseAddress = new Uri(baseUrl);
-            http.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-        });
+        // ── Conectores de IA (abstracción ILlmClient + fábrica por proveedor) ─────
+        // La configuración de cada IA vive en la BD (tabla ai_connectors, JSON).
+        // LlmClientFactory resuelve el conector activo y construye el cliente concreto;
+        // cambiar de proveedor es un cambio de datos, no de código.
+        services.AddHttpClient(LlmClientFactory.HttpClientName);
+        services.AddScoped<ILlmClientFactory, LlmClientFactory>();
 
         // ── Conectores de canales externos (keyed DI) ─────────────────────────
         // WebChatConnector se registra en Mimo.Api (requiere IHubContext<ChatHub>).

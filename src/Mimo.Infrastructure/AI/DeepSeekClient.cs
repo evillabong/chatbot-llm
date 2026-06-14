@@ -1,34 +1,37 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Mimo.Core.Interfaces;
+using Mimo.Core.Models.Configuration;
 
 namespace Mimo.Infrastructure.AI;
 
 /// <summary>
 /// Cliente HTTP para la API de DeepSeek (compatible con OpenAI).
 /// Maneja completions de chat y generación de embeddings.
-/// Configuración esperada en appsettings:
-///   DeepSeek:ApiKey
-///   DeepSeek:BaseUrl        (default: https://api.deepseek.com)
-///   DeepSeek:ChatModel      (default: deepseek-chat)
-///   DeepSeek:EmbeddingModel (default: deepseek-embedding)
+///
+/// La configuración (ApiKey, BaseUrl, modelos, temperatura, tokens) proviene del
+/// conector de IA activo almacenado en la base de datos (ver LlmClientFactory),
+/// no de appsettings: así se puede cambiar de proveedor sin redeploy.
 /// </summary>
 public class DeepSeekClient : ILlmClient
 {
     private readonly HttpClient _http;
-    private readonly string _chatModel;
-    private readonly string _embeddingModel;
+    private readonly LlmConnectorSettings _settings;
     private readonly ILogger<DeepSeekClient> _logger;
 
-    public DeepSeekClient(HttpClient http, IConfiguration config, ILogger<DeepSeekClient> logger)
+    public DeepSeekClient(HttpClient http, LlmConnectorSettings settings, ILogger<DeepSeekClient> logger)
     {
-        _http           = http;
-        _chatModel      = config["DeepSeek:ChatModel"]      ?? "deepseek-chat";
-        _embeddingModel = config["DeepSeek:EmbeddingModel"] ?? "deepseek-embedding";
-        _logger         = logger;
+        if (!string.IsNullOrWhiteSpace(settings.BaseUrl))
+            http.BaseAddress = new Uri(settings.BaseUrl);
+
+        if (!string.IsNullOrWhiteSpace(settings.ApiKey))
+            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
+
+        _http     = http;
+        _settings = settings;
+        _logger   = logger;
     }
 
     /// <summary>
@@ -45,7 +48,7 @@ public class DeepSeekClient : ILlmClient
         };
         messages.AddRange(history.Select(h => new ChatMessage(h.role, h.content)));
 
-        var request = new ChatRequest(_chatModel, messages, Temperature: 0.7f, MaxTokens: 1024);
+        var request = new ChatRequest(_settings.ChatModel, messages, _settings.Temperature, _settings.MaxTokens);
 
         var response = await _http.PostAsJsonAsync("/v1/chat/completions", request, ct);
         response.EnsureSuccessStatusCode();
@@ -62,7 +65,7 @@ public class DeepSeekClient : ILlmClient
     /// </summary>
     public async Task<float[]> GetEmbeddingAsync(string text, CancellationToken ct = default)
     {
-        var request = new EmbeddingRequest(_embeddingModel, text);
+        var request = new EmbeddingRequest(_settings.EmbeddingModel, text);
 
         var response = await _http.PostAsJsonAsync("/v1/embeddings", request, ct);
         response.EnsureSuccessStatusCode();

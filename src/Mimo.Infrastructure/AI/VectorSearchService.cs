@@ -13,7 +13,7 @@ namespace Mimo.Infrastructure.AI;
 /// Utiliza LINQ con CosineDistance() de Pgvector.EntityFrameworkCore en lugar de SQL crudo,
 /// lo que permite que EF Core genere la consulta con el operador &lt;=&gt; de manera segura.
 /// </summary>
-public class VectorSearchService(TenantDbContext db, ILlmClient llm) : IVectorSearchService
+public class VectorSearchService(TenantDbContext db, ILlmClientFactory llmFactory) : IVectorSearchService
 {
     /// <summary>
     /// Genera el embedding para la consulta y recupera los documentos más similares
@@ -27,6 +27,7 @@ public class VectorSearchService(TenantDbContext db, ILlmClient llm) : IVectorSe
         int topK = 5,
         CancellationToken ct = default)
     {
+        var llm = await llmFactory.GetActiveClientAsync(ct);
         var rawEmbedding = await llm.GetEmbeddingAsync(query, ct);
         var queryVector = new Vector(rawEmbedding);
 
@@ -52,8 +53,11 @@ public class VectorSearchService(TenantDbContext db, ILlmClient llm) : IVectorSe
 
     /// <summary>
     /// Genera el vector de embeddings para un texto dado.
-    /// Delegado al cliente LLM configurado.
+    /// Delegado al cliente LLM del conector de IA activo.
     /// </summary>
-    public Task<float[]> GetEmbeddingAsync(string text, CancellationToken ct = default)
-        => llm.GetEmbeddingAsync(text, ct);
+    public async Task<float[]> GetEmbeddingAsync(string text, CancellationToken ct = default)
+    {
+        var llm = await llmFactory.GetActiveClientAsync(ct);
+        return await llm.GetEmbeddingAsync(text, ct);
+    }
 }
