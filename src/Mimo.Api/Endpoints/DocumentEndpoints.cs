@@ -25,29 +25,29 @@ public static class DocumentEndpoints
             .WithName("ListDocuments")
             .WithSummary("Lista documentos del tenant con filtros opcionales.");
 
-        group.MapGet("/{id:guid}", GetDocumentAsync)
+        group.MapGet("/detail", GetDocumentAsync)
             .WithName("GetDocument")
-            .WithSummary("Obtiene un documento por su ID.");
+            .WithSummary("Obtiene un documento por su ID (query: id).");
 
         group.MapPost("/", CreateDocumentAsync)
             .WithName("CreateDocument")
             .WithSummary("Crea un documento y genera su embedding para búsqueda semántica.")
             .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
 
-        group.MapPut("/{id:guid}", UpdateDocumentAsync)
+        group.MapPut("/", UpdateDocumentAsync)
             .WithName("UpdateDocument")
-            .WithSummary("Actualiza un documento. Regenera embedding si cambia el contenido.")
+            .WithSummary("Actualiza un documento; regenera embedding si cambia el contenido (query: id).")
             .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
 
-        group.MapDelete("/{id:guid}", DeactivateDocumentAsync)
+        group.MapDelete("/", DeactivateDocumentAsync)
             .WithName("DeactivateDocument")
-            .WithSummary("Desactiva un documento (borrado lógico).")
+            .WithSummary("Desactiva un documento / borrado lógico (query: id).")
             .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
 
         // Endpoint para regenerar el embedding manualmente
-        group.MapPost("/{id:guid}/reindex", ReindexDocumentAsync)
+        group.MapPost("/reindex", ReindexDocumentAsync)
             .WithName("ReindexDocument")
-            .WithSummary("Regenera el embedding de un documento existente.")
+            .WithSummary("Regenera el embedding de un documento existente (query: id).")
             .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
 
         return app;
@@ -115,7 +115,7 @@ public static class DocumentEndpoints
         };
 
         await repo.AddAsync(doc, ct);
-        return Results.Created($"/documents/{doc.Id}", ToResponse(doc));
+        return Results.Created($"/documents/detail?id={doc.Id}", ToResponse(doc));
     }
 
     private static async Task<IResult> UpdateDocumentAsync(

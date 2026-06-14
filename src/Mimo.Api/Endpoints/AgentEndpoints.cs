@@ -21,21 +21,21 @@ public static class AgentEndpoints
             .WithName("ListAgents")
             .WithSummary("Lista los funcionarios del tenant.");
 
-        group.MapGet("/{id:guid}", GetAgentAsync)
+        group.MapGet("/detail", GetAgentAsync)
             .WithName("GetAgent")
-            .WithSummary("Obtiene un funcionario por su ID.");
+            .WithSummary("Obtiene un funcionario por su ID (query: id).");
 
         group.MapPost("/", CreateAgentAsync)
             .WithName("CreateAgent")
             .WithSummary("Crea un nuevo funcionario en el tenant.");
 
-        group.MapPut("/{id:guid}", UpdateAgentAsync)
+        group.MapPut("/", UpdateAgentAsync)
             .WithName("UpdateAgent")
-            .WithSummary("Actualiza los datos de un funcionario.");
+            .WithSummary("Actualiza los datos de un funcionario (query: id).");
 
-        group.MapDelete("/{id:guid}", DeactivateAgentAsync)
+        group.MapDelete("/", DeactivateAgentAsync)
             .WithName("DeactivateAgent")
-            .WithSummary("Desactiva un funcionario (borrado lógico).");
+            .WithSummary("Desactiva un funcionario / borrado lógico (query: id).");
 
         return app;
     }
@@ -100,7 +100,7 @@ public static class AgentEndpoints
         }
 
         await repo.AddAsync(agent, ct);
-        return Results.Created($"/agents/{agent.Id}", ToResponse(agent));
+        return Results.Created($"/agents/detail?id={agent.Id}", ToResponse(agent));
     }
 
     private static async Task<IResult> UpdateAgentAsync(

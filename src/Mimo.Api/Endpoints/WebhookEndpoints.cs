@@ -17,15 +17,15 @@ public static class WebhookEndpoints
         var group = app.MapGroup("/webhooks")
             .WithTags("Webhooks");
 
-        // POST /webhooks/{channel}/incoming
-        group.MapPost("/{channel}/incoming", HandleIncomingAsync)
+        // POST /webhooks/incoming?channel=
+        group.MapPost("/incoming", HandleIncomingAsync)
             .WithName("WebhookIncoming")
-            .WithSummary("Recibe y procesa mensajes entrantes de un canal externo.");
+            .WithSummary("Recibe y procesa mensajes entrantes de un canal externo (query: channel).");
 
-        // GET /webhooks/{channel}/incoming — verificación de webhook (Meta: Facebook/WhatsApp/Instagram)
-        group.MapGet("/{channel}/incoming", VerifyWebhookAsync)
+        // GET /webhooks/incoming?channel= — verificación de webhook (Meta: Facebook/WhatsApp/Instagram)
+        group.MapGet("/incoming", VerifyWebhookAsync)
             .WithName("WebhookVerify")
-            .WithSummary("Verificación del endpoint de webhook para Meta (Facebook/WhatsApp/Instagram).");
+            .WithSummary("Verificación del endpoint de webhook para Meta; el proveedor se configura con ?channel= (query).");
 
         return app;
     }

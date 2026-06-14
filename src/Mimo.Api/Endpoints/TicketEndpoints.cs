@@ -20,15 +20,15 @@ public static class TicketEndpoints
             .WithTags("Tickets")
             .RequireAuthorization(MimoAuthorization.Policies.Agent);
 
-        // GET /tickets/queue/{roleId}
-        group.MapGet("/queue/{roleId:guid}", GetRoleQueueAsync)
+        // GET /tickets/queue?roleId=
+        group.MapGet("/queue", GetRoleQueueAsync)
             .WithName("GetRoleQueue")
-            .WithSummary("Lista los tickets en cola para un rol.");
+            .WithSummary("Lista los tickets en cola para un rol (query: roleId).");
 
-        // GET /tickets/{id}
-        group.MapGet("/{id:guid}", GetTicketAsync)
+        // GET /tickets/detail?id=
+        group.MapGet("/detail", GetTicketAsync)
             .WithName("GetTicket")
-            .WithSummary("Obtiene un ticket por ID con su historial de transferencias.");
+            .WithSummary("Obtiene un ticket por ID con su historial de transferencias (query: id).");
 
         // GET /tickets/my
         group.MapGet("/my", GetMyTicketsAsync)
@@ -40,35 +40,35 @@ public static class TicketEndpoints
             .WithName("GetVisibleTickets")
             .WithSummary("Lista los tickets visibles para el funcionario según sus roles (todos si tiene CanViewAllTickets).");
 
-        // POST /tickets/{id}/claim
-        group.MapPost("/{id:guid}/claim", ClaimTicketAsync)
+        // POST /tickets/claim?id=
+        group.MapPost("/claim", ClaimTicketAsync)
             .WithName("ClaimTicket")
-            .WithSummary("El funcionario toma el ticket de la cola (asignación manual).");
+            .WithSummary("El funcionario toma el ticket de la cola / asignación manual (query: id).");
 
-        // POST /tickets/{id}/resolve
-        group.MapPost("/{id:guid}/resolve", ResolveTicketAsync)
+        // POST /tickets/resolve?id=
+        group.MapPost("/resolve", ResolveTicketAsync)
             .WithName("ResolveTicket")
-            .WithSummary("Marca el ticket como resuelto.");
+            .WithSummary("Marca el ticket como resuelto (query: id).");
 
-        // POST /tickets/{id}/close
-        group.MapPost("/{id:guid}/close", CloseTicketAsync)
+        // POST /tickets/close?id=
+        group.MapPost("/close", CloseTicketAsync)
             .WithName("CloseTicket")
-            .WithSummary("Cierra definitivamente el ticket.");
+            .WithSummary("Cierra definitivamente el ticket (query: id).");
 
-        // POST /tickets/{id}/reopen
-        group.MapPost("/{id:guid}/reopen", ReopenTicketAsync)
+        // POST /tickets/reopen?id=
+        group.MapPost("/reopen", ReopenTicketAsync)
             .WithName("ReopenTicket")
-            .WithSummary("Reabre un ticket resuelto.");
+            .WithSummary("Reabre un ticket resuelto (query: id).");
 
-        // POST /tickets/{id}/transfer
-        group.MapPost("/{id:guid}/transfer", TransferTicketAsync)
+        // POST /tickets/transfer?id=
+        group.MapPost("/transfer", TransferTicketAsync)
             .WithName("TransferTicket")
-            .WithSummary("Transfiere el ticket a otro rol o funcionario.");
+            .WithSummary("Transfiere el ticket a otro rol o funcionario (query: id).");
 
-        // PATCH /tickets/{id}/notes
-        group.MapPatch("/{id:guid}/notes", UpdateNotesAsync)
+        // PATCH /tickets/notes?id=
+        group.MapPatch("/notes", UpdateNotesAsync)
             .WithName("UpdateTicketNotes")
-            .WithSummary("Actualiza las notas internas del ticket.");
+            .WithSummary("Actualiza las notas internas del ticket (query: id).");
 
         return app;
     }

@@ -13,16 +13,16 @@ public static class SurveyEndpoints
 {
     public static IEndpointRouteBuilder MapSurveyEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/conversations/{conversationId:guid}/survey")
+        var group = app.MapGroup("/conversations/survey")
             .WithTags("Survey");
 
         group.MapPost("/", SubmitSurveyAsync)
             .WithName("SubmitSurvey")
-            .WithSummary("Registra la encuesta de satisfacción del ciudadano.");
+            .WithSummary("Registra la encuesta de satisfacción del ciudadano (query: conversationId).");
 
         group.MapGet("/", GetSurveyAsync)
             .WithName("GetSurvey")
-            .WithSummary("Obtiene la encuesta registrada de una conversación.");
+            .WithSummary("Obtiene la encuesta registrada de una conversación (query: conversationId).");
 
         return app;
     }
@@ -97,7 +97,7 @@ public static class SurveyEndpoints
             survey.Observations,
             survey.RecordedAt);
 
-        return Results.Created($"/conversations/{conversationId}/survey", response);
+        return Results.Created($"/conversations/survey?conversationId={conversationId}", response);
     }
 
     private static async Task<IResult> GetSurveyAsync(

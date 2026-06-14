@@ -148,10 +148,22 @@ public class Ticket
 }
 ```
 
+### Endpoints: ubicación de parámetros
+
+Los endpoints **no llevan parámetros en la ruta** (ver [ADR 0006](docs/adr/0006-convencion-de-endpoints-sin-parametros-en-la-ruta.md)):
+
+- Parámetros simples (id, filtros, paginación) → **query string**.
+- Objetos complejos → **body**.
+- Parámetros de seguridad (tokens, firmas) → **header**.
+
+La obtención de un único recurso usa un segmento literal (`GET /recurso/detail?id=`) para no
+colisionar con el listado (`GET /recurso`); las acciones son segmentos literales con el id
+por query (`POST /tickets/claim?id=`).
+
 ### Arquitectura
 
 - `Mimo.Core` contiene modelos, enums, DTOs e interfaces.
-- `Mimo.Infrastructure` contiene EF Core, repositorios, conectores, servicios externos, búsqueda vectorial, Redis y DeepSeek.
+- `Mimo.Infrastructure` contiene EF Core, repositorios, conectores de canales y de IA, gateway de IA, búsqueda vectorial y servicios externos (caché efímera con `IMemoryCache`, sin Redis).
 - `Mimo.Api` contiene Minimal APIs tenant-facing, hubs SignalR y middleware de tenant.
 - `Mimo.Admin.Api` contiene exclusivamente los endpoints de administración de la plataforma (tenants, planes, facturación, monitoreo). Este proyecto se despliega en un host separado y no debe estar expuesto junto a `Mimo.Api`.
 - Los frontends Blazor consumen su API correspondiente (`Mimo.Admin.Web` → `Mimo.Admin.Api`; los demás → `Mimo.Api`); ninguno accede a infraestructura directamente.

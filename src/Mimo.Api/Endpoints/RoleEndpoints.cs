@@ -21,21 +21,21 @@ public static class RoleEndpoints
             .WithName("ListRoles")
             .WithSummary("Lista los roles/departamentos del tenant.");
 
-        group.MapGet("/{id:guid}", GetRoleAsync)
+        group.MapGet("/detail", GetRoleAsync)
             .WithName("GetRole")
-            .WithSummary("Obtiene un rol por su ID.");
+            .WithSummary("Obtiene un rol por su ID (query: id).");
 
         group.MapPost("/", CreateRoleAsync)
             .WithName("CreateRole")
             .WithSummary("Crea un nuevo rol/departamento.");
 
-        group.MapPut("/{id:guid}", UpdateRoleAsync)
+        group.MapPut("/", UpdateRoleAsync)
             .WithName("UpdateRole")
-            .WithSummary("Actualiza los datos de un rol.");
+            .WithSummary("Actualiza los datos de un rol (query: id).");
 
-        group.MapDelete("/{id:guid}", DeactivateRoleAsync)
+        group.MapDelete("/", DeactivateRoleAsync)
             .WithName("DeactivateRole")
-            .WithSummary("Desactiva un rol (borrado lógico).");
+            .WithSummary("Desactiva un rol / borrado lógico (query: id).");
 
         return app;
     }
@@ -84,7 +84,7 @@ public static class RoleEndpoints
         };
 
         await repo.AddAsync(role, ct);
-        return Results.Created($"/roles/{role.Id}", ToResponse(role));
+        return Results.Created($"/roles/detail?id={role.Id}", ToResponse(role));
     }
 
     private static async Task<IResult> UpdateRoleAsync(

@@ -24,15 +24,15 @@ public static class ConversationEndpoints
             .AllowAnonymous();
 
         // Enviar mensaje y obtener respuesta del bot (no requiere auth)
-        group.MapPost("/{id:guid}/messages", SendMessageAsync)
+        group.MapPost("/messages", SendMessageAsync)
             .WithName("SendMessage")
-            .WithSummary("Envía un mensaje y obtiene la respuesta del bot.")
+            .WithSummary("Envía un mensaje y obtiene la respuesta del bot (query: id).")
             .AllowAnonymous();
 
         // Historial de mensajes
-        group.MapGet("/{id:guid}", GetConversationAsync)
+        group.MapGet("/detail", GetConversationAsync)
             .WithName("GetConversation")
-            .WithSummary("Obtiene el estado y los mensajes recientes de una conversación.")
+            .WithSummary("Obtiene el estado y los mensajes recientes de una conversación (query: id).")
             .AllowAnonymous();
 
         return app;
@@ -66,7 +66,7 @@ public static class ConversationEndpoints
         };
 
         await repo.AddAsync(conversation, ct);
-        return Results.Created($"/conversations/{conversation.Id}", ToResponse(conversation, []));
+        return Results.Created($"/conversations/detail?id={conversation.Id}", ToResponse(conversation, []));
     }
 
     private static async Task<IResult> SendMessageAsync(

@@ -18,20 +18,20 @@ public static class InternalChatEndpoints
             .WithTags("InternalChat")
             .RequireAuthorization(MimoAuthorization.Policies.Agent);
 
-        // GET /internal-chat/{agentId}/history
-        group.MapGet("/{agentId:guid}/history", GetHistoryAsync)
+        // GET /internal-chat/history?agentId=
+        group.MapGet("/history", GetHistoryAsync)
             .WithName("GetInternalChatHistory")
-            .WithSummary("Historial paginado de mensajes con otro funcionario.");
+            .WithSummary("Historial paginado de mensajes con otro funcionario (query: agentId, page, pageSize).");
 
         // POST /internal-chat/send
         group.MapPost("/send", SendMessageAsync)
             .WithName("SendInternalMessage")
             .WithSummary("Envía un mensaje de chat interno a otro funcionario.");
 
-        // POST /internal-chat/{agentId}/read
-        group.MapPost("/{agentId:guid}/read", MarkAsReadAsync)
+        // POST /internal-chat/read?agentId=
+        group.MapPost("/read", MarkAsReadAsync)
             .WithName("MarkInternalMessagesRead")
-            .WithSummary("Marca como leídos los mensajes de un funcionario.");
+            .WithSummary("Marca como leídos los mensajes de un funcionario (query: agentId).");
 
         return app;
     }
@@ -71,7 +71,7 @@ public static class InternalChatEndpoints
             .Group($"agent:{request.ToAgentId}")
             .SendAsync("InternalMessage", dto, ct);
 
-        return Results.Created($"/internal-chat/{request.ToAgentId}/history", dto);
+        return Results.Created($"/internal-chat/history?agentId={request.ToAgentId}", dto);
     }
 
     private static async Task<IResult> MarkAsReadAsync(

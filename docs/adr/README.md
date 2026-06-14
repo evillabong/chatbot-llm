@@ -25,3 +25,4 @@ decisión se revierte o cambia, se crea un ADR nuevo que marca al anterior como
 | [0003](0003-autorizacion-basada-en-roles.md) | Autorización basada en roles por políticas | Aceptado |
 | [0004](0004-configuracion-de-conectores-de-ia-en-base-de-datos.md) | Configuración de conectores de IA en base de datos | Aceptado |
 | [0005](0005-gateway-de-ia-in-process-con-entitlements-y-cuotas-por-plan.md) | Gateway de IA in-process con entitlements y cuotas por plan | Aceptado |
+| [0006](0006-convencion-de-endpoints-sin-parametros-en-la-ruta.md) | Convención de endpoints sin parámetros en la ruta | Aceptado |

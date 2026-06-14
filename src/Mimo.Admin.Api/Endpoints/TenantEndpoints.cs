@@ -24,25 +24,25 @@ public static class TenantEndpoints
             .WithName("ListTenants")
             .WithSummary("Lista todos los tenants con paginación opcional.");
 
-        // GET /tenants/{id}
-        group.MapGet("/{id:guid}", GetTenantAsync)
+        // GET /tenants/detail?id=
+        group.MapGet("/detail", GetTenantAsync)
             .WithName("GetTenant")
-            .WithSummary("Obtiene un tenant por su ID.");
+            .WithSummary("Obtiene un tenant por su ID (query: id).");
 
         // POST /tenants
         group.MapPost("/", CreateTenantAsync)
             .WithName("CreateTenant")
             .WithSummary("Registra un nuevo tenant y aprovisiona su esquema en la BD.");
 
-        // PUT /tenants/{id}
-        group.MapPut("/{id:guid}", UpdateTenantAsync)
+        // PUT /tenants?id=
+        group.MapPut("/", UpdateTenantAsync)
             .WithName("UpdateTenant")
-            .WithSummary("Actualiza nombre, plan y estado activo de un tenant.");
+            .WithSummary("Actualiza nombre, plan y estado activo de un tenant (query: id).");
 
-        // DELETE /tenants/{id}  (desactivación lógica, no borrado físico)
-        group.MapDelete("/{id:guid}", DeactivateTenantAsync)
+        // DELETE /tenants?id=  (desactivación lógica, no borrado físico)
+        group.MapDelete("/", DeactivateTenantAsync)
             .WithName("DeactivateTenant")
-            .WithSummary("Desactiva un tenant (borrado lógico).");
+            .WithSummary("Desactiva un tenant / borrado lógico (query: id).");
 
         return app;
     }
@@ -107,7 +107,7 @@ public static class TenantEndpoints
 
         await provisioning.ProvisionAsync(tenant, adminSeed, ct);
 
-        return Results.Created($"/tenants/{tenant.Id}", ToResponse(tenant));
+        return Results.Created($"/tenants/detail?id={tenant.Id}", ToResponse(tenant));
     }
 
     private static async Task<IResult> UpdateTenantAsync(
