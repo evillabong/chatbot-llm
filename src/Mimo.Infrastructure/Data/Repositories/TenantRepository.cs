@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Mimo.Core.Common;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
+using Mimo.Infrastructure.Common;
 
 namespace Mimo.Infrastructure.Data.Repositories;
 
@@ -16,22 +18,17 @@ public class TenantRepository(GlobalDbContext db) : ITenantRepository
     public Task<Tenant?> GetBySlugAsync(string slug, CancellationToken ct = default)
         => db.Tenants.FirstOrDefaultAsync(t => t.Slug == slug, ct);
 
-    public async Task<(IReadOnlyList<Tenant> Items, int Total)> ListAsync(
-        int page, int pageSize, bool? isActive, CancellationToken ct = default)
+    public Task<PagedResult<Tenant>> ListAsync(
+        PaginationRequest pagination, bool? isActive, CancellationToken ct = default)
     {
-        var query = db.Tenants.AsQueryable();
+        var query = db.Tenants.AsNoTracking();
 
         if (isActive.HasValue)
             query = query.Where(t => t.IsActive == isActive.Value);
 
-        var total = await query.CountAsync(ct);
-        var items = await query
+        return query
             .OrderBy(t => t.Name)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(ct);
-
-        return (items, total);
+            .ToPagedResultAsync(pagination, ct);
     }
 
     public Task<bool> SlugExistsAsync(string slug, CancellationToken ct = default)

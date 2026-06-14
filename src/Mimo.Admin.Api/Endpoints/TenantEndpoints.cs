@@ -1,4 +1,5 @@
 using Mimo.Core.Authorization;
+using Mimo.Core.Common;
 using Mimo.Core.DTOs.Tenant;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
@@ -55,16 +56,10 @@ public static class TenantEndpoints
         bool? isActive = null,
         CancellationToken ct = default)
     {
-        if (page < 1) page = 1;
-        if (pageSize is < 1 or > 100) pageSize = 20;
+        var pagedTenants = await repo.ListAsync(new PaginationRequest(page, pageSize), isActive, ct);
 
-        var (items, total) = await repo.ListAsync(page, pageSize, isActive, ct);
-
-        var response = new TenantListResponse(
-            items.Select(ToResponse).ToList(),
-            total, page, pageSize);
-
-        return Results.Ok(response);
+        // Conserva los metadatos de paginación y proyecta las entidades a DTOs.
+        return Results.Ok(pagedTenants.Map(ToResponse));
     }
 
     private static async Task<IResult> GetTenantAsync(
