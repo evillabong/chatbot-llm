@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Mimo.Core.Enums;
+using Mimo.Core.Exceptions;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
 
@@ -27,7 +28,7 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
 {
     private readonly IConversationRepository _conversations;
     private readonly IVectorSearchService    _vectorSearch;
-    private readonly ILlmClientFactory       _llmFactory;
+    private readonly IAiGatewayService       _ai;
     private readonly ITicketService         _tickets;
     private readonly IMcpToolProvider       _mcp;
     private readonly ILogger<ConversationOrchestrator> _logger;
@@ -39,14 +40,14 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
     public ConversationOrchestrator(
         IConversationRepository conversations,
         IVectorSearchService    vectorSearch,
-        ILlmClientFactory       llmFactory,
+        IAiGatewayService       ai,
         ITicketService          tickets,
         IMcpToolProvider        mcp,
         ILogger<ConversationOrchestrator> logger)
     {
         _conversations = conversations;
         _vectorSearch  = vectorSearch;
-        _llmFactory    = llmFactory;
+        _ai            = ai;
         _tickets       = tickets;
         _mcp           = mcp;
         _logger        = logger;
@@ -106,8 +107,17 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
         string rawResponse;
         try
         {
-            var llm = await _llmFactory.GetActiveClientAsync(ct);
-            rawResponse = await llm.ChatAsync(systemPrompt, llmHistory, ct);
+            rawResponse = await _ai.ChatAsync(conversation.TenantId, systemPrompt, llmHistory, ct);
+        }
+        catch (AiQuotaExceededException ex)
+        {
+            _logger.LogWarning(ex, "Cuota de IA alcanzada para conversación {Id}", conversationId);
+            rawResponse = "En este momento no podemos atenderte de forma automática. Te pondremos en contacto con un funcionario. [ESCALATE: cuota de IA alcanzada]";
+        }
+        catch (AiAccessDeniedException ex)
+        {
+            _logger.LogWarning(ex, "Acceso de IA denegado para conversación {Id}", conversationId);
+            rawResponse = "En este momento no podemos atenderte de forma automática. Te pondremos en contacto con un funcionario. [ESCALATE: acceso de IA no disponible en el plan]";
         }
         catch (Exception ex)
         {

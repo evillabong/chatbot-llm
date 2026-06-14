@@ -21,6 +21,8 @@ public interface IVectorSearchService
         int topK = 5,
         CancellationToken ct = default);
 
-    /// <summary>Genera el vector de embeddings para un texto.</summary>
-    Task<float[]> GetEmbeddingAsync(string text, CancellationToken ct = default);
+    /// <summary>
+    /// Genera el vector de embeddings para un texto, atribuyendo el uso al tenant indicado.
+    /// </summary>
+    Task<float[]> GetEmbeddingAsync(Guid tenantId, string text, CancellationToken ct = default);
 }

@@ -21,11 +21,17 @@ public class GlobalDbContext(DbContextOptions<GlobalDbContext> options) : DbCont
 
     public DbSet<AiConnector> AiConnectors => Set<AiConnector>();
 
+    public DbSet<AiPlanPolicy> AiPlanPolicies => Set<AiPlanPolicy>();
+
+    public DbSet<AiUsageRecord> AiUsageRecords => Set<AiUsageRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfiguration(new TenantEntityConfiguration());
         modelBuilder.ApplyConfiguration(new SuperAdminEntityConfiguration());
         modelBuilder.ApplyConfiguration(new AiConnectorEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new AiPlanPolicyEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new AiUsageRecordEntityConfiguration());
     }
 }

@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Mimo.Core.Interfaces;
+using Mimo.Core.Models.Ai;
 using Mimo.Core.Models.Configuration;
 
 namespace Mimo.Infrastructure.AI;
@@ -37,7 +38,7 @@ public class DeepSeekClient : ILlmClient
     /// <summary>
     /// Genera una respuesta del bot dado un prompt de sistema y el historial de la conversación.
     /// </summary>
-    public async Task<string> ChatAsync(
+    public async Task<LlmChatResult> ChatAsync(
         string systemPrompt,
         IReadOnlyList<(string role, string content)> history,
         CancellationToken ct = default)
@@ -56,14 +57,14 @@ public class DeepSeekClient : ILlmClient
         var result = await response.Content.ReadFromJsonAsync<ChatResponse>(cancellationToken: ct)
             ?? throw new InvalidOperationException("Respuesta vacía de DeepSeek.");
 
-        return result.Choices[0].Message.Content;
+        return new LlmChatResult(result.Choices[0].Message.Content, ToUsage(result.Usage));
     }
 
     /// <summary>
     /// Genera el vector de embeddings para un texto.
     /// Dimensión: configurable en appsettings (default 1536 para compatibilidad con pgvector).
     /// </summary>
-    public async Task<float[]> GetEmbeddingAsync(string text, CancellationToken ct = default)
+    public async Task<LlmEmbeddingResult> GetEmbeddingAsync(string text, CancellationToken ct = default)
     {
         var request = new EmbeddingRequest(_settings.EmbeddingModel, text);
 
@@ -73,8 +74,14 @@ public class DeepSeekClient : ILlmClient
         var result = await response.Content.ReadFromJsonAsync<EmbeddingResponse>(cancellationToken: ct)
             ?? throw new InvalidOperationException("Respuesta de embedding vacía.");
 
-        return result.Data[0].Embedding;
+        return new LlmEmbeddingResult(result.Data[0].Embedding, ToUsage(result.Usage));
     }
+
+    /// <summary>Convierte el bloque usage de la API (si viene) a LlmUsage.</summary>
+    private static LlmUsage ToUsage(Usage? usage) =>
+        usage is null
+            ? LlmUsage.None
+            : new LlmUsage(usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens);
 
     // ── Modelos internos de la API ────────────────────────────────────────────
 
@@ -88,7 +95,8 @@ public class DeepSeekClient : ILlmClient
     private record ChatMessage(string Role, string Content);
 
     private record ChatResponse(
-        [property: JsonPropertyName("choices")] List<Choice> Choices
+        [property: JsonPropertyName("choices")] List<Choice> Choices,
+        [property: JsonPropertyName("usage")] Usage? Usage
     );
 
     private record Choice(
@@ -101,10 +109,17 @@ public class DeepSeekClient : ILlmClient
     );
 
     private record EmbeddingResponse(
-        [property: JsonPropertyName("data")] List<EmbeddingData> Data
+        [property: JsonPropertyName("data")]  List<EmbeddingData> Data,
+        [property: JsonPropertyName("usage")] Usage? Usage
     );
 
     private record EmbeddingData(
         [property: JsonPropertyName("embedding")] float[] Embedding
+    );
+
+    private record Usage(
+        [property: JsonPropertyName("prompt_tokens")]     int PromptTokens,
+        [property: JsonPropertyName("completion_tokens")] int CompletionTokens,
+        [property: JsonPropertyName("total_tokens")]      int TotalTokens
     );
 }

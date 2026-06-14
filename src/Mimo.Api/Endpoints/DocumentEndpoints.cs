@@ -89,7 +89,7 @@ public static class DocumentEndpoints
         try
         {
             var raw = await vectorSearch.GetEmbeddingAsync(
-                $"{request.Title}\n{request.Content}", ct);
+                tenantId, $"{request.Title}\n{request.Content}", ct);
             embedding = new Vector(raw);
         }
         catch (Exception ex)
@@ -123,12 +123,14 @@ public static class DocumentEndpoints
         UpdateDocumentRequest request,
         IDocumentRepository repo,
         IVectorSearchService vectorSearch,
+        HttpContext context,
         CancellationToken ct = default)
     {
         var doc = await repo.GetByIdAsync(id, ct);
         if (doc is null)
             return Results.NotFound(new { error = "Documento no encontrado." });
 
+        var tenantId       = (Guid)context.Items["TenantId"]!;
         var contentChanged = doc.Content != request.Content || doc.Title != request.Title;
 
         doc.Title         = request.Title;
@@ -147,7 +149,7 @@ public static class DocumentEndpoints
             try
             {
                 var raw = await vectorSearch.GetEmbeddingAsync(
-                    $"{doc.Title}\n{doc.Content}", ct);
+                    tenantId, $"{doc.Title}\n{doc.Content}", ct);
                 doc.Embedding = new Vector(raw);
             }
             catch { /* mantener embedding anterior si falla */ }
@@ -176,14 +178,16 @@ public static class DocumentEndpoints
         Guid id,
         IDocumentRepository repo,
         IVectorSearchService vectorSearch,
+        HttpContext context,
         CancellationToken ct = default)
     {
         var doc = await repo.GetByIdAsync(id, ct);
         if (doc is null)
             return Results.NotFound(new { error = "Documento no encontrado." });
 
+        var tenantId = (Guid)context.Items["TenantId"]!;
         var raw = await vectorSearch.GetEmbeddingAsync(
-            $"{doc.Title}\n{doc.Content}", ct);
+            tenantId, $"{doc.Title}\n{doc.Content}", ct);
 
         doc.Embedding = new Vector(raw);
         doc.UpdatedAt = DateTime.UtcNow;

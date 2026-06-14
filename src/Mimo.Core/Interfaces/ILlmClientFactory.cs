@@ -1,15 +1,18 @@
+using Mimo.Core.Models;
+
 namespace Mimo.Core.Interfaces;
 
 /// <summary>
-/// Fábrica que resuelve el cliente LLM correspondiente al conector de IA activo
-/// configurado en la base de datos. Aísla a los consumidores (orquestador, búsqueda
-/// vectorial) del proveedor concreto y permite cambiar de IA sin tocar su código.
+/// Construye el cliente LLM concreto a partir de un conector de IA.
+/// La selección del conector (activo, permitido por plan) y el control de uso son
+/// responsabilidad de <see cref="IAiGatewayService"/>; esta fábrica solo materializa
+/// la implementación correspondiente al proveedor del conector.
 /// </summary>
 public interface ILlmClientFactory
 {
     /// <summary>
-    /// Obtiene un cliente LLM configurado con los parámetros del conector activo.
-    /// Lanza si no hay ningún conector de IA activo.
+    /// Crea un cliente LLM configurado con los parámetros del conector indicado.
     /// </summary>
-    Task<ILlmClient> GetActiveClientAsync(CancellationToken ct = default);
+    /// <exception cref="NotSupportedException">El proveedor del conector no está soportado.</exception>
+    ILlmClient Create(AiConnector connector);
 }

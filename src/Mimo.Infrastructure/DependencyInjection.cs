@@ -69,12 +69,14 @@ public static class DependencyInjection
         services.AddScoped<IConversationOrchestrator,  ConversationOrchestrator>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 
-        // ── Conectores de IA (abstracción ILlmClient + fábrica por proveedor) ─────
+        // ── Conectores de IA + gateway de plataforma (ver ADR 0004 y 0005) ────────
         // La configuración de cada IA vive en la BD (tabla ai_connectors, JSON).
-        // LlmClientFactory resuelve el conector activo y construye el cliente concreto;
-        // cambiar de proveedor es un cambio de datos, no de código.
+        // LlmClientFactory construye el cliente concreto del conector; AiGatewayService
+        // es el punto único de acceso al LLM: resuelve el conector activo, aplica los
+        // entitlements y cuotas del plan del tenant y registra el uso.
         services.AddHttpClient(LlmClientFactory.HttpClientName);
         services.AddScoped<ILlmClientFactory, LlmClientFactory>();
+        services.AddScoped<IAiGatewayService, AiGatewayService>();
 
         // ── Conectores de canales externos (keyed DI) ─────────────────────────
         // WebChatConnector se registra en Mimo.Api (requiere IHubContext<ChatHub>).
