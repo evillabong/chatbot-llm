@@ -23,4 +23,25 @@ public class PlanRepository(GlobalDbContext db) : IPlanRepository
 
         return await query.OrderBy(p => p.Code).ToListAsync(ct);
     }
+
+    public Task<Plan?> GetByCodeAsync(string code, CancellationToken ct = default)
+    {
+        var normalized = Plan.NormalizeCode(code);
+        return db.Plans.FirstOrDefaultAsync(p => p.Code == normalized, ct);
+    }
+
+    public async Task<Plan> AddAsync(Plan plan, CancellationToken ct = default)
+    {
+        db.Plans.Add(plan);
+        await db.SaveChangesAsync(ct);
+        return plan;
+    }
+
+    public Task UpdateAsync(Plan plan, CancellationToken ct = default)
+    {
+        db.Plans.Update(plan);
+        return Task.CompletedTask;
+    }
+
+    public Task SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 }

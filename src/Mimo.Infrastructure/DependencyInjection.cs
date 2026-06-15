@@ -116,6 +116,9 @@ public static class DependencyInjection
         services.AddScoped<ITenantRepository,          TenantRepository>();
         services.AddScoped<IPlanRepository,            PlanRepository>();
         services.AddScoped<ISuperAdminRepository,      SuperAdminRepository>();
+        services.AddScoped<IAiConnectorRepository,     AiConnectorRepository>();
+        services.AddScoped<IAiPlanPolicyRepository,    AiPlanPolicyRepository>();
+        services.AddScoped<IAiUsageRepository,         AiUsageRepository>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 
         return services;

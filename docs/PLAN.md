@@ -565,8 +565,9 @@ Tablas (esquema `public`, gestionadas por el SuperAdmin):
 | `ai_plan_policies` | Modelos permitidos y cuota por código de plan |
 | `ai_usage_records` | Consumo por tenant (proveedor, modelo, operación, tokens) |
 
-Pendiente (incremento siguiente): endpoints en `Mimo.Admin.Api` para administrar
-conectores y políticas de plan, y para consultar las estadísticas de uso.
+Administración (SuperAdmin) en `Mimo.Admin.Api`: `/plans` (catálogo), `/ai/connectors`
+(conectores, activación exclusiva), `/ai/plan-policies` (modelos permitidos y cuotas por plan)
+y `/ai/usage/summary` (estadísticas de uso por tenant).
 
 ---
 
