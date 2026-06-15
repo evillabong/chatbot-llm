@@ -345,8 +345,10 @@ namespace Mimo.Infrastructure.Data.Migrations.Tenant
             // Índice HNSW para búsqueda de vecinos más cercanos por distancia coseno en pgvector.
             // Permite que CosineDistance() en EF LINQ use el índice en lugar de escaneo secuencial.
             // m=16 y ef_construction=64 son los valores por defecto recomendados.
+            // NO se usa CONCURRENTLY: el esquema del tenant se crea vacío y la migración corre
+            // dentro de una transacción (CREATE INDEX CONCURRENTLY no es válido en transacción).
             migrationBuilder.Sql(
-                "CREATE INDEX CONCURRENTLY IF NOT EXISTS ix_documents_embedding_hnsw " +
+                "CREATE INDEX IF NOT EXISTS ix_documents_embedding_hnsw " +
                 "ON documents USING hnsw (embedding vector_cosine_ops) " +
                 "WITH (m = 16, ef_construction = 64);");
         }
