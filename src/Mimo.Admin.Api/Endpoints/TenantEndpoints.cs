@@ -100,18 +100,27 @@ public static class TenantEndpoints
             CreatedAt = DateTime.UtcNow
         };
 
-        // 1. Persistir el registro del tenant en el esquema public
-        await repo.AddAsync(tenant, ct);
-
-        // 2. Provisionar el esquema PostgreSQL del tenant, aplicar migraciones (EF Core) y
-        //    crear el rol "Administrador" + el funcionario administrador inicial.
         var adminSeed = new TenantAdminSeed(
             request.AdminEmail,
             passwordHasher.Hash(request.AdminPassword),
             request.AdminFullName,
             request.AdminAlias);
 
-        await provisioning.ProvisionAsync(tenant, adminSeed, ct);
+        // Atomicidad: se aprovisiona el esquema PRIMERO y el registro global se persiste
+        // sólo si el aprovisionamiento tuvo éxito, para no dejar tenants huérfanos (registro
+        // sin esquema). Ante cualquier fallo, se elimina el esquema parcial creado.
+        try
+        {
+            await provisioning.ProvisionAsync(tenant, adminSeed, ct);
+            await repo.AddAsync(tenant, ct);
+        }
+        catch
+        {
+            // Compensación: borrar el esquema parcial. Se ignoran errores aquí para no
+            // enmascarar la excepción original (el servicio registra el intento de borrado).
+            try { await provisioning.DeprovisionAsync(tenant.Slug, ct); } catch { /* preservar excepción original */ }
+            throw;
+        }
 
         return Results.Created($"/tenants/detail?id={tenant.Id}", ToResponse(tenant));
     }

@@ -86,7 +86,10 @@ public partial class TenantProvisioningService(
         logger.LogWarning("Eliminando esquema '{Schema}' del tenant '{Slug}'", schema, slug);
 
         await using var db = await contextFactory.CreateDbContextAsync(ct);
-        await db.Database.ExecuteSqlAsync($"DROP SCHEMA IF EXISTS {schema} CASCADE", ct);
+        // Identificador saneado por BuildSchemaName ([a-z0-9_]); no se puede parametrizar en DDL.
+#pragma warning disable EF1002
+        await db.Database.ExecuteSqlRawAsync($"DROP SCHEMA IF EXISTS \"{schema}\" CASCADE", ct);
+#pragma warning restore EF1002
 
         logger.LogWarning("Esquema '{Schema}' eliminado", schema);
     }

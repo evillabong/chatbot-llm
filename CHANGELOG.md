@@ -22,6 +22,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 - La autorización por roles no funcionaba en runtime: `JwtBearer` remapeaba el claim `role`; se desactiva con `MapInboundClaims = false` en ambas APIs.
 - Aprovisionamiento de tenant roto: `SET search_path`/`CREATE SCHEMA` se parametrizaban (error 42601) y el `search_path` no persistía con pooling; ahora se usa SQL crudo con esquema saneado y una conexión abierta durante la migración.
 - La migración del esquema de tenant fallaba por `CREATE INDEX CONCURRENTLY` dentro de transacción (25001); el índice HNSW se crea sin `CONCURRENTLY` (esquema nuevo, tabla vacía).
+- Creación de tenant no atómica: si el aprovisionamiento fallaba quedaba un registro huérfano. Ahora se aprovisiona primero y el registro global se persiste solo si tuvo éxito; ante fallo se elimina el esquema parcial. Se corrige también `DeprovisionAsync` (mismo bug de parametrización del identificador).
 
 ## [0.1.0] - 2026-06-14
 
