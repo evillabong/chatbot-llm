@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Mimo.Core.Interfaces;
 using Mimo.Core.MultiTenancy;
 using Mimo.Infrastructure.Data;
 
@@ -30,7 +31,7 @@ public partial class TenantResolutionMiddleware(
     private static readonly HashSet<string> BypassPaths = ["/health", "/ready"];
     private static readonly TimeSpan        CacheTtl    = TimeSpan.FromMinutes(5);
 
-    public async Task InvokeAsync(HttpContext context, GlobalDbContext globalDb, TenantDbContext tenantDb)
+    public async Task InvokeAsync(HttpContext context, GlobalDbContext globalDb, ITenantSchemaProvider schemaProvider)
     {
         var path = context.Request.Path.Value ?? string.Empty;
 
@@ -91,11 +92,10 @@ public partial class TenantResolutionMiddleware(
             return;
         }
 
-        // Establecer search_path en TenantDbContext para aislar las consultas al esquema del tenant.
+        // Fijar el esquema del tenant para esta petición. El SearchPathConnectionInterceptor
+        // aplica el search_path en cada apertura de conexión de TenantDbContext (fiable con pooling).
         var schemaName = $"tenant_{SlugRegex().Replace(slug.Replace("-", "_"), "")}";
-        await tenantDb.Database.ExecuteSqlAsync(
-            $"SET search_path TO {schemaName}, public",
-            context.RequestAborted);
+        schemaProvider.Schema = schemaName;
 
         // Exponer el tenant resuelto al resto del pipeline (leído vía TenantHttpContextExtensions)
         context.Items[TenantHttpContextExtensions.TenantIdKey]            = tenant.Id;

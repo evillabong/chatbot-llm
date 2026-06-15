@@ -10,6 +10,7 @@ using Mimo.Infrastructure.Chat;
 using Mimo.Infrastructure.Data;
 using Mimo.Infrastructure.Data.Repositories;
 using Mimo.Infrastructure.Mcp;
+using Mimo.Infrastructure.MultiTenancy;
 using Mimo.Infrastructure.Orchestration;
 using Mimo.Infrastructure.Queuing;
 using Mimo.Infrastructure.Services;
@@ -35,8 +36,14 @@ public static class DependencyInjection
         services.AddDbContext<GlobalDbContext>(options =>
             options.UseNpgsql(connectionString));
 
-        services.AddDbContext<TenantDbContext>(options =>
-            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()));
+        // Multi-tenant: el search_path se fija por petición vía interceptor de conexión
+        // (fiable con pooling), según el esquema que establece el middleware de tenant.
+        services.AddScoped<ITenantSchemaProvider, TenantSchemaProvider>();
+        services.AddScoped<SearchPathConnectionInterceptor>();
+
+        services.AddDbContext<TenantDbContext>((sp, options) =>
+            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector())
+                   .AddInterceptors(sp.GetRequiredService<SearchPathConnectionInterceptor>()));
 
         services.AddDbContextFactory<TenantDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()),

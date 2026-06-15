@@ -40,6 +40,10 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Conservar los nombres de claim tal cual se emiten ("role", "agent_id", "tenant_slug").
+        // Sin esto, JwtBearer remapea "role" a ClaimTypes.Role y las políticas RequireClaim fallan (403).
+        options.MapInboundClaims = false;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer           = true,
