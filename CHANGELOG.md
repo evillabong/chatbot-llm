@@ -6,6 +6,10 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+Sin cambios sin publicar.
+
+## [0.2.0] - 2026-06-15
+
 ### Added
 
 - Administración del SuperAdmin en `Mimo.Admin.Api`: catálogo de planes (`/plans`),
@@ -66,5 +70,6 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/evillabong/chatbot-llm/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/evillabong/chatbot-llm/releases/tag/v0.1.0
