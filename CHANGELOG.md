@@ -6,7 +6,15 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
-Sin cambios sin publicar.
+### Added
+
+- Administración del SuperAdmin en `Mimo.Admin.Api`: catálogo de planes (`/plans`),
+  conectores de IA (`/ai/connectors`, con activación exclusiva y sin exponer la API key),
+  políticas de IA por plan (`/ai/plan-policies`, upsert de modelos permitidos y cuotas) y
+  estadísticas de uso por tenant (`/ai/usage/summary`).
+- Repositorios `IAiConnectorRepository`, `IAiPlanPolicyRepository`, `IAiUsageRepository` y
+  extensión de `IPlanRepository` para gestión del catálogo.
+- Tests de agregación de uso de IA (resumen por tenant y periodo).
 
 ## [0.1.0] - 2026-06-14
 

@@ -78,5 +78,9 @@ app.MapHealthChecks("/health");
 // ── Endpoints ────────────────────────────────────────────────────────────────
 app.MapAuthEndpoints();
 app.MapTenantEndpoints();
+app.MapPlanEndpoints();
+app.MapAiConnectorEndpoints();
+app.MapAiPlanPolicyEndpoints();
+app.MapAiUsageEndpoints();
 
 app.Run();
