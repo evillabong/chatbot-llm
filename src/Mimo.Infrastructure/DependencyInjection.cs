@@ -13,6 +13,7 @@ using Mimo.Infrastructure.Mcp;
 using Mimo.Infrastructure.MultiTenancy;
 using Mimo.Infrastructure.Orchestration;
 using Mimo.Infrastructure.Queuing;
+using Mimo.Infrastructure.Security;
 using Mimo.Infrastructure.Services;
 using Mimo.Infrastructure.Ticketing;
 namespace Mimo.Infrastructure;
@@ -58,6 +59,10 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
+
+        // Cifrado de secretos en reposo (API keys de conectores de IA). Requiere que la app
+        // configure Data Protection con anillo de llaves compartido (ver Program.cs / ADR 0010).
+        services.AddSingleton<ISecretProtector, DataProtectionSecretProtector>();
 
         // ── Repositorios ───────────────────────────────────────────────────────
         services.AddScoped<ITenantRepository,          TenantRepository>();
@@ -119,6 +124,7 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<ISecretProtector, DataProtectionSecretProtector>();
 
         services.AddScoped<ITenantRepository,          TenantRepository>();
         services.AddScoped<IPlanRepository,            PlanRepository>();

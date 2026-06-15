@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Mimo.Admin.Api.Endpoints;
@@ -17,6 +18,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ── Infraestructura (esquema public + aprovisionamiento de tenants) ───────────
 builder.Services.AddAdminInfrastructure(builder.Configuration);
+
+// ── Data Protection (anillo de llaves compartido con Mimo.Api) ─────────────────
+// Este API cifra las API keys de los conectores; Mimo.Api las descifra. Mismo
+// ApplicationName y ubicación de llaves para que el cifrado sea interoperable.
+var dpKeysPath = builder.Configuration["DataProtection:KeysPath"]
+    ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "MIMO", "dp-keys");
+Directory.CreateDirectory(dpKeysPath);
+builder.Services.AddDataProtection()
+    .SetApplicationName("MIMO")
+    .PersistKeysToFileSystem(new DirectoryInfo(dpKeysPath));
 
 // ── Autenticación JWT ────────────────────────────────────────────────────────
 var jwtSection  = builder.Configuration.GetSection("Jwt");
