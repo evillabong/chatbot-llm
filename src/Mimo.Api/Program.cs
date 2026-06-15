@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Mimo.Api.Channels;
@@ -18,6 +19,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ── Infraestructura ──────────────────────────────────────────────────────────
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// ── Data Protection (anillo de llaves compartido entre ambas APIs) ─────────────
+// Mimo.Admin.Api cifra las API keys de los conectores; Mimo.Api las descifra. Para
+// que funcione entre procesos, ambas comparten ApplicationName y ubicación de llaves.
+var dpKeysPath = builder.Configuration["DataProtection:KeysPath"]
+    ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "MIMO", "dp-keys");
+Directory.CreateDirectory(dpKeysPath);
+builder.Services.AddDataProtection()
+    .SetApplicationName("MIMO")
+    .PersistKeysToFileSystem(new DirectoryInfo(dpKeysPath));
 
 // ── Notificaciones en tiempo real ────────────────────────────────────────────
 // INotificationService se implementa en esta capa (Mimo.Api) porque usa SignalR
@@ -110,7 +121,8 @@ await using (var scope = app.Services.CreateAsyncScope())
     await PlanSeeder.SeedDefaultAsync(globalDb);
 
     // Migrar la configuración de IA de appsettings a la BD si aún no existe ningún conector.
-    await AiConnectorSeeder.SeedDefaultAsync(globalDb, app.Configuration);
+    var secretProtector = scope.ServiceProvider.GetRequiredService<ISecretProtector>();
+    await AiConnectorSeeder.SeedDefaultAsync(globalDb, app.Configuration, secretProtector);
 }
 
 if (app.Environment.IsDevelopment())

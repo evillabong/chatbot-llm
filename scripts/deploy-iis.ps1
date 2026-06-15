@@ -42,6 +42,13 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $appcmd   = Join-Path $env:windir 'system32\inetsrv\appcmd.exe'
 $stage    = Join-Path $env:TEMP 'mimo_publish'
 
+# Anillo de llaves de Data Protection compartido por ambas APIs (cifra/descifra API keys).
+# Debe ser accesible por las identidades de los App Pools de IIS (ADR 0010).
+$dpKeys = Join-Path $env:ProgramData 'MIMO\dp-keys'
+New-Item -ItemType Directory -Force -Path $dpKeys | Out-Null
+icacls $dpKeys /grant 'IIS_IUSRS:(OI)(CI)M' /T | Out-Null
+Write-Host "Anillo de llaves Data Protection: $dpKeys (acceso IIS_IUSRS concedido)"
+
 # Mapeo proyecto -> sitio de IIS. Los frontends/worker aún no existen (placeholders).
 $apps = @(
     @{ Project = 'src\Mimo.Api';       Site = 'mimo.api' },

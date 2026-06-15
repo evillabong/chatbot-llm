@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Mimo.Core.Constants;
+using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
 using Mimo.Core.Models.Configuration;
 
@@ -16,7 +17,7 @@ namespace Mimo.Infrastructure.Data.Seeding;
 public static class AiConnectorSeeder
 {
     public static async Task SeedDefaultAsync(
-        GlobalDbContext db, IConfiguration configuration, CancellationToken ct = default)
+        GlobalDbContext db, IConfiguration configuration, ISecretProtector protector, CancellationToken ct = default)
     {
         if (await db.AiConnectors.AnyAsync(ct))
             return;
@@ -31,7 +32,7 @@ public static class AiConnectorSeeder
             IsActive    = true,
             Settings    = new LlmConnectorSettings
             {
-                ApiKey         = section["ApiKey"]         ?? string.Empty,
+                ApiKey         = protector.Protect(section["ApiKey"]),  // cifrada en reposo
                 BaseUrl        = section["BaseUrl"]        ?? "https://api.deepseek.com",
                 ChatModel      = section["ChatModel"]      ?? "deepseek-chat",
                 EmbeddingModel = section["EmbeddingModel"] ?? "deepseek-embedding"

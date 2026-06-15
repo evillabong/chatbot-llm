@@ -37,7 +37,7 @@ public static class AiConnectorEndpoints
         => Results.Ok((await repo.ListAsync(ct)).Select(ToResponse).ToList());
 
     private static async Task<IResult> CreateAsync(
-        CreateAiConnectorRequest request, IAiConnectorRepository repo, CancellationToken ct = default)
+        CreateAiConnectorRequest request, IAiConnectorRepository repo, ISecretProtector protector, CancellationToken ct = default)
     {
         var provider = request.Provider.Trim().ToLowerInvariant();
         if (await repo.ProviderExistsAsync(provider, ct))
@@ -49,7 +49,7 @@ public static class AiConnectorEndpoints
             Provider    = provider,
             DisplayName = request.DisplayName,
             IsActive    = false, // se activa explícitamente vía /activate
-            Settings    = ToSettings(request.Settings),
+            Settings    = ToSettings(request.Settings, protector),
             CreatedAt   = DateTime.UtcNow
         };
 
@@ -58,13 +58,13 @@ public static class AiConnectorEndpoints
     }
 
     private static async Task<IResult> UpdateAsync(
-        Guid id, UpdateAiConnectorRequest request, IAiConnectorRepository repo, CancellationToken ct = default)
+        Guid id, UpdateAiConnectorRequest request, IAiConnectorRepository repo, ISecretProtector protector, CancellationToken ct = default)
     {
         var connector = await repo.GetByIdAsync(id, ct);
         if (connector is null) return Results.NotFound(new { error = "Conector no encontrado." });
 
         connector.DisplayName = request.DisplayName;
-        connector.Settings    = ToSettings(request.Settings);
+        connector.Settings    = ToSettings(request.Settings, protector);
         connector.UpdatedAt   = DateTime.UtcNow;
 
         await repo.UpdateAsync(connector, ct);
@@ -80,10 +80,10 @@ public static class AiConnectorEndpoints
             : Results.NotFound(new { error = "Conector no encontrado." });
     }
 
-    private static LlmConnectorSettings ToSettings(AiConnectorSettingsDto dto) =>
+    private static LlmConnectorSettings ToSettings(AiConnectorSettingsDto dto, ISecretProtector protector) =>
         new()
         {
-            ApiKey         = dto.ApiKey,
+            ApiKey         = protector.Protect(dto.ApiKey),  // cifrada en reposo
             BaseUrl        = dto.BaseUrl,
             ChatModel      = dto.ChatModel,
             EmbeddingModel = dto.EmbeddingModel,

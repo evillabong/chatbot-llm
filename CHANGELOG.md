@@ -17,6 +17,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 - Tests de agregación de uso de IA (resumen por tenant y periodo).
 - `search_path` multi-tenant vía `SearchPathConnectionInterceptor` + `ITenantSchemaProvider` (ADR 0009).
 - `scripts/deploy-iis.ps1`: publica y despliega ambas APIs a IIS local (auto-elevación, App Pool sin código administrado, preserva `appsettings.Production.json`) + plantilla y README.
+- Cifrado en reposo de las API keys de conectores de IA con Data Protection (`ISecretProtector`); anillo de llaves compartido entre ambas APIs (ADR 0010).
+
+### Security
+
+- Las API keys de conectores de IA ya no se almacenan en texto plano en la base de datos; se cifran al escribir y se descifran solo al construir el cliente del proveedor.
 
 ### Fixed
 
