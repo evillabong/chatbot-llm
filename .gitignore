@@ -427,3 +427,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# MIMO: configuración de Producción con secretos (cadena de conexión, Jwt:Key).
+# Vive solo en la carpeta del sitio en IIS; nunca debe commitearse. La plantilla
+# sin secretos es scripts/appsettings.Production.template.json.
+**/appsettings.Production.json

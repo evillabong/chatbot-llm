@@ -110,6 +110,7 @@ Frontends Blazor WASM
 ├── tests/
 │   ├── Mimo.UnitTests/
 │   └── Mimo.IntegrationTests/
+├── scripts/                # Utilidades (deploy-iis.ps1, plantillas)
 ├── docker-compose.yml
 ├── README.md
 ├── CONTRIBUTING.md
