@@ -101,7 +101,8 @@ builder.Services.AddHostedService<InactivityTimeoutWorker>();
 builder.Services.AddHostedService<QueueNotificationWorker>();
 
 // ── OpenAPI ──────────────────────────────────────────────────────────────────
-builder.Services.AddOpenApi();
+// OpenAPI 3.0 (no 3.1): mejor compatibilidad con generadores de cliente como Kiota.
+builder.Services.AddOpenApi(options => options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0);
 
 // ── Health checks ────────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()

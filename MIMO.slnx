@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Mimo.Admin.Api/Mimo.Admin.Api.csproj" />
     <Project Path="src/Mimo.Api/Mimo.Api.csproj" />
+    <Project Path="src/Mimo.ApiClient/Mimo.ApiClient.csproj" />
     <Project Path="src/Mimo.App/Mimo.App.csproj" />
     <Project Path="src/Mimo.Core/Mimo.Core.csproj" />
     <Project Path="src/Mimo.Infrastructure/Mimo.Infrastructure.csproj" />
