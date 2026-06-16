@@ -4,6 +4,8 @@
     <Project Path="src/Mimo.Api/Mimo.Api.csproj" />
     <Project Path="src/Mimo.Core/Mimo.Core.csproj" />
     <Project Path="src/Mimo.Infrastructure/Mimo.Infrastructure.csproj" />
+    <Project Path="src/Mimo.Tenant.Web/Mimo.Tenant.Web.csproj" />
+    <Project Path="src/Mimo.Ui/Mimo.Ui.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Mimo.IntegrationTests/Mimo.IntegrationTests.csproj" />
