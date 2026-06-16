@@ -22,8 +22,9 @@ plan vive en [docs/frontend/README.md](../frontend/README.md).
   `Mimo.Ui`; no usan HTML crudo, clases Tailwind sueltas ni Flowbite directo (regla de oro).
 - **Cliente de API generado desde OpenAPI** (Kiota) en `Mimo.ApiClient`, regenerable ante
   cambios de contrato; nada de clientes escritos a mano.
-- **Primera app: `Mimo.Tenant.Web`** (CRUD) para cimentar `Mimo.Ui`, auth JWT, manejo de tenant
-  y patrones antes de la consola de agente.
+- **Apps:** `Mimo.App` (tenant-facing: admin de tenant + consola de agente) y `Mimo.Admin.App`
+  (SuperAdmin), alineadas con los sitios IIS `mimo.app` y `mimo.admin.app`. Se arranca por
+  `Mimo.App` (admin de tenant, CRUD) para cimentar `Mimo.Ui`, auth JWT y patrones.
 
 ## Consecuencias
 

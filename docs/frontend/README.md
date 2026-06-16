@@ -20,9 +20,11 @@ escribir cualquier código de UI. Decisiones de arquitectura registradas en
 | UI kit | **Tailwind CSS + Flowbite Blazor** |
 | Componentización | Toda la UI vive en **`Mimo.Ui`**; las apps solo componen sus componentes |
 | Cliente de API | **Generado desde OpenAPI** (Kiota) — sin escribir clientes a mano |
-| Primera app | **`Mimo.Tenant.Web`** (CRUD) para cimentar `Mimo.Ui`, auth y patrones |
+| Primera app | **`Mimo.App`**, empezando por el admin de tenant (CRUD) para cimentar `Mimo.Ui`, auth y patrones |
 
 ## 3. Arquitectura de proyectos
+
+Dos apps de frontend (alineadas con los sitios IIS `mimo.app` y `mimo.admin.app`):
 
 ```text
 src/
@@ -31,14 +33,15 @@ src/
 │                       # Expone componentes propios: <MimoButton>, <MimoTable>, etc.
 ├── Mimo.ApiClient/     # Cliente(s) tipados generados de OpenAPI (Mimo.Api y Mimo.Admin.Api)
 │                       # + handlers de auth/tenant. Sin lógica de UI.
-├── Mimo.Tenant.Web/    # WASM — consola del TenantAdmin (consume Mimo.Api)
-├── Mimo.Agent.Web/     # WASM — consola del agente, estilo Callbell (consume Mimo.Api)
-├── Mimo.Admin.Web/     # WASM — panel del SuperAdmin (consume Mimo.Admin.Api)
-└── Mimo.WebChat/       # WASM — widget embebible del ciudadano (consume Mimo.Api)
+├── Mimo.App/           # WASM tenant-facing: admin de tenant + consola de agente (Callbell).
+│                       # Consume Mimo.Api. Despliega al sitio IIS "mimo.app".
+└── Mimo.Admin.App/     # WASM del SuperAdmin (tenants, planes, conectores de IA, uso).
+                        # Consume Mimo.Admin.Api. Despliega al sitio IIS "mimo.admin.app".
 ```
 
-Regla de dependencias: `App.Web → Mimo.Ui` y `App.Web → Mimo.ApiClient`. **Ninguna app
-referencia Flowbite ni Tailwind directamente.**
+El WebChat embebible del ciudadano se resolverá después (ruta/modo dentro de `Mimo.App` o
+proyecto aparte). Regla de dependencias: `App → Mimo.Ui` y `App → Mimo.ApiClient`. **Ninguna
+app referencia Flowbite ni Tailwind directamente.**
 
 ## 4. Regla de oro (directriz innegociable)
 
@@ -114,13 +117,13 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
 ## 8. Roadmap por fases
 
 - **Fase A — Cimientos:** crear `Mimo.Ui` (tokens + pipeline Tailwind/Flowbite + ~8 componentes
-  base), `Mimo.ApiClient` (Kiota) y `Mimo.Tenant.Web` con login (JWT + tenant) + 1–2 pantallas
-  CRUD (funcionarios, roles) usando solo `Mimo.Ui`.
-- **Fase B — Tenant admin completo:** documentos (con estados), configuración del tenant.
-- **Fase C — Consola de agente (Callbell):** inbox omnicanal en vivo (SignalR), conversación,
-  cola, transferencias, chat interno.
-- **Fase D — WebChat embebible** (ciudadano).
-- **Fase E — SuperAdmin:** tenants, planes, conectores de IA, estadísticas de uso.
+  base), `Mimo.ApiClient` (Kiota) y `Mimo.App` con login (JWT + tenant) + 1–2 pantallas CRUD de
+  admin de tenant (funcionarios, roles) usando solo `Mimo.Ui`.
+- **Fase B — Admin de tenant completo** (en `Mimo.App`): documentos (con estados), configuración.
+- **Fase C — Consola de agente (Callbell)** (en `Mimo.App`): inbox omnicanal en vivo (SignalR),
+  conversación, cola, transferencias, chat interno.
+- **Fase D — `Mimo.Admin.App` (SuperAdmin):** tenants, planes, conectores de IA, uso.
+- **Fase E — WebChat embebible** (ciudadano).
 
 ## 9. Directrices de código (frontend)
 
