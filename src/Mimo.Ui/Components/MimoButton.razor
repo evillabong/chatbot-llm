@@ -1,0 +1,23 @@
+@namespace Mimo.Ui.Components
+
+@* Botón estándar de MIMO. Envuelve el Button de Flowbite y centraliza el estilo por variante.
+   Las apps usan <MimoButton>, nunca el Button de Flowbite ni clases Tailwind directas. *@
+<Button class="@VariantClass" @onclick="OnClick">@ChildContent</Button>
+
+@code {
+    /// <summary>Contenido del botón (texto/íconos).</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Acción al hacer clic.</summary>
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    /// <summary>Variante visual.</summary>
+    [Parameter] public MimoButtonVariant Variant { get; set; } = MimoButtonVariant.Primary;
+
+    private string VariantClass => Variant switch
+    {
+        MimoButtonVariant.Secondary => "font-medium",
+        MimoButtonVariant.Danger    => "font-semibold",
+        _                           => "font-semibold"
+    };
+}

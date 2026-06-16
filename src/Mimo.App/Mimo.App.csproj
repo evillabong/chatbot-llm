@@ -16,4 +16,17 @@
     <ProjectReference Include="..\Mimo.Ui\Mimo.Ui.csproj" />
   </ItemGroup>
 
+  <!-- Compila el CSS de Tailwind (escanea Mimo.Ui + esta app) antes de construir.
+       El binario standalone vive en tools/ (no se commitea; ver scripts). -->
+  <Target Name="BuildTailwindCss" BeforeTargets="Build">
+    <PropertyGroup>
+      <TailwindExe>$(MSBuildProjectDirectory)\tools\tailwindcss.exe</TailwindExe>
+    </PropertyGroup>
+    <Warning Condition="!Exists('$(TailwindExe)')"
+             Text="Tailwind CLI no encontrado en tools/tailwindcss.exe; el CSS (app.min.css) no se generará." />
+    <Exec Condition="Exists('$(TailwindExe)')"
+          Command="&quot;$(TailwindExe)&quot; -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --minify"
+          StandardOutputImportance="low" />
+  </Target>
+
 </Project>
