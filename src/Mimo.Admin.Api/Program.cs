@@ -63,6 +63,18 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("role", MimoAuthorization.Roles.SuperAdmin));
 });
 
+// ── CORS ───────────────────────────────────────────────────────────────────────
+// Mimo.Admin.App (WASM) consume esta API desde otro origen. Orígenes en "Cors:AllowedOrigins";
+// sin configurar (dev) se permite cualquier origen (autenticación por Bearer, no cookies).
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+{
+    if (corsOrigins.Length > 0)
+        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod();
+    else
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+}));
+
 // ── OpenAPI ──────────────────────────────────────────────────────────────────
 // OpenAPI 3.0 (no 3.1): mejor compatibilidad con generadores de cliente como Kiota.
 builder.Services.AddOpenApi(options => options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0);
@@ -86,6 +98,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 

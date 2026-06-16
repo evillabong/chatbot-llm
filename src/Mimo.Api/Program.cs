@@ -93,6 +93,19 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("agent_id"));
 });
 
+// ── CORS ───────────────────────────────────────────────────────────────────────
+// Las apps WASM (Mimo.App) consumen esta API desde otro origen. Los orígenes permitidos
+// se configuran en "Cors:AllowedOrigins"; sin configurar (dev) se permite cualquier origen.
+// Autenticación por Bearer (no cookies), por lo que AllowAnyOrigin es admisible en dev.
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+{
+    if (corsOrigins.Length > 0)
+        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod();
+    else
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+}));
+
 // ── SignalR ──────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
 
@@ -130,6 +143,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 
 // ── Middleware ───────────────────────────────────────────────────────────────
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<TenantResolutionMiddleware>();
