@@ -6,7 +6,9 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
-Sin cambios sin publicar.
+### Added
+
+- Plan y directrices del frontend en `docs/frontend/` y decisión de arquitectura en ADR 0011: Blazor WASM aislado, biblioteca de UI `Mimo.Ui` (Tailwind + Flowbite, cero hardcode en las apps) y cliente de API generado desde OpenAPI.
 
 ## [0.2.0] - 2026-06-15
 

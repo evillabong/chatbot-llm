@@ -189,6 +189,7 @@ desde la sección `DeepSeek` de `appsettings` a la tabla `ai_connectors`.
 | [memory.md](memory.md) | Contexto rápido del proyecto, decisiones y próximos pasos. |
 | [docs/PLAN.md](docs/PLAN.md) | Arquitectura canónica, actores, flujo, modelo de datos y fases. |
 | [docs/adr/](docs/adr/README.md) | Architecture Decision Records: decisiones de arquitectura y su justificación. |
+| [docs/frontend/](docs/frontend/README.md) | Plan y directrices del frontend (Blazor WASM + Mimo.Ui + Tailwind/Flowbite). |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Reglas de colaboración, commits, branches y documentación. |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de cambios del proyecto. |
 
