@@ -83,6 +83,26 @@ paginación server-side, `MimoBadge`, `MimoAvatar`, `MimoCard`), feedback (`Mimo
 - **Tiempo real:** `Microsoft.AspNetCore.SignalR.Client` para la consola de agente
   (`/hubs/tickets`, `/hubs/chat`); el token viaja por query string (ya soportado).
 
+## 6.bis. Integración de Flowbite Blazor (confirmada)
+
+Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.Blazor.Templates`:
+
+- **No hay un paquete `Flowbite.Blazor`**; la librería de componentes es el paquete NuGet
+  **`Flowbite`** (+ `Flowbite.ExtendedIcons`), en **prerelease** (por eso no aparecía en la
+  búsqueda por defecto). Verificado: `Flowbite 0.2.6-beta` **restaura y compila en net10**
+  dentro de `Mimo.Ui` (el paquete es net8/beta pero es consumible desde net10).
+- **`Mimo.Ui`** referencia `Flowbite` y expone sus componentes envueltos en los nuestros
+  (`MimoButton`, etc.); las apps NO referencian `Flowbite` directamente.
+- **Tailwind v3 standalone** (no v4, no npm): se versiona el binario `tailwindcss(.exe)` en
+  `tools/` y un target MSBuild lo ejecuta antes de Build: `tailwindcss -i wwwroot/css/app.css
+  -o wwwroot/css/app.min.css`. `tailwind.config.js` con `darkMode:'class'`, color `primary` y
+  `content` que **debe incluir los `.razor` de `Mimo.Ui`** además de los de la app.
+- **Assets de Flowbite** vía web assets del paquete: en `index.html` referenciar
+  `_content/Flowbite/flowbite.min.css` y `_content/Flowbite/flowbite.js`, más el JS de
+  posicionamiento `@floating-ui/dom` (CDN) para dropdown/tooltip/popover.
+- **`Program.cs`**: `builder.Services.AddFlowbite();`. **`_Imports.razor`** (en `Mimo.Ui`):
+  `@using Flowbite.Components`, `Flowbite.Services`, etc.
+
 ## 7. Pipeline de Tailwind
 
 - Tailwind CLI (binario standalone o vía npm) con el plugin de Flowbite.
