@@ -200,7 +200,29 @@ profesionalizar y escalar esa atención. Por ejemplo:
 
 ---
 
-## 10. Próximos pasos
+## 10. Evolución: el asistente mejora con el uso *(capacidad en evolución)*
+
+MIMO está pensado para **mejorar con la operación diaria**, no para quedarse estático. A partir de
+las conversaciones resueltas, las calificaciones de satisfacción y las decisiones del equipo, la
+plataforma evoluciona en dos frentes:
+
+- **Respuestas más precisas:** identifica vacíos y preguntas frecuentes mal resueltas y **propone
+  nuevo conocimiento** (con aprobación humana), de modo que el asistente responde cada vez mejor.
+- **Derivación más inteligente:** aprende **cuándo una consulta puede resolverse solo con IA y
+  cuándo conviene un funcionario**, afinando el momento del traspaso para no molestar al cliente ni
+  saturar al equipo.
+
+Principios de esta capacidad:
+
+- **Por organización y privada:** cada cliente mejora con **sus propios datos**; el aprendizaje
+  **nunca se mezcla** entre organizaciones. El asistente se vuelve, con el tiempo, "más tuyo".
+- **Con supervisión humana:** las mejoras se proponen y se aprueban; no se cambian solas.
+- **Gradual y por plan:** es un **plus** que se habilita según el plan, no el núcleo del servicio.
+
+> Es una capacidad en evolución dentro del roadmap del producto; el núcleo de atención omnicanal con
+> IA funciona desde el primer día.
+
+## 11. Próximos pasos
 
 1. **Demostración guiada** con un caso de negocio de ejemplo.
 2. **Definición del alcance** para la organización (canales, departamentos, base de conocimiento).
