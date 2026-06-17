@@ -63,34 +63,45 @@ Vista general de los módulos del sistema y para qué sirve cada uno:
 
 ```text
 MIMO
-├─ Atención omnicanal                      # Recibe y responde por todos los canales desde una sola bandeja
-│  ├─ Canales (web, redes, mensajería)     # El cliente escribe por el canal que prefiere
-│  └─ Bandeja unificada                    # Todas las conversaciones en un único lugar
-├─ Asistente con IA generativa (LLM)       # Responde al instante, 24/7, en lenguaje natural
-│  └─ Base de conocimiento                 # Fuente oficial de las respuestas (responde con TU información)
-├─ Consola de agentes                      # El puesto de trabajo del equipo
-│  ├─ Conversación en tiempo real          # Chat en vivo con el cliente, con todo el historial
-│  └─ Acciones de atención                 # Tomar, responder, transferir, resolver y cerrar
-├─ Enrutamiento y colas                    # Cada consulta llega al área y a la persona correcta
-│  ├─ Departamentos / áreas                # Soporte, ventas, envíos, etc.
-│  ├─ Asignación manual o automática       # Reparte la carga entre los agentes disponibles
-│  └─ Transferencias                       # Pasa el caso a otro equipo sin perder el contexto
-├─ Tickets y seguimiento                   # Ciclo de vida del caso: estado, prioridad y trazabilidad
-├─ Equipos y permisos                      # Define roles/departamentos y qué ve y hace cada uno
-├─ Encuestas de satisfacción               # Mide la calidad y recoge comentarios del cliente
-├─ Configuración de la organización        # Adapta la operación sin depender del proveedor
-│  ├─ Horarios de atención                 # Cuándo atiende el equipo y mensajes fuera de horario
-│  ├─ Reglas de asignación y encuestas     # Cómo se reparten los casos y cómo se evalúan
-│  └─ Personalización del chat             # Marca, color y mensaje de bienvenida
-├─ Ventas  (opcional)                      # Convierte consultas en oportunidades sin cambiar de herramienta
-├─ Administración de la plataforma         # Operación centralizada para varias organizaciones
-│  ├─ Organizaciones                       # Alta y gestión de cada cliente
-│  ├─ Planes y capacidades                 # Qué funciones y volúmenes habilita cada plan
-│  └─ Uso y seguimiento                    # Visibilidad del consumo y la actividad
-└─ Mejora continua  (en evolución/premium) # El asistente mejora con el uso de la organización
-   ├─ Sugerencia de conocimiento           # Propone nuevas respuestas a partir de lo ya resuelto
-   └─ Derivación inteligente               # Aprende cuándo basta la IA y cuándo entra un funcionario
+├─ Atención omnicanal                       # Recibe y responde por todos los canales desde una sola bandeja
+│  ├─ Canales (web, redes, mensajería)      # El cliente escribe por el canal que prefiere
+│  └─ Bandeja unificada                     # Todas las conversaciones en un único lugar
+├─ Asistente con IA generativa (LLM)        # Responde al instante, 24/7, en lenguaje natural
+│  ├─ Base de conocimiento                  # Fuente oficial de las respuestas (responde con TU información)
+│  └─ Acciones e integración con sistemas ▹ # Consulta datos y ejecuta acciones reales (pedido, saldo, cita)
+├─ Consola de agentes                       # El puesto de trabajo del equipo
+│  ├─ Conversación en tiempo real           # Chat en vivo con el cliente, con todo el historial
+│  └─ Acciones de atención                  # Tomar, responder, transferir, resolver y cerrar
+├─ Enrutamiento y colas                     # Cada consulta llega al área y a la persona correcta
+│  ├─ Departamentos / áreas                 # Soporte, ventas, envíos, etc.
+│  ├─ Asignación manual o automática        # Reparte la carga entre los agentes disponibles
+│  └─ Transferencias                        # Pasa el caso a otro equipo sin perder el contexto
+├─ Tickets y seguimiento                    # Ciclo de vida del caso: estado, prioridad y trazabilidad
+├─ Tareas ▹                                 # Pendientes y seguimientos asignables, ligados a casos
+├─ Flujos de trabajo (automatizaciones) ▹   # "Cuando pasa X, haz Y": etiquetar, enrutar, responder, crear tarea
+├─ Campañas de comunicación ▹               # Envíos salientes segmentados y programados a clientes
+├─ Equipos y permisos                       # Define roles/departamentos y qué ve y hace cada uno
+├─ Encuestas de satisfacción                # Mide la calidad y recoge comentarios del cliente
+├─ Ventas (opcional) ▹                      # De la conversación a la oportunidad: leads, pipeline y seguimiento
+│  ├─ Captura de oportunidades (leads)      # Convierte una conversación en una oportunidad
+│  ├─ Pipeline / etapas                     # Seguimiento del avance de la venta
+│  └─ Tareas de seguimiento                 # Próximos pasos para no perder la oportunidad
+├─ Configuración de la organización         # Adapta la operación sin depender del proveedor
+│  ├─ Horarios de atención                  # Cuándo atiende el equipo y mensajes fuera de horario
+│  ├─ Reglas de asignación y encuestas      # Cómo se reparten los casos y cómo se evalúan
+│  └─ Personalización del chat              # Marca, color y mensaje de bienvenida
+├─ Administración de la plataforma          # Operación centralizada para varias organizaciones
+│  ├─ Organizaciones                        # Alta y gestión de cada cliente
+│  ├─ Planes y capacidades                  # Qué funciones y volúmenes habilita cada plan
+│  └─ Uso y seguimiento                     # Visibilidad del consumo y la actividad
+└─ Mejora continua ▹                        # El asistente mejora con el uso de la organización
+   ├─ Sugerencia de conocimiento            # Propone nuevas respuestas a partir de lo ya resuelto
+   └─ Derivación inteligente                # Aprende cuándo basta la IA y cuándo entra un funcionario
 ```
+
+> **▹ = capacidad del roadmap del producto** (en evolución / por plan). El núcleo —atención
+> omnicanal, asistente con IA sobre tu conocimiento, consola de agentes, enrutamiento, tickets,
+> equipos, encuestas y administración— es la base del servicio.
 
 A continuación, el detalle de cada módulo:
 
@@ -142,14 +153,47 @@ Cada organización adapta su operación sin depender de terceros: mensajes de at
 de servicio**, modo de asignación, reglas de encuestas y **personalización del chat** (mensaje de
 bienvenida, identidad visual).
 
-### 4.10 Ventas como capacidad opcional
-El núcleo es la **atención al cliente**, pero muchas consultas terminan en una **oportunidad de
-venta**. MIMO permite activar la venta como una capacidad adicional para gestionar esos casos sin
-salir de la conversación.
+### 4.10 Ventas (capacidad opcional)
+El núcleo es la atención; la **venta surge de ella**. Es activable por plan y añade **lo mínimo
+para no perder oportunidades**, sin convertir MIMO en un CRM pesado:
+- **Captura de oportunidades (leads):** desde la conversación, el agente —o el propio asistente—
+  crea una oportunidad con los datos del cliente y el interés detectado.
+- **Pipeline básico por etapas:** seguimiento del avance (p. ej. *nueva → en negociación →
+  ganada / perdida*).
+- **Tareas de seguimiento:** próximos pasos asignados para que la oportunidad no se enfríe.
+- **Integrable con tu CRM:** si la organización ya usa un CRM, las oportunidades pueden
+  sincronizarse en lugar de duplicar la gestión.
+
+> Alcance deliberado: cubre el tramo **"de la conversación a la oportunidad"**; no pretende
+> reemplazar a un CRM completo.
 
 ### 4.11 Administración de la plataforma
 Un panel de administración permite operar el servicio para varias organizaciones, gestionar sus
 planes y dar seguimiento al uso de forma centralizada.
+
+### 4.12 Tareas
+Pendientes y seguimientos **asignables** a personas o equipos, **ligados a una conversación,
+ticket u oportunidad**. Con responsable, vencimiento y estado, para que ningún caso quede sin un
+siguiente paso claro.
+
+### 4.13 Flujos de trabajo (automatizaciones)
+Reglas del tipo **"cuando pasa X, haz Y"** que automatizan la operación: **etiquetar y enrutar**
+conversaciones, responder mensajes estándar, **crear tareas**, escalar por inactividad o por
+palabras clave, disparar una encuesta, etc. Reduce el trabajo manual y **estandariza** la atención.
+
+### 4.14 Campañas de comunicación
+Envíos **salientes** (proactivos) a **segmentos** de clientes por los canales habilitados:
+notificaciones, recordatorios, novedades o seguimiento. **Programables y segmentadas**, respetando
+las reglas de cada canal y las preferencias del cliente. Las respuestas **vuelven a la misma
+bandeja** para continuar la conversación.
+
+### 4.15 Acciones del asistente e integración con tus sistemas
+El asistente no solo responde con conocimiento: puede **consultar tus sistemas en tiempo real** y
+**ejecutar acciones** durante la conversación —por ejemplo, consultar el **estado de un pedido**,
+el **saldo de una cuenta** o la **disponibilidad de una cita**, o registrar una solicitud— para que
+las respuestas usen **datos reales y actualizados**, no solo información publicada. Cada acción se
+**configura y autoriza por organización**. *(El mecanismo de integración se detalla en el anexo
+técnico.)*
 
 ---
 
