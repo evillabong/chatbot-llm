@@ -34,3 +34,4 @@ decisión se revierte o cambia, se crea un ADR nuevo que marca al anterior como
 | [0012](0012-autenticacion-en-frontend-wasm-con-jwt-en-sessionstorage.md) | Autenticación en el frontend WASM: JWT en sessionStorage e inyección por handler | Aceptado |
 | [0013](0013-configuracion-self-service-del-tenant-en-mimo-api.md) | Configuración self-service del tenant en Mimo.Api | Aceptado |
 | [0014](0014-resolucion-de-tenant-en-hubs-signalr.md) | Resolución de tenant en hubs SignalR | Aceptado |
+| [0015](0015-autenticacion-por-api-key-y-api-de-integracion.md) | Autenticación por API key y superficie de integración | Aceptado |

@@ -724,6 +724,93 @@
         }
       }
     },
+    "/integration/v1/me": {
+      "get": {
+        "tags": [
+          "Integration API"
+        ],
+        "summary": "Devuelve la organización y la API key con que se autenticó la petición.",
+        "operationId": "IntegrationIdentity",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationIdentityResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integration/v1/conversations": {
+      "post": {
+        "tags": [
+          "Integration API"
+        ],
+        "summary": "Inicia (o retoma) una conversación para un usuario externo.",
+        "operationId": "IntegrationStartConversation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartConversationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integration/v1/conversations/detail": {
+      "get": {
+        "tags": [
+          "Integration API"
+        ],
+        "summary": "Obtiene el estado y los mensajes recientes de una conversación (query: id).",
+        "operationId": "IntegrationGetConversation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/conversations": {
       "post": {
         "tags": [
@@ -1890,6 +1977,29 @@
       "IKeyedServiceProvider": {
         "type": "object"
       },
+      "IntegrationIdentityResponse": {
+        "required": [
+          "tenantSlug",
+          "tenantName",
+          "plan",
+          "apiKeyName"
+        ],
+        "type": "object",
+        "properties": {
+          "tenantSlug": {
+            "type": "string"
+          },
+          "tenantName": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          },
+          "apiKeyName": {
+            "type": "string"
+          }
+        }
+      },
       "InternalMessageResponse": {
         "required": [
           "id",
@@ -2565,6 +2675,9 @@
     },
     {
       "name": "Integration"
+    },
+    {
+      "name": "Integration API"
     },
     {
       "name": "Conversations"

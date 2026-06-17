@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication;
+using Mimo.Api.Authentication;
 using Mimo.Api.Channels;
 using Mimo.Api.Endpoints;
 using Mimo.Api.Hubs;
@@ -81,7 +83,11 @@ builder.Services
                 return Task.CompletedTask;
             }
         };
-    });
+    })
+    // Esquema por API key para la superficie de interoperabilidad (cabecera X-Api-Key, ADR 0015).
+    // No es el esquema por defecto: solo lo activan los endpoints con la política Integration.
+    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
+        ApiKeyAuthenticationHandler.SchemeName, _ => { });
 
 // ── Políticas de autorización por rol ─────────────────────────────────────────
 // TenantAdmin: gestión de funcionarios, roles y administración del conocimiento.
@@ -93,6 +99,12 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy(MimoAuthorization.Policies.Agent, policy =>
         policy.RequireClaim("agent_id"));
+
+    // Interoperabilidad: autentica exclusivamente por el esquema ApiKey (no JWT) y exige que el
+    // principal provenga de una API key válida. El tenant ya quedó resuelto por la propia clave.
+    options.AddPolicy(MimoAuthorization.Policies.Integration, policy =>
+        policy.AddAuthenticationSchemes(ApiKeyAuthenticationHandler.SchemeName)
+              .RequireClaim(ApiKeyAuthenticationHandler.Claims.AuthMethod, ApiKeyAuthenticationHandler.Claims.ApiKeyValue));
 });
 
 // ── CORS ───────────────────────────────────────────────────────────────────────
@@ -188,6 +200,7 @@ app.MapRoleEndpoints();
 app.MapDocumentEndpoints();
 app.MapTenantConfigurationEndpoints();
 app.MapIntegrationEndpoints();
+app.MapIntegrationApiEndpoints();
 app.MapConversationEndpoints();
 app.MapTicketEndpoints();
 app.MapInternalChatEndpoints();

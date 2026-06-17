@@ -39,5 +39,12 @@ public static class MimoAuthorization
         /// Requiere el rol SuperAdmin. Única política de Mimo.Admin.Api.
         /// </summary>
         public const string SuperAdmin = "SuperAdmin";
+
+        /// <summary>
+        /// Superficie de interoperabilidad: el llamante se autentica con una API key del tenant
+        /// (cabecera dedicada), no con el JWT de usuario. El tenant se resuelve a partir de la key
+        /// (ver ADR 0015). Aplica a los endpoints públicos de integración (/integration/v1/*).
+        /// </summary>
+        public const string Integration = "Integration";
     }
 }
