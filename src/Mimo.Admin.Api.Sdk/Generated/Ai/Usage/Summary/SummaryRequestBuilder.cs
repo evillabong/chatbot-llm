@@ -3,6 +3,7 @@
 using Microsoft.Kiota.Abstractions.Extensions;
 using Microsoft.Kiota.Abstractions.Serialization;
 using Microsoft.Kiota.Abstractions;
+using Mimo.Admin.Api.Sdk.Models;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -35,20 +36,21 @@ namespace Mimo.Admin.Api.Sdk.Ai.Usage.Summary
         /// <summary>
         /// Resume el uso de IA por tenant en un periodo (query: from, to, tenantId; por defecto el mes actual).
         /// </summary>
-        /// <returns>A <see cref="Stream"/></returns>
+        /// <returns>A List&lt;global::Mimo.Admin.Api.Sdk.Models.AiUsageSummaryResponse&gt;</returns>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<Stream?> GetAsync(Action<RequestConfiguration<global::Mimo.Admin.Api.Sdk.Ai.Usage.Summary.SummaryRequestBuilder.SummaryRequestBuilderGetQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<List<global::Mimo.Admin.Api.Sdk.Models.AiUsageSummaryResponse>?> GetAsync(Action<RequestConfiguration<global::Mimo.Admin.Api.Sdk.Ai.Usage.Summary.SummaryRequestBuilder.SummaryRequestBuilderGetQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<Stream> GetAsync(Action<RequestConfiguration<global::Mimo.Admin.Api.Sdk.Ai.Usage.Summary.SummaryRequestBuilder.SummaryRequestBuilderGetQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<List<global::Mimo.Admin.Api.Sdk.Models.AiUsageSummaryResponse>> GetAsync(Action<RequestConfiguration<global::Mimo.Admin.Api.Sdk.Ai.Usage.Summary.SummaryRequestBuilder.SummaryRequestBuilderGetQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             var requestInfo = ToGetRequestInformation(requestConfiguration);
-            return await RequestAdapter.SendPrimitiveAsync<Stream>(requestInfo, default, cancellationToken).ConfigureAwait(false);
+            var collectionResult = await RequestAdapter.SendCollectionAsync<global::Mimo.Admin.Api.Sdk.Models.AiUsageSummaryResponse>(requestInfo, global::Mimo.Admin.Api.Sdk.Models.AiUsageSummaryResponse.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
+            return collectionResult?.AsList();
         }
         /// <summary>
         /// Resume el uso de IA por tenant en un periodo (query: from, to, tenantId; por defecto el mes actual).
@@ -66,6 +68,7 @@ namespace Mimo.Admin.Api.Sdk.Ai.Usage.Summary
 #endif
             var requestInfo = new RequestInformation(Method.GET, UrlTemplate, PathParameters);
             requestInfo.Configure(requestConfiguration);
+            requestInfo.Headers.TryAdd("Accept", "application/json");
             return requestInfo;
         }
         /// <summary>

@@ -17,7 +17,9 @@ public static class AiUsageEndpoints
 
         group.MapGet("/summary", SummaryAsync)
             .WithName("GetAiUsageSummary")
-            .WithSummary("Resume el uso de IA por tenant en un periodo (query: from, to, tenantId; por defecto el mes actual).");
+            .WithSummary("Resume el uso de IA por tenant en un periodo (query: from, to, tenantId; por defecto el mes actual).")
+            .Produces<List<AiUsageSummaryResponse>>()
+            .Produces(StatusCodes.Status400BadRequest);
 
         return app;
     }

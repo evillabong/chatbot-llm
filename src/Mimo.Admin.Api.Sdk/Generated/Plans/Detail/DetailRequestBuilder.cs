@@ -3,6 +3,7 @@
 using Microsoft.Kiota.Abstractions.Extensions;
 using Microsoft.Kiota.Abstractions.Serialization;
 using Microsoft.Kiota.Abstractions;
+using Mimo.Admin.Api.Sdk.Models;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -35,20 +36,20 @@ namespace Mimo.Admin.Api.Sdk.Plans.Detail
         /// <summary>
         /// Obtiene un plan por código (query: code).
         /// </summary>
-        /// <returns>A <see cref="Stream"/></returns>
+        /// <returns>A <see cref="global::Mimo.Admin.Api.Sdk.Models.PlanResponse"/></returns>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<Stream?> GetAsync(Action<RequestConfiguration<global::Mimo.Admin.Api.Sdk.Plans.Detail.DetailRequestBuilder.DetailRequestBuilderGetQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.Admin.Api.Sdk.Models.PlanResponse?> GetAsync(Action<RequestConfiguration<global::Mimo.Admin.Api.Sdk.Plans.Detail.DetailRequestBuilder.DetailRequestBuilderGetQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<Stream> GetAsync(Action<RequestConfiguration<global::Mimo.Admin.Api.Sdk.Plans.Detail.DetailRequestBuilder.DetailRequestBuilderGetQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.Admin.Api.Sdk.Models.PlanResponse> GetAsync(Action<RequestConfiguration<global::Mimo.Admin.Api.Sdk.Plans.Detail.DetailRequestBuilder.DetailRequestBuilderGetQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             var requestInfo = ToGetRequestInformation(requestConfiguration);
-            return await RequestAdapter.SendPrimitiveAsync<Stream>(requestInfo, default, cancellationToken).ConfigureAwait(false);
+            return await RequestAdapter.SendAsync<global::Mimo.Admin.Api.Sdk.Models.PlanResponse>(requestInfo, global::Mimo.Admin.Api.Sdk.Models.PlanResponse.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
         /// Obtiene un plan por código (query: code).
@@ -66,6 +67,7 @@ namespace Mimo.Admin.Api.Sdk.Plans.Detail
 #endif
             var requestInfo = new RequestInformation(Method.GET, UrlTemplate, PathParameters);
             requestInfo.Configure(requestConfiguration);
+            requestInfo.Headers.TryAdd("Accept", "application/json");
             return requestInfo;
         }
         /// <summary>

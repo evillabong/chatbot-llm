@@ -1,0 +1,203 @@
+@page "/planes"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.Kiota.Abstractions
+@inject PlansService Plans
+
+<PageTitle>Planes · Administración</PageTitle>
+
+<MimoPageHeader Title="Planes"
+                Description="Catálogo de planes de la plataforma.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nuevo plan</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_plans.Count == 0)" EmptyText="Aún no hay planes.">
+    <Header>
+        <MimoTh>Código</MimoTh>
+        <MimoTh>Nombre</MimoTh>
+        <MimoTh>Descripción</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var p in _plans)
+        {
+            <MimoTr>
+                <MimoTd><MimoBadge Variant="MimoBadgeVariant.Info">@p.Code</MimoBadge></MimoTd>
+                <MimoTd>@p.Name</MimoTd>
+                <MimoTd>
+                    @if (!string.IsNullOrWhiteSpace(p.Description)) { @p.Description }
+                    else { <MimoText Muted Small>—</MimoText> }
+                </MimoTd>
+                <MimoTd>
+                    @if (p.IsActive == true) { <MimoBadge Variant="MimoBadgeVariant.Success">Activo</MimoBadge> }
+                    else { <MimoBadge Variant="MimoBadgeVariant.Neutral">Inactivo</MimoBadge> }
+                </MimoTd>
+                <MimoTd AlignRight="true">
+                    <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(p)">Editar</MimoButton>
+                        @if (p.IsActive == true)
+                        {
+                            <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDeactivate(p)">Desactivar</MimoButton>
+                        }
+                    </MimoActions>
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+<MimoModal @bind-Show="_showForm" Title="@(_editingCode is null ? "Nuevo plan" : "Editar plan")">
+    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+        @if (_editingCode is null)
+        {
+            <MimoTextField Label="Código" @bind-Value="_form.Code" Placeholder="free / pro / enterprise"
+                           HelperText="Solo minúsculas, números y guiones." Required="true" />
+        }
+        else
+        {
+            <MimoFormGroup Label="Código"><MimoText>@_editingCode</MimoText></MimoFormGroup>
+        }
+        <MimoTextField Label="Nombre" @bind-Value="_form.Name" Required="true" />
+        <MimoTextArea Label="Descripción" @bind-Value="_form.Description" Rows="2" />
+        @if (_editingCode is not null)
+        {
+            <MimoFormGroup>
+                <MimoCheckbox Label="Activo" @bind-Checked="_form.IsActive" />
+            </MimoFormGroup>
+        }
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" Loading="_saving">Guardar</MimoButton>
+        </MimoActions>
+    </EditForm>
+</MimoModal>
+
+<MimoModal @bind-Show="_showDeactivate" Title="Desactivar plan" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Seguro que deseas desactivar el plan @_deactivateTarget?.Name?</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showDeactivate = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmDeactivateAsync">Desactivar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<PlanResponse> _plans = [];
+    private bool _loading = true;
+    private string? _pageError;
+
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private string? _editingCode;
+    private readonly PlanForm _form = new();
+
+    private bool _showDeactivate;
+    private PlanResponse? _deactivateTarget;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try { _plans = await Plans.ListAsync(); }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+    }
+
+    private void OpenCreate()
+    {
+        _editingCode = null;
+        _form.Reset();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private void OpenEdit(PlanResponse p)
+    {
+        _editingCode = p.Code;
+        _form.Code = p.Code ?? "";
+        _form.Name = p.Name ?? "";
+        _form.Description = p.Description ?? "";
+        _form.IsActive = p.IsActive ?? true;
+        _formError = null;
+        _showForm = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _formError = null;
+        var description = string.IsNullOrWhiteSpace(_form.Description) ? null : _form.Description;
+        try
+        {
+            if (_editingCode is null)
+                await Plans.CreateAsync(new CreatePlanRequest { Code = _form.Code, Name = _form.Name, Description = description });
+            else
+                await Plans.UpdateAsync(_editingCode, new UpdatePlanRequest { Name = _form.Name, Description = description, IsActive = _form.IsActive });
+            _showForm = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _formError = Describe(ex); }
+        finally { _saving = false; }
+    }
+
+    private void OpenDeactivate(PlanResponse p)
+    {
+        _deactivateTarget = p;
+        _showDeactivate = true;
+    }
+
+    private async Task ConfirmDeactivateAsync()
+    {
+        if (_deactivateTarget?.Code is null) return;
+        _saving = true;
+        try
+        {
+            await Plans.DeactivateAsync(_deactivateTarget.Code);
+            _showDeactivate = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); _showDeactivate = false; }
+        finally { _saving = false; }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 409 } => "Ya existe un plan con ese código.",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class PlanForm
+    {
+        [Required(ErrorMessage = "Indica el código.")]
+        [RegularExpression(@"^[a-z0-9\-]+$", ErrorMessage = "Solo minúsculas, números y guiones.")]
+        public string Code { get; set; } = "";
+        [Required(ErrorMessage = "Indica el nombre.")]
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public bool IsActive { get; set; } = true;
+
+        public void Reset() { Code = ""; Name = ""; Description = ""; IsActive = true; }
+    }
+}

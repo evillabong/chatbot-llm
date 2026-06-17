@@ -18,19 +18,24 @@ public static class PlanEndpoints
             .RequireAuthorization(MimoAuthorization.Policies.SuperAdmin);
 
         group.MapGet("/", ListAsync)
-            .WithName("ListPlans").WithSummary("Lista los planes del catálogo.");
+            .WithName("ListPlans").WithSummary("Lista los planes del catálogo.")
+            .Produces<List<PlanResponse>>();
 
         group.MapGet("/detail", GetAsync)
-            .WithName("GetPlan").WithSummary("Obtiene un plan por código (query: code).");
+            .WithName("GetPlan").WithSummary("Obtiene un plan por código (query: code).")
+            .Produces<PlanResponse>().Produces(StatusCodes.Status404NotFound);
 
         group.MapPost("/", CreateAsync)
-            .WithName("CreatePlan").WithSummary("Crea un plan en el catálogo.");
+            .WithName("CreatePlan").WithSummary("Crea un plan en el catálogo.")
+            .Produces<PlanResponse>(StatusCodes.Status201Created).Produces(StatusCodes.Status409Conflict);
 
         group.MapPut("/", UpdateAsync)
-            .WithName("UpdatePlan").WithSummary("Actualiza nombre, descripción y estado de un plan (query: code).");
+            .WithName("UpdatePlan").WithSummary("Actualiza nombre, descripción y estado de un plan (query: code).")
+            .Produces<PlanResponse>().Produces(StatusCodes.Status404NotFound);
 
         group.MapDelete("/", DeactivateAsync)
-            .WithName("DeactivatePlan").WithSummary("Desactiva un plan / borrado lógico (query: code).");
+            .WithName("DeactivatePlan").WithSummary("Desactiva un plan / borrado lógico (query: code).")
+            .Produces(StatusCodes.Status204NoContent).Produces(StatusCodes.Status404NotFound);
 
         return app;
     }

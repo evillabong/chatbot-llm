@@ -1,0 +1,79 @@
+@page "/uso"
+@attribute [Authorize]
+@using Microsoft.Kiota.Abstractions
+@inject UsageService Usage
+@inject TenantsService TenantsApi
+
+<PageTitle>Uso de IA · Administración</PageTitle>
+
+<MimoPageHeader Title="Uso de IA"
+                Description="Consumo de IA por organización en el mes actual." >
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="LoadAsync">Actualizar</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_rows.Count == 0)" EmptyText="Sin consumo registrado en el periodo.">
+    <Header>
+        <MimoTh>Organización</MimoTh>
+        <MimoTh>Solicitudes</MimoTh>
+        <MimoTh>Tokens (prompt)</MimoTh>
+        <MimoTh>Tokens (respuesta)</MimoTh>
+        <MimoTh>Tokens (total)</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var r in _rows)
+        {
+            <MimoTr>
+                <MimoTd>@TenantName(r.TenantId)</MimoTd>
+                <MimoTd>@r.Requests</MimoTd>
+                <MimoTd>@r.PromptTokens</MimoTd>
+                <MimoTd>@r.CompletionTokens</MimoTd>
+                <MimoTd>@r.TotalTokens</MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+@code {
+    private List<AiUsageSummaryResponse> _rows = [];
+    private Dictionary<Guid, string> _tenantNames = [];
+    private bool _loading = true;
+    private string? _pageError;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try
+        {
+            _rows = await Usage.SummaryAsync();
+            var paged = await TenantsApi.ListAsync(pageSize: 200);
+            _tenantNames = (paged?.Items ?? [])
+                .Where(t => t.Id is not null)
+                .ToDictionary(t => t.Id!.Value, t => t.Name ?? t.Slug ?? "");
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+    }
+
+    private string TenantName(Guid? id) =>
+        id is not null && _tenantNames.TryGetValue(id.Value, out var name) && !string.IsNullOrEmpty(name)
+            ? name
+            : id?.ToString() ?? "—";
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+}
