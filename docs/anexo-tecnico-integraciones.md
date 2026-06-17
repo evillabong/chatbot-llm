@@ -117,6 +117,31 @@ organización y aislado.
 - **Sincronización opcional con CRM externo** vía su API (salida) cuando la organización ya opera
   un CRM; evita duplicar la gestión.
 
+## 6.bis. Interoperabilidad (API de integración, API keys, webhooks salientes) — ▹
+
+Superficie de integración **por organización** para que sus sistemas (ERP, CRM, e-commerce,
+portal) se conecten. Gestionada por el `TenantAdmin` desde `Mimo.App`; aislada por tenant.
+
+- **API de integración:** endpoints publicados (subconjunto curado: iniciar/consultar
+  conversaciones, tickets, publicar conocimiento…). Autenticación por **API key** (cabecera
+  dedicada), **no** por el JWT de usuario. El tenant se resuelve a partir de la API key, no por
+  `X-Tenant-Slug`. Documentación vía OpenAPI dedicado de esa superficie.
+- **Gestión de API keys:**
+  - Se **genera y se muestra una sola vez**; en BD se guarda solo un **hash** (mismo criterio que
+    las contraseñas, [ADR 0010](adr/0010-cifrado-de-api-keys-de-conectores-de-ia.md) y el hasher
+    PBKDF2 existente), nunca la clave en claro.
+  - Atributos: nombre, **scopes/permisos**, fecha de creación, **último uso**, estado.
+  - **Revocación** y rotación inmediatas. Aislada por tenant.
+- **Webhooks salientes (suscripción a eventos):**
+  - El tenant registra **URLs** y se suscribe a eventos (`conversation.created`, `ticket.assigned`,
+    `ticket.resolved`, `survey.recorded`, …).
+  - Entrega **firmada (HMAC con secreto por suscripción)**, con **reintentos** (backoff) y
+    **bitácora** de entregas.
+  - **Distinto** de los webhooks *entrantes* de canales (`/webhooks/incoming`, §3): aquí la
+    plataforma es el emisor hacia los sistemas del cliente.
+- **Estado:** diseño/roadmap. Al implementarse requiere su propio ADR (autenticación por API key,
+  modelo de eventos y entrega de webhooks).
+
 ## 7. Seguridad e identidad (resumen)
 
 - Autenticación por **JWT**; autorización por rol; el tenant se **liga al token**
@@ -142,6 +167,7 @@ organización y aislado.
 | Agentes de IA por rol/atención + servidores MCP externos | ▹ diseño |
 | Flujos de trabajo / Campañas / Tareas | ▹ roadmap |
 | Ventas (leads + pipeline) e integración con CRM | ▹ roadmap |
+| Interoperabilidad (API de integración + API keys + webhooks salientes) | ▹ diseño |
 | Mejora continua (aprende con el uso) | ▹ ver [vision-mejora-continua.md](vision-mejora-continua.md) |
 
 > Este panorama debe mantenerse al día conforme avanza el producto; es la referencia para

@@ -97,6 +97,10 @@ CHATBOT/AI CRM
 │  ├─ Horarios de atención                  # Cuándo atiende el equipo y mensajes fuera de horario
 │  ├─ Reglas de asignación y encuestas      # Cómo se reparten los casos y cómo se evalúan
 │  └─ Personalización del chat              # Marca, color y mensaje de bienvenida
+├─ Interoperabilidad ▹                      # Conecta tus sistemas con la plataforma
+│  ├─ API de integración                    # Endpoints publicados para que tus sistemas consuman/registren
+│  ├─ Claves de API (API keys)              # Genera, administra y revoca credenciales de integración
+│  └─ Webhooks de eventos                    # Notifica a tus sistemas cuando algo ocurre (ticket, encuesta…)
 ├─ Administración de la plataforma          # Operación centralizada para varias organizaciones
 │  ├─ Organizaciones                        # Alta y gestión de cada cliente
 │  ├─ Planes y capacidades                  # Qué funciones y volúmenes habilita cada plan
@@ -228,6 +232,20 @@ Para el modo IA, la organización puede ir más allá de un único asistente:
 
 > Resultado: una IA **a la medida de cada atención**, que crece conectando nuevas capacidades sin
 > rehacer la plataforma. *(Detalle de integración en el anexo técnico.)*
+
+### 4.18 Interoperabilidad (conecta tus sistemas)
+Para que la plataforma **no sea una isla**, la organización dispone de un módulo de integración:
+- **API de integración:** un conjunto de **endpoints publicados** para que tus sistemas (ERP, CRM,
+  e-commerce, portal…) consulten o registren información —por ejemplo, iniciar una conversación,
+  consultar tickets o publicar conocimiento— de forma segura.
+- **Claves de API (API keys):** una sección para **generar, nombrar, administrar y revocar** las
+  credenciales que autentican a tus sistemas, con control de permisos y trazabilidad de uso. La
+  clave se muestra **una sola vez** al crearse.
+- **Webhooks de eventos:** registra URLs para que la plataforma **avise a tus sistemas** cuando
+  ocurre algo relevante (nuevo ticket, asignación, resolución, encuesta…), con entrega confiable.
+
+Todo es **autogestionable por organización** y aislado: cada cliente administra sus propias claves
+y suscripciones. *(El detalle técnico vive en el anexo.)*
 
 ---
 
