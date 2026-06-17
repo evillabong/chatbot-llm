@@ -23,7 +23,9 @@ public static class SurveyEndpoints
 
         group.MapGet("/", GetSurveyAsync)
             .WithName("GetSurvey")
-            .WithSummary("Obtiene la encuesta registrada de una conversación (query: conversationId).");
+            .WithSummary("Obtiene la encuesta registrada de una conversación (query: conversationId).")
+            .Produces<SurveyResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         return app;
     }

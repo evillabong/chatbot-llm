@@ -93,6 +93,13 @@
                 </MimoActions>
             </MimoBar>
 
+            @if (_survey is not null)
+            {
+                <MimoBar>
+                    <MimoText Small>Satisfacción: @Stars(_survey.Rating) (@(_survey.Rating)/5)@(string.IsNullOrWhiteSpace(_survey.Observations) ? "" : $" — {_survey.Observations}")</MimoText>
+                </MimoBar>
+            }
+
             <MimoScroll Muted Padded>
                 @if (_convLoading)
                 {
@@ -164,6 +171,7 @@
 
     private TicketResponse? _selected;
     private ConversationResponse? _conversation;
+    private SurveyResponse? _survey;
     private readonly List<ChatLine> _lines = [];
     private bool _convLoading;
     private bool _acting;
@@ -223,6 +231,7 @@
     {
         _selected = t;
         _conversation = null;
+        _survey = null;
         _lines.Clear();
         if (t.ConversationId is null) return;
 
@@ -233,6 +242,9 @@
             if (_conversation?.Messages is { } msgs)
                 _lines.AddRange(msgs.Select(m =>
                     new ChatLine(m.Role ?? 0, m.Content ?? "", Fmt(m.CreatedAt))));
+
+            if (CanHaveSurvey(t.Status))
+                _survey = await Console.SurveyAsync(t.ConversationId.Value);
 
             if (_live)
                 await Hub.OpenConversationAsync(t.ConversationId.Value);
@@ -336,6 +348,13 @@
     private static bool CanResolve(int? status)  => status is 2 or 3 or 8;
     private static bool CanClose(int? status)    => status is 2 or 3 or 5 or 8;
     private static bool CanTransfer(int? status) => status is 1 or 2 or 3 or 8;
+    private static bool CanHaveSurvey(int? status) => status is 5 or 6 or 7 or 8; // Resolved/Survey/Closed/Reopened
+
+    private static string Stars(int? rating)
+    {
+        var n = Math.Clamp(rating ?? 0, 0, 5);
+        return new string('★', n) + new string('☆', 5 - n);
+    }
 
     private static MimoChatBubbleVariant BubbleVariant(int? role) => role switch
     {

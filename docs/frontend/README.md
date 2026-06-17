@@ -188,8 +188,11 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
     `InternalChatService`; recepción en vivo por `TicketHub` (`InternalMessage`), con auto-unión al
     grupo `agent:{id}` al conectar. Se abrió la **lectura de `/agents` a agentes** (escritura sigue
     TenantAdmin) para listar colegas.
-  - **Pendiente (corte 3 restante):** encuesta de satisfacción en la consola; CORS para SignalR en
-    producción (pendiente #5).
+  - **Encuesta de satisfacción: hecho.** La consola muestra la calificación (★) y observaciones del
+    ticket resuelto/cerrado (`GET /conversations/survey`).
+  - **Fase C completa** (inbox, triage, mensajería en vivo, transferencias, cola en vivo, chat
+    interno y encuesta). Pendiente transversal: verificación de eventos SignalR en navegador y CORS
+    para SignalR en producción (pendiente #5).
 - **Fase D — `Mimo.Admin.App` (SuperAdmin):** tenants, planes, conectores de IA, uso.
 - **Fase E — WebChat embebible** (ciudadano).
 

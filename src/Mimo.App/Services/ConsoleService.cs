@@ -1,3 +1,4 @@
+using Microsoft.Kiota.Abstractions;
 using Mimo.Api.Sdk;
 using Mimo.Api.Sdk.Models;
 using Mimo.Api.Sdk.Tickets.Resolve;
@@ -34,6 +35,18 @@ public sealed class ConsoleService(MimoApiClient api)
 
     public Task<TicketResponse?> CloseAsync(Guid ticketId, CancellationToken ct = default) =>
         api.Tickets.Close.PostAsync(rc => rc.QueryParameters.Id = ticketId, ct);
+
+    public async Task<SurveyResponse?> SurveyAsync(Guid conversationId, CancellationToken ct = default)
+    {
+        try
+        {
+            return await api.Conversations.Survey.GetAsync(rc => rc.QueryParameters.ConversationId = conversationId, ct);
+        }
+        catch (ApiException ex) when (ex.ResponseStatusCode == 404)
+        {
+            return null; // la conversación aún no tiene encuesta
+        }
+    }
 
     public Task<TransferTicketResponse?> TransferAsync(
         Guid ticketId, Guid toRoleId, Guid? toAgentId, string? reason, CancellationToken ct = default) =>
