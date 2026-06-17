@@ -1055,7 +1055,17 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferTicketResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -2120,6 +2130,22 @@
           },
           "isPartial": {
             "type": "boolean"
+          }
+        }
+      },
+      "TransferTicketResponse": {
+        "required": [
+          "newTicketId",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "newTicketId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "message": {
+            "type": "string"
           }
         }
       },

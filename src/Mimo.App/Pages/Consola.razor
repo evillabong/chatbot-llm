@@ -4,6 +4,7 @@
 @using Microsoft.Kiota.Abstractions
 @inject ConsoleService Console
 @inject ConsoleHubClient Hub
+@inject RolesService RolesApi
 
 <PageTitle>Consola · MIMO</PageTitle>
 
@@ -81,6 +82,10 @@
                     {
                         <MimoButton Variant="MimoButtonVariant.Secondary" Loading="_acting" OnClick="ResolveAsync">Resolver</MimoButton>
                     }
+                    @if (CanTransfer(_selected.Status))
+                    {
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="OpenTransfer">Transferir</MimoButton>
+                    }
                     @if (CanClose(_selected.Status))
                     {
                         <MimoButton Variant="MimoButtonVariant.Danger" Loading="_acting" OnClick="CloseAsync">Cerrar</MimoButton>
@@ -122,6 +127,27 @@
     </ChildContent>
 </MimoSplitPane>
 
+<MimoModal @bind-Show="_showTransfer" Title="Transferir ticket" Size="MimoModalSize.Small">
+    <ChildContent>
+        @if (_transferError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_transferError" />
+        }
+        <MimoSelect Label="Transferir al rol" @bind-Value="_transferRoleId" Options="_roleOptions" Placeholder="Selecciona un rol" />
+        <MimoTextField Label="Motivo" @bind-Value="_transferReason" Placeholder="Opcional" />
+        <MimoText Small Muted>Se reasigna automáticamente a un funcionario disponible del rol destino.</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showTransfer = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Primary" Loading="_transferring"
+                        Disabled="@string.IsNullOrEmpty(_transferRoleId)" OnClick="ConfirmTransferAsync">
+                Transferir
+            </MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
 @code {
     private static readonly IReadOnlyList<MimoTab> _tabs =
     [
@@ -144,10 +170,24 @@
     private string _reply = "";
     private string? _pageError;
 
+    private bool _showTransfer;
+    private string _transferRoleId = "";
+    private string _transferReason = "";
+    private bool _transferring;
+    private string? _transferError;
+    private IReadOnlyList<MimoSelectOption> _roleOptions = [];
+
     protected override async Task OnInitializedAsync()
     {
         Hub.MessageReceived += OnHubMessage;
         await RefreshAsync();
+        try
+        {
+            var roles = await RolesApi.ListAsync(isActive: true);
+            _roleOptions = roles.Where(r => r.Id is not null)
+                .Select(r => new MimoSelectOption(r.Id!.Value.ToString(), r.Name ?? "")).ToList();
+        }
+        catch { /* el desplegable de transferencia queda vacío si falla */ }
         try { await Hub.StartAsync(); }
         catch { /* la consola funciona sin tiempo real; el badge lo refleja */ }
         _live = Hub.IsConnected;
@@ -227,6 +267,34 @@
         finally { _acting = false; }
     }
 
+    private void OpenTransfer()
+    {
+        _transferRoleId = "";
+        _transferReason = "";
+        _transferError = null;
+        _showTransfer = true;
+    }
+
+    private async Task ConfirmTransferAsync()
+    {
+        if (_selected?.Id is null || !Guid.TryParse(_transferRoleId, out var roleId)) return;
+        _transferring = true;
+        _transferError = null;
+        try
+        {
+            await Console.TransferAsync(_selected.Id.Value, roleId, null,
+                string.IsNullOrWhiteSpace(_transferReason) ? null : _transferReason);
+            _showTransfer = false;
+            // El ticket original se cierra y se crea uno nuevo en el rol destino; limpiar selección.
+            _selected = null;
+            _conversation = null;
+            _lines.Clear();
+            await RefreshAsync();
+        }
+        catch (Exception ex) { _transferError = Describe(ex); }
+        finally { _transferring = false; }
+    }
+
     public void Dispose() => Hub.MessageReceived -= OnHubMessage;
 
     private static string Fmt(DateTimeOffset? dt) => (dt ?? DateTimeOffset.UtcNow).ToLocalTime().ToString("dd/MM HH:mm");
@@ -236,8 +304,9 @@
 
     // ── Mapeos de presentación (enums como int) ────────────────────────────────
 
-    private static bool CanResolve(int? status) => status is 2 or 3 or 8;
-    private static bool CanClose(int? status)   => status is 2 or 3 or 5 or 8;
+    private static bool CanResolve(int? status)  => status is 2 or 3 or 8;
+    private static bool CanClose(int? status)    => status is 2 or 3 or 5 or 8;
+    private static bool CanTransfer(int? status) => status is 1 or 2 or 3 or 8;
 
     private static MimoChatBubbleVariant BubbleVariant(int? role) => role switch
     {

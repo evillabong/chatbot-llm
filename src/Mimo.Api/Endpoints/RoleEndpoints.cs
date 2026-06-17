@@ -14,9 +14,11 @@ public static class RoleEndpoints
 {
     public static IEndpointRouteBuilder MapRoleEndpoints(this IEndpointRouteBuilder app)
     {
+        // Lectura para cualquier funcionario (los agentes necesitan ver roles, p. ej. para
+        // transferir tickets); la administración (crear/editar/desactivar) exige TenantAdmin.
         var group = app.MapGroup("/roles")
             .WithTags("Roles")
-            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
+            .RequireAuthorization(MimoAuthorization.Policies.Agent);
 
         group.MapGet("/", ListRolesAsync)
             .WithName("ListRoles")
@@ -32,18 +34,21 @@ public static class RoleEndpoints
         group.MapPost("/", CreateRoleAsync)
             .WithName("CreateRole")
             .WithSummary("Crea un nuevo rol/departamento.")
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin)
             .Produces<RoleResponse>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status409Conflict);
 
         group.MapPut("/", UpdateRoleAsync)
             .WithName("UpdateRole")
             .WithSummary("Actualiza los datos de un rol (query: id).")
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin)
             .Produces<RoleResponse>()
             .Produces(StatusCodes.Status404NotFound);
 
         group.MapDelete("/", DeactivateRoleAsync)
             .WithName("DeactivateRole")
             .WithSummary("Desactiva un rol / borrado lógico (query: id).")
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin)
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound);
 

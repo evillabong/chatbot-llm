@@ -74,7 +74,9 @@ public static class TicketEndpoints
         // POST /tickets/transfer?id=
         group.MapPost("/transfer", TransferTicketAsync)
             .WithName("TransferTicket")
-            .WithSummary("Transfiere el ticket a otro rol o funcionario (query: id).");
+            .WithSummary("Transfiere el ticket a otro rol o funcionario (query: id).")
+            .Produces<TransferTicketResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         // PATCH /tickets/notes?id=
         group.MapPatch("/notes", UpdateNotesAsync)
@@ -280,7 +282,7 @@ public static class TicketEndpoints
         await hub.Clients.Group($"role:{request.ToRoleId}")
             .SendAsync("TicketEnqueued", new { ticketId = newTicket.Id }, ct);
 
-        return Results.Ok(new { message = "Ticket transferido.", newTicketId = newTicket.Id });
+        return Results.Ok(new TransferTicketResponse(newTicket.Id, "Ticket transferido."));
     }
 
     private static async Task<IResult> UpdateNotesAsync(

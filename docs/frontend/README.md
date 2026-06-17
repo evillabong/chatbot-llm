@@ -177,8 +177,12 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
     (`SendMessageToCitizen`), con `ConsoleHubClient` (`Microsoft.AspNetCore.SignalR.Client`,
     token por `access_token`). Indicador "En vivo". Prerrequisito de backend: `TenantHubFilter`
     fija el `search_path` por invocación de hub ([ADR 0014](../adr/0014-resolucion-de-tenant-en-hubs-signalr.md)).
-  - **Pendiente (corte 3):** notificación de cola en vivo (`TicketEnqueued`/`TicketAssigned`/
-    `TicketResolved`, requiere IDs de rol del agente), transferencias, chat interno y encuesta;
+  - **Transferencias: hecho.** Modal en la consola para transferir el ticket a otro rol (con
+    motivo); reasignación automática a un funcionario del rol destino. Se tipó `/tickets/transfer`
+    (`TransferTicketResponse`) y se abrió la **lectura de `/roles` a agentes** (escritura sigue
+    siendo TenantAdmin) para poblar el desplegable.
+  - **Pendiente (corte 3 restante):** notificación de cola en vivo (`TicketEnqueued`/
+    `TicketAssigned`/`TicketResolved`, requiere IDs de rol del agente), chat interno y encuesta;
     CORS para SignalR en producción (pendiente #5).
 - **Fase D — `Mimo.Admin.App` (SuperAdmin):** tenants, planes, conectores de IA, uso.
 - **Fase E — WebChat embebible** (ciudadano).

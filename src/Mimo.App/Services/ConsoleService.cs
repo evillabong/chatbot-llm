@@ -34,4 +34,10 @@ public sealed class ConsoleService(MimoApiClient api)
 
     public Task<TicketResponse?> CloseAsync(Guid ticketId, CancellationToken ct = default) =>
         api.Tickets.Close.PostAsync(rc => rc.QueryParameters.Id = ticketId, ct);
+
+    public Task<TransferTicketResponse?> TransferAsync(
+        Guid ticketId, Guid toRoleId, Guid? toAgentId, string? reason, CancellationToken ct = default) =>
+        api.Tickets.Transfer.PostAsync(
+            new TransferTicketRequest { ToRoleId = toRoleId, ToAgentId = toAgentId, Reason = reason, IsPartial = false },
+            rc => rc.QueryParameters.Id = ticketId, ct);
 }
