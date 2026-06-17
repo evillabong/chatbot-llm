@@ -1,0 +1,29 @@
+@inherits LayoutComponentBase
+@inject AuthService Auth
+@inject NavigationManager Navigation
+
+<MimoShell Brand="CHATBOT/AI CRM" Subtitle="Administración">
+    <Nav>
+        <MimoNavLink Href="" Match="NavLinkMatch.All">Inicio</MimoNavLink>
+        <MimoNavLink Href="tenants">Organizaciones</MimoNavLink>
+    </Nav>
+    <Actions>
+        <AuthorizeView>
+            <Authorized>
+                <MimoText Muted Small>@context.User.Identity?.Name</MimoText>
+                <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="LogoutAsync">Salir</MimoButton>
+            </Authorized>
+        </AuthorizeView>
+    </Actions>
+    <ChildContent>
+        @Body
+    </ChildContent>
+</MimoShell>
+
+@code {
+    private async Task LogoutAsync()
+    {
+        await Auth.LogoutAsync();
+        Navigation.NavigateTo("login");
+    }
+}

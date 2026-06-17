@@ -48,6 +48,15 @@ Regenera el cliente Kiota [`Mimo.Api.Sdk`](../src/Mimo.Api.Sdk) desde el OpenAPI
 .\scripts\generate-apiclient.ps1
 ```
 
+## `generate-admin-apiclient.ps1`
+
+Igual que el anterior pero para la **admin API**: regenera [`Mimo.Admin.Api.Sdk`](../src/Mimo.Admin.Api.Sdk)
+(namespace `Mimo.Admin.Api.Sdk`, clase `MimoAdminApiClient`) desde el OpenAPI de `Mimo.Admin.Api`.
+
+```powershell
+.\scripts\generate-admin-apiclient.ps1
+```
+
 ## Configuración de Producción (una sola vez, fuera del repo)
 
 El despliegue **no** incluye secretos. La cadena de conexión y `Jwt:Key` se definen en un

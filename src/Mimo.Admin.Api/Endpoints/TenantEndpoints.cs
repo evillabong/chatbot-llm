@@ -22,27 +22,37 @@ public static class TenantEndpoints
         // GET /tenants
         group.MapGet("/", ListTenantsAsync)
             .WithName("ListTenants")
-            .WithSummary("Lista todos los tenants con paginación opcional.");
+            .WithSummary("Lista todos los tenants con paginación opcional.")
+            .Produces<PagedResult<TenantResponse>>();
 
         // GET /tenants/detail?id=
         group.MapGet("/detail", GetTenantAsync)
             .WithName("GetTenant")
-            .WithSummary("Obtiene un tenant por su ID (query: id).");
+            .WithSummary("Obtiene un tenant por su ID (query: id).")
+            .Produces<TenantResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         // POST /tenants
         group.MapPost("/", CreateTenantAsync)
             .WithName("CreateTenant")
-            .WithSummary("Registra un nuevo tenant y aprovisiona su esquema en la BD.");
+            .WithSummary("Registra un nuevo tenant y aprovisiona su esquema en la BD.")
+            .Produces<TenantResponse>(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status409Conflict);
 
         // PUT /tenants?id=
         group.MapPut("/", UpdateTenantAsync)
             .WithName("UpdateTenant")
-            .WithSummary("Actualiza nombre, plan y estado activo de un tenant (query: id).");
+            .WithSummary("Actualiza nombre, plan y estado activo de un tenant (query: id).")
+            .Produces<TenantResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         // DELETE /tenants?id=  (desactivación lógica, no borrado físico)
         group.MapDelete("/", DeactivateTenantAsync)
             .WithName("DeactivateTenant")
-            .WithSummary("Desactiva un tenant / borrado lógico (query: id).");
+            .WithSummary("Desactiva un tenant / borrado lógico (query: id).")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound);
 
         return app;
     }

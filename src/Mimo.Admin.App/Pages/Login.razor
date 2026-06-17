@@ -1,0 +1,57 @@
+@page "/login"
+@layout EmptyLayout
+@using System.ComponentModel.DataAnnotations
+@inject AuthService Auth
+@inject NavigationManager Navigation
+
+<PageTitle>Administración · Iniciar sesión</PageTitle>
+
+<MimoAuthScreen Brand="CHATBOT/AI CRM" Subtitle="Administración de la plataforma">
+    <EditForm Model="_model" OnValidSubmit="HandleLogin">
+        <DataAnnotationsValidator />
+
+        @if (_error is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_error" />
+        }
+
+        <MimoTextField Label="Correo" Type="email" @bind-Value="_model.Email"
+                       Placeholder="dev@mimo.local" Required="true" />
+        <MimoTextField Label="Contraseña" Type="password" @bind-Value="_model.Password" Required="true" />
+
+        <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" FullWidth="true" Loading="_busy">
+            @(_busy ? "Ingresando…" : "Iniciar sesión")
+        </MimoButton>
+    </EditForm>
+</MimoAuthScreen>
+
+@code {
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+
+    private readonly LoginModel _model = new();
+    private bool _busy;
+    private string? _error;
+
+    private async Task HandleLogin()
+    {
+        _busy = true;
+        _error = null;
+        var result = await Auth.LoginAsync(_model.Email, _model.Password);
+        _busy = false;
+
+        if (result.Success)
+            Navigation.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "" : ReturnUrl);
+        else
+            _error = result.Error;
+    }
+
+    private sealed class LoginModel
+    {
+        [Required(ErrorMessage = "Indica tu correo.")]
+        [EmailAddress(ErrorMessage = "Correo no válido.")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "Indica tu contraseña.")]
+        public string Password { get; set; } = "";
+    }
+}

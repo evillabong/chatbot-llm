@@ -1,0 +1,205 @@
+@page "/tenants"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.Kiota.Abstractions
+@inject TenantsService TenantsApi
+
+<PageTitle>Organizaciones · Administración</PageTitle>
+
+<MimoPageHeader Title="Organizaciones"
+                Description="Tenants registrados en la plataforma.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nueva organización</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_tenants.Count == 0)" EmptyText="Aún no hay organizaciones.">
+    <Header>
+        <MimoTh>Nombre</MimoTh>
+        <MimoTh>Slug</MimoTh>
+        <MimoTh>Plan</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var t in _tenants)
+        {
+            <MimoTr>
+                <MimoTd>@t.Name</MimoTd>
+                <MimoTd><MimoText Muted Small>@t.Slug</MimoText></MimoTd>
+                <MimoTd><MimoBadge Variant="MimoBadgeVariant.Info">@t.Plan</MimoBadge></MimoTd>
+                <MimoTd>
+                    @if (t.IsActive == true)
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Success">Activa</MimoBadge>
+                    }
+                    else
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Neutral">Inactiva</MimoBadge>
+                    }
+                </MimoTd>
+                <MimoTd AlignRight="true">
+                    @if (t.IsActive == true)
+                    {
+                        <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDeactivate(t)">Desactivar</MimoButton>
+                    }
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+@* ── Modal crear organización ───────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showForm" Title="Nueva organización">
+    <EditForm Model="_form" OnValidSubmit="CreateAsync">
+        <DataAnnotationsValidator />
+
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+
+        <MimoTextField Label="Nombre" @bind-Value="_form.Name" Required="true" />
+        <MimoTextField Label="Slug (identificador)" @bind-Value="_form.Slug" Placeholder="mi-organizacion"
+                       HelperText="Solo minúsculas, números y guiones." Required="true" />
+        <MimoTextField Label="Plan" @bind-Value="_form.Plan" Placeholder="free / pro" Required="true" />
+
+        <MimoFormGroup Label="Administrador del tenant">
+            <MimoTextField Label="Nombre completo" @bind-Value="_form.AdminFullName" Required="true" />
+            <MimoTextField Label="Correo" Type="email" @bind-Value="_form.AdminEmail" Required="true" />
+            <MimoTextField Label="Alias" @bind-Value="_form.AdminAlias" Placeholder="Opcional" />
+            <MimoTextField Label="Contraseña" Type="password" @bind-Value="_form.AdminPassword" Required="true"
+                           HelperText="Mínimo 8 caracteres." />
+        </MimoFormGroup>
+
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" Loading="_saving">Crear</MimoButton>
+        </MimoActions>
+    </EditForm>
+</MimoModal>
+
+@* ── Modal confirmar desactivación ──────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showDeactivate" Title="Desactivar organización" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Seguro que deseas desactivar @_deactivateTarget?.Name? Sus usuarios no podrán acceder.</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showDeactivate = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmDeactivateAsync">Desactivar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<TenantResponse> _tenants = [];
+    private bool _loading = true;
+    private string? _pageError;
+
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private readonly TenantForm _form = new();
+
+    private bool _showDeactivate;
+    private TenantResponse? _deactivateTarget;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try
+        {
+            var paged = await TenantsApi.ListAsync();
+            _tenants = paged?.Items ?? [];
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+    }
+
+    private void OpenCreate()
+    {
+        _form.Reset();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private async Task CreateAsync()
+    {
+        _saving = true;
+        _formError = null;
+        try
+        {
+            await TenantsApi.CreateAsync(new CreateTenantRequest
+            {
+                Name = _form.Name,
+                Slug = _form.Slug,
+                Plan = _form.Plan,
+                AdminFullName = _form.AdminFullName,
+                AdminEmail = _form.AdminEmail,
+                AdminAlias = string.IsNullOrWhiteSpace(_form.AdminAlias) ? _form.AdminFullName : _form.AdminAlias,
+                AdminPassword = _form.AdminPassword
+            });
+            _showForm = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _formError = Describe(ex); }
+        finally { _saving = false; }
+    }
+
+    private void OpenDeactivate(TenantResponse t)
+    {
+        _deactivateTarget = t;
+        _showDeactivate = true;
+    }
+
+    private async Task ConfirmDeactivateAsync()
+    {
+        if (_deactivateTarget?.Id is null) return;
+        _saving = true;
+        try
+        {
+            await TenantsApi.DeactivateAsync(_deactivateTarget.Id.Value);
+            _showDeactivate = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); _showDeactivate = false; }
+        finally { _saving = false; }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 409 } => "El slug ya está en uso.",
+        ApiException { ResponseStatusCode: 400 } => "Datos inválidos (¿el plan existe?).",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class TenantForm
+    {
+        [Required(ErrorMessage = "Indica el nombre.")] public string Name { get; set; } = "";
+        [Required(ErrorMessage = "Indica el slug.")] public string Slug { get; set; } = "";
+        [Required(ErrorMessage = "Indica el plan.")] public string Plan { get; set; } = "";
+        [Required(ErrorMessage = "Indica el nombre del admin.")] public string AdminFullName { get; set; } = "";
+        [Required(ErrorMessage = "Indica el correo del admin.")]
+        [EmailAddress(ErrorMessage = "Correo no válido.")] public string AdminEmail { get; set; } = "";
+        public string AdminAlias { get; set; } = "";
+        [Required(ErrorMessage = "Indica la contraseña.")]
+        [MinLength(8, ErrorMessage = "Mínimo 8 caracteres.")] public string AdminPassword { get; set; } = "";
+
+        public void Reset()
+        {
+            Name = Slug = Plan = AdminFullName = AdminEmail = AdminAlias = AdminPassword = "";
+        }
+    }
+}

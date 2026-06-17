@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Mimo.Admin.Api/Mimo.Admin.Api.csproj" />
+    <Project Path="src/Mimo.Admin.Api.Sdk/Mimo.Admin.Api.Sdk.csproj" />
+    <Project Path="src/Mimo.Admin.App/Mimo.Admin.App.csproj" />
     <Project Path="src/Mimo.Api/Mimo.Api.csproj" />
     <Project Path="src/Mimo.Api.Sdk/Mimo.Api.Sdk.csproj" />
     <Project Path="src/Mimo.App/Mimo.App.csproj" />

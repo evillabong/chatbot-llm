@@ -194,6 +194,11 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
     interno y encuesta). Pendiente transversal: verificación de eventos SignalR en navegador y CORS
     para SignalR en producción (pendiente #5).
 - **Fase D — `Mimo.Admin.App` (SuperAdmin):** tenants, planes, conectores de IA, uso.
+  - **Corte 1: hecho.** App WASM `Mimo.Admin.App` (reusa `Mimo.Ui`) con **login de SuperAdmin**
+    contra `Mimo.Admin.Api` (sin tenant) y **gestión de organizaciones/tenants** (listar, crear con
+    aprovisionamiento, desactivar). Nuevo SDK `Mimo.Admin.Api.Sdk` (Kiota) + `generate-admin-apiclient.ps1`;
+    se tiparon Auth y Tenants del admin.
+  - **Pendiente (cortes siguientes):** planes, conectores de IA, políticas/cuotas y uso.
 - **Fase E — WebChat embebible** (ciudadano).
 
 ## 9. Directrices de código (frontend)

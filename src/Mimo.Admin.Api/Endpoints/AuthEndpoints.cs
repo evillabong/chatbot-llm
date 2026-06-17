@@ -18,7 +18,9 @@ public static class AuthEndpoints
         group.MapPost("/login", LoginAsync)
             .WithName("SuperAdminLogin")
             .WithSummary("Autentica a un super administrador y emite un token JWT.")
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/setup", SetupAsync)
             .WithName("SetupSuperAdmin")
