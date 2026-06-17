@@ -1,0 +1,17 @@
+@namespace Mimo.Ui.Components
+
+@* Agrupa acciones (botones) en línea con separación uniforme. *@
+<div class="@CssClass">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Alinea las acciones a la derecha (pies de modal, columnas de acción).</summary>
+    [Parameter] public bool AlignRight { get; set; }
+
+    private string CssClass => AlignRight
+        ? "flex items-center justify-end gap-2"
+        : "flex items-center gap-2";
+}

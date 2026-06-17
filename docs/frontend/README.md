@@ -67,11 +67,23 @@ un cambio de *framework* Blazor→JS reescribiría `Mimo.Ui` igual.)
 - **Estados estándar** en todo componente de datos: cargando, vacío, error, sin permisos.
 - **i18n-ready:** textos de UI en español; estructura preparada para localización.
 
-### Catálogo inicial de componentes
-Formularios (`MimoInput`, `MimoSelect`, `MimoCheckbox`, `MimoForm`, validación), navegación
-(`MimoSidebar`, `MimoNavbar`, `MimoTabs`, `MimoBreadcrumb`), datos (`MimoTable`/DataGrid con
-paginación server-side, `MimoBadge`, `MimoAvatar`, `MimoCard`), feedback (`MimoModal`,
-`MimoToast`, `MimoSpinner`, `MimoEmptyState`), acciones (`MimoButton`, `MimoDropdown`).
+### Catálogo de componentes
+
+Implementados (al cerrar la Fase A de funcionarios):
+
+- **Formularios:** `MimoTextField` (genérico, soporta `@bind-Value`), `MimoCheckbox`,
+  `MimoFormGroup`.
+- **Datos:** `MimoTable` (con estados de carga/vacío) + `MimoTr`/`MimoTh`/`MimoTd`, `MimoBadge`,
+  `MimoCard`.
+- **Feedback:** `MimoAlert`, `MimoModal`, `MimoSpinner`.
+- **Acciones / layout:** `MimoButton` (submit/loading/disabled/full-width), `MimoActions`,
+  `MimoPageHeader`, `MimoHeading`, `MimoText`, `MimoShell`, `MimoNavLink`, `MimoAuthScreen`.
+- **Enums propios** para no filtrar tipos de Flowbite a las apps: `MimoButtonVariant`,
+  `MimoAlertVariant`, `MimoBadgeVariant`, `MimoModalSize`.
+
+Pendientes del catálogo (siguientes fases): `MimoSelect`, `MimoDropdown`, `MimoTabs`,
+`MimoSidebar`/`MimoBreadcrumb`, `MimoToast`, `MimoAvatar`, `MimoEmptyState`, paginación
+server-side en `MimoTable`.
 
 ## 6. Consumo de APIs
 
@@ -130,8 +142,12 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
     persiste el JWT en `sessionStorage` y lo inyecta vía `AuthHeaderHandler`; rutas protegidas con
     `[Authorize]` y `AuthorizeRouteView` (detalle en [ADR 0012](../adr/0012-autenticacion-en-frontend-wasm-con-jwt-en-sessionstorage.md)).
     Componentes nuevos en `Mimo.Ui`: `MimoTextField`, `MimoCard`, `MimoAlert`, `MimoShell`
-    (+ `MimoButton` ampliado con submit/loading/disabled). **Pendiente de Fase A:** CRUD de
-    funcionarios y roles.
+    (+ `MimoButton` ampliado con submit/loading/disabled).
+  - **CRUD de funcionarios: hecho.** Página `/funcionarios` (listar, crear, editar, desactivar)
+    con tabla + modal + asignación de roles, sobre `AgentsService`/`RolesService` (sin HTTP
+    directo en la página). Sumó al catálogo: `MimoTable`/`MimoTr`/`MimoTh`/`MimoTd`, `MimoBadge`,
+    `MimoCheckbox`, `MimoModal`, `MimoSpinner`, `MimoFormGroup`, `MimoActions`, `MimoPageHeader`,
+    `MimoNavLink`. **Pendiente de Fase A:** CRUD de roles (reutiliza estos componentes).
 - **Fase B — Admin de tenant completo** (en `Mimo.App`): documentos (con estados), configuración.
 - **Fase C — Consola de agente (Callbell)** (en `Mimo.App`): inbox omnicanal en vivo (SignalR),
   conversación, cola, transferencias, chat interno.

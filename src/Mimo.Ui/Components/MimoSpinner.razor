@@ -1,0 +1,9 @@
+@namespace Mimo.Ui.Components
+
+@* Indicador de carga estándar de MIMO. Envuelve el Spinner de Flowbite. *@
+<Spinner Size="Size" />
+
+@code {
+    /// <summary>Tamaño del spinner.</summary>
+    [Parameter] public SpinnerSize Size { get; set; } = SpinnerSize.Lg;
+}

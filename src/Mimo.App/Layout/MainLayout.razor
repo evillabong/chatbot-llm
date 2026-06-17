@@ -3,6 +3,10 @@
 @inject NavigationManager Navigation
 
 <MimoShell Subtitle="@TenantSlug">
+    <Nav>
+        <MimoNavLink Href="" Match="NavLinkMatch.All">Inicio</MimoNavLink>
+        <MimoNavLink Href="funcionarios">Funcionarios</MimoNavLink>
+    </Nav>
     <Actions>
         <AuthorizeView>
             <Authorized>

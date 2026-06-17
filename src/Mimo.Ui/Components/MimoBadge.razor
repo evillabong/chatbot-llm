@@ -1,0 +1,21 @@
+@namespace Mimo.Ui.Components
+
+@* Etiqueta/chip de estado. Envuelve el Badge de Flowbite y mapea la variante semántica. *@
+<Badge Color="FlowbiteColor">@ChildContent</Badge>
+
+@code {
+    /// <summary>Contenido del badge.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Variante semántica.</summary>
+    [Parameter] public MimoBadgeVariant Variant { get; set; } = MimoBadgeVariant.Neutral;
+
+    private Badge.BadgeColor FlowbiteColor => Variant switch
+    {
+        MimoBadgeVariant.Success => Badge.BadgeColor.Success,
+        MimoBadgeVariant.Warning => Badge.BadgeColor.Warning,
+        MimoBadgeVariant.Danger  => Badge.BadgeColor.Failure,
+        MimoBadgeVariant.Info    => Badge.BadgeColor.Info,
+        _                        => Badge.BadgeColor.Gray
+    };
+}

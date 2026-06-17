@@ -1,0 +1,20 @@
+@namespace Mimo.Ui.Components
+
+@* Enlace de navegación con estado activo. Envuelve NavLink y centraliza el estilo. *@
+<NavLink class="rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+         ActiveClass="bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white"
+         href="@Href"
+         Match="@Match">
+    @ChildContent
+</NavLink>
+
+@code {
+    /// <summary>Ruta destino.</summary>
+    [Parameter] public string? Href { get; set; }
+
+    /// <summary>Criterio de coincidencia para el estado activo.</summary>
+    [Parameter] public NavLinkMatch Match { get; set; } = NavLinkMatch.Prefix;
+
+    /// <summary>Contenido del enlace.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

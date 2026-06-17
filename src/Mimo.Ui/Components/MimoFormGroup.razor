@@ -1,0 +1,23 @@
+@namespace Mimo.Ui.Components
+
+@* Grupo de formulario: etiqueta opcional + contenido apilado verticalmente, con
+   separación inferior consistente con los demás campos. *@
+<div class="mb-4">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <div class="mb-2">
+            <MimoText Small Muted>@Label</MimoText>
+        </div>
+    }
+    <div class="flex flex-col gap-2">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    /// <summary>Etiqueta del grupo.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>Contenido del grupo.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

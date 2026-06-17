@@ -1,0 +1,332 @@
+@page "/funcionarios"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.Kiota.Abstractions
+@inject AgentsService Agents
+@inject RolesService Roles
+
+<PageTitle>Funcionarios · MIMO</PageTitle>
+
+<MimoPageHeader Title="Funcionarios"
+                Description="Gestiona los funcionarios del tenant y sus roles.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nuevo funcionario</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_agents.Count == 0)" EmptyText="Aún no hay funcionarios. Crea el primero.">
+    <Header>
+        <MimoTh>Nombre</MimoTh>
+        <MimoTh>Correo</MimoTh>
+        <MimoTh>Roles</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var a in _agents)
+        {
+            <MimoTr>
+                <MimoTd>@a.FullName</MimoTd>
+                <MimoTd>@a.Email</MimoTd>
+                <MimoTd>
+                    @if (a.Roles is { Count: > 0 })
+                    {
+                        @foreach (var r in a.Roles)
+                        {
+                            <MimoBadge Variant="MimoBadgeVariant.Info">@r.Name</MimoBadge>
+                        }
+                    }
+                    else
+                    {
+                        <MimoText Muted Small>Sin roles</MimoText>
+                    }
+                </MimoTd>
+                <MimoTd>
+                    @if (a.IsActive == true)
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Success">Activo</MimoBadge>
+                    }
+                    else
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Neutral">Inactivo</MimoBadge>
+                    }
+                </MimoTd>
+                <MimoTd AlignRight="true">
+                    <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(a)">Editar</MimoButton>
+                        @if (a.IsActive == true)
+                        {
+                            <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDeactivate(a)">Desactivar</MimoButton>
+                        }
+                    </MimoActions>
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+@* ── Modal crear/editar ─────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showForm" Title="@(_editingId is null ? "Nuevo funcionario" : "Editar funcionario")">
+    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+
+        <MimoTextField Label="Nombre completo" @bind-Value="_form.FullName" Required="true" />
+        <MimoTextField Label="Alias" @bind-Value="_form.Alias" Placeholder="Opcional" />
+
+        @if (_editingId is null)
+        {
+            <MimoTextField Label="Correo" Type="email" @bind-Value="_form.Email" Required="true" />
+            <MimoTextField Label="Contraseña" Type="password" @bind-Value="_form.Password" Required="true"
+                           HelperText="Mínimo 8 caracteres." />
+        }
+
+        <MimoTextField Label="Sesiones concurrentes máximas" Type="number" @bind-Value="_form.MaxConcurrentSessions" />
+
+        @if (_editingId is not null)
+        {
+            <MimoFormGroup>
+                <MimoCheckbox Label="Activo" @bind-Checked="_form.IsActive" />
+            </MimoFormGroup>
+        }
+
+        @if (_roles.Count > 0)
+        {
+            <MimoFormGroup Label="Roles">
+                @foreach (var role in _roles)
+                {
+                    var roleId = role.Id!.Value;
+                    <MimoCheckbox Label="@role.Name"
+                                  Checked="_selectedRoleIds.Contains(roleId)"
+                                  CheckedChanged="(v) => ToggleRole(roleId, v)" />
+                }
+            </MimoFormGroup>
+        }
+
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" Loading="_saving">Guardar</MimoButton>
+        </MimoActions>
+    </EditForm>
+</MimoModal>
+
+@* ── Modal confirmar desactivación ──────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showDeactivate" Title="Desactivar funcionario" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Seguro que deseas desactivar a @_deactivateTarget?.FullName? Podrá reactivarse después.</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showDeactivate = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmDeactivateAsync">Desactivar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<AgentResponse> _agents = [];
+    private List<RoleResponse> _roles = [];
+    private bool _loading = true;
+    private string? _pageError;
+
+    // Formulario crear/editar
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private Guid? _editingId;
+    private readonly AgentForm _form = new();
+    private readonly HashSet<Guid> _selectedRoleIds = [];
+
+    // Confirmación de desactivación
+    private bool _showDeactivate;
+    private AgentResponse? _deactivateTarget;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        try { _roles = await Roles.ListAsync(isActive: true); }
+        catch { /* los roles son opcionales para el alta; no bloquear la página */ }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try
+        {
+            _agents = await Agents.ListAsync();
+        }
+        catch (Exception ex)
+        {
+            _pageError = Describe(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form.Reset();
+        _form.IsCreateMode = true;
+        _selectedRoleIds.Clear();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private void OpenEdit(AgentResponse a)
+    {
+        _editingId = a.Id;
+        _form.IsCreateMode = false;
+        _form.FullName = a.FullName ?? "";
+        _form.Alias = a.Alias ?? "";
+        _form.MaxConcurrentSessions = a.MaxConcurrentSessions ?? 1;
+        _form.IsActive = a.IsActive ?? true;
+        _selectedRoleIds.Clear();
+        if (a.Roles is not null)
+            foreach (var r in a.Roles)
+                if (r.Id is not null) _selectedRoleIds.Add(r.Id.Value);
+        _formError = null;
+        _showForm = true;
+    }
+
+    private void ToggleRole(Guid roleId, bool selected)
+    {
+        if (selected) _selectedRoleIds.Add(roleId);
+        else _selectedRoleIds.Remove(roleId);
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _formError = null;
+        var roleIds = _selectedRoleIds.Select(id => (Guid?)id).ToList();
+        try
+        {
+            if (_editingId is null)
+            {
+                await Agents.CreateAsync(new CreateAgentRequest
+                {
+                    Email = _form.Email,
+                    Password = _form.Password,
+                    FullName = _form.FullName,
+                    Alias = string.IsNullOrWhiteSpace(_form.Alias) ? null : _form.Alias,
+                    MaxConcurrentSessions = _form.MaxConcurrentSessions,
+                    RoleIds = roleIds
+                });
+            }
+            else
+            {
+                await Agents.UpdateAsync(_editingId.Value, new UpdateAgentRequest
+                {
+                    FullName = _form.FullName,
+                    Alias = string.IsNullOrWhiteSpace(_form.Alias) ? null : _form.Alias,
+                    MaxConcurrentSessions = _form.MaxConcurrentSessions,
+                    IsActive = _form.IsActive,
+                    RoleIds = roleIds
+                });
+            }
+
+            _showForm = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _formError = Describe(ex);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void OpenDeactivate(AgentResponse a)
+    {
+        _deactivateTarget = a;
+        _showDeactivate = true;
+    }
+
+    private async Task ConfirmDeactivateAsync()
+    {
+        if (_deactivateTarget?.Id is null) return;
+        _saving = true;
+        try
+        {
+            await Agents.DeactivateAsync(_deactivateTarget.Id.Value);
+            _showDeactivate = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _pageError = Describe(ex);
+            _showDeactivate = false;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 409 } => "El correo ya está registrado.",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class AgentForm : IValidatableObject
+    {
+        /// <summary>Email y contraseña solo se validan al crear (en edición no se muestran).</summary>
+        public bool IsCreateMode { get; set; }
+
+        [Required(ErrorMessage = "Indica el nombre.")]
+        public string FullName { get; set; } = "";
+
+        public string Alias { get; set; } = "";
+
+        public string Email { get; set; } = "";
+
+        public string Password { get; set; } = "";
+
+        [Range(1, 100, ErrorMessage = "Entre 1 y 100.")]
+        public int MaxConcurrentSessions { get; set; } = 1;
+
+        public bool IsActive { get; set; } = true;
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext _)
+        {
+            if (!IsCreateMode) yield break;
+
+            if (string.IsNullOrWhiteSpace(Email))
+                yield return new ValidationResult("Indica el correo.", [nameof(Email)]);
+            else if (new EmailAddressAttribute().IsValid(Email) == false)
+                yield return new ValidationResult("Correo no válido.", [nameof(Email)]);
+
+            if (Password.Length < 8)
+                yield return new ValidationResult("Mínimo 8 caracteres.", [nameof(Password)]);
+        }
+
+        public void Reset()
+        {
+            FullName = "";
+            Alias = "";
+            Email = "";
+            Password = "";
+            MaxConcurrentSessions = 1;
+            IsActive = true;
+        }
+    }
+}

@@ -1,0 +1,43 @@
+@namespace Mimo.Ui.Components
+
+@* Diálogo modal estándar de MIMO. Envuelve el Modal de Flowbite.
+   Soporta enlace bidireccional de visibilidad con @bind-Show. *@
+<Modal Show="Show"
+       ShowChanged="ShowChanged"
+       Title="@Title"
+       Size="FlowbiteSize"
+       Dismissible="Dismissible"
+       FooterContent="FooterContent">
+    @ChildContent
+</Modal>
+
+@code {
+    /// <summary>Visibilidad del modal (usar @bind-Show).</summary>
+    [Parameter] public bool Show { get; set; }
+
+    /// <summary>Callback de cambio de visibilidad (parte de @bind-Show).</summary>
+    [Parameter] public EventCallback<bool> ShowChanged { get; set; }
+
+    /// <summary>Título de la cabecera.</summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>Tamaño del modal.</summary>
+    [Parameter] public MimoModalSize Size { get; set; } = MimoModalSize.Medium;
+
+    private ModalSize FlowbiteSize => Size switch
+    {
+        MimoModalSize.Small      => ModalSize.Small,
+        MimoModalSize.Large      => ModalSize.Large,
+        MimoModalSize.ExtraLarge => ModalSize.ExtraLarge,
+        _                        => ModalSize.Medium
+    };
+
+    /// <summary>Permite cerrar con la X / clic fuera.</summary>
+    [Parameter] public bool Dismissible { get; set; } = true;
+
+    /// <summary>Cuerpo del modal.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Pie del modal (acciones).</summary>
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+}

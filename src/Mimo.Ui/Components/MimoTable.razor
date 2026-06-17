@@ -1,0 +1,50 @@
+@namespace Mimo.Ui.Components
+
+@* Tabla de datos estándar de MIMO con estados de carga y vacío.
+   Las celdas se componen con <MimoTh>/<MimoTd> dentro de <Header>/<Body>. *@
+<div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+    <table class="w-full text-left text-sm text-gray-700 dark:text-gray-300">
+        <thead class="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+            <tr>@Header</tr>
+        </thead>
+        <tbody>
+            @if (Loading)
+            {
+                <tr>
+                    <td colspan="100" class="py-10 text-center">
+                        <MimoSpinner />
+                    </td>
+                </tr>
+            }
+            else if (IsEmpty)
+            {
+                <tr>
+                    <td colspan="100" class="py-10 text-center text-gray-500 dark:text-gray-400">
+                        @(string.IsNullOrEmpty(EmptyText) ? "No hay datos." : EmptyText)
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @Body
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    /// <summary>Celdas de encabezado (<MimoTh>).</summary>
+    [Parameter] public RenderFragment? Header { get; set; }
+
+    /// <summary>Filas (<MimoTr> con <MimoTd>).</summary>
+    [Parameter] public RenderFragment? Body { get; set; }
+
+    /// <summary>Muestra el estado de carga.</summary>
+    [Parameter] public bool Loading { get; set; }
+
+    /// <summary>Indica que no hay filas (muestra el estado vacío).</summary>
+    [Parameter] public bool IsEmpty { get; set; }
+
+    /// <summary>Texto del estado vacío.</summary>
+    [Parameter] public string? EmptyText { get; set; }
+}

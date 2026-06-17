@@ -1,0 +1,15 @@
+@namespace Mimo.Ui.Components
+
+@* Celda de datos de tabla. *@
+<td class="@CssClass">@ChildContent</td>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Alinea el contenido a la derecha (p. ej. columna de acciones).</summary>
+    [Parameter] public bool AlignRight { get; set; }
+
+    private string CssClass => AlignRight
+        ? "px-4 py-3 text-right whitespace-nowrap"
+        : "px-4 py-3 align-middle";
+}

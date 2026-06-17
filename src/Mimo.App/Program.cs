@@ -7,6 +7,7 @@ using Flowbite.Services;
 using Mimo.ApiClient.MimoApi;
 using Mimo.App;
 using Mimo.App.Auth;
+using Mimo.App.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -38,6 +39,10 @@ builder.Services.AddScoped(sp =>
     };
     return new MimoApiClient(adapter);
 });
+
+// ── Servicios de dominio (sobre el cliente Kiota) ──────────────────────────────
+builder.Services.AddScoped<AgentsService>();
+builder.Services.AddScoped<RolesService>();
 
 // HttpClient genérico (recursos estáticos de la propia app).
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

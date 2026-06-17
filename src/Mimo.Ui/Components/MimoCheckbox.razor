@@ -1,0 +1,21 @@
+@namespace Mimo.Ui.Components
+
+@* Casilla con etiqueta. Envuelve el Checkbox de Flowbite y soporta @bind-Checked. *@
+<label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+    <Checkbox Checked="Checked" CheckedChanged="CheckedChanged" Disabled="Disabled" />
+    <span>@Label</span>
+</label>
+
+@code {
+    /// <summary>Estado marcado (usar @bind-Checked).</summary>
+    [Parameter] public bool Checked { get; set; }
+
+    /// <summary>Callback de cambio (parte de @bind-Checked).</summary>
+    [Parameter] public EventCallback<bool> CheckedChanged { get; set; }
+
+    /// <summary>Texto de la etiqueta.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>Deshabilita la casilla.</summary>
+    [Parameter] public bool Disabled { get; set; }
+}

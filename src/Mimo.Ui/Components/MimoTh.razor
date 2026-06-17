@@ -1,0 +1,13 @@
+@namespace Mimo.Ui.Components
+
+@* Celda de encabezado de tabla. *@
+<th scope="col" class="@CssClass">@ChildContent</th>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Alinea el contenido a la derecha (p. ej. columna de acciones).</summary>
+    [Parameter] public bool AlignRight { get; set; }
+
+    private string CssClass => AlignRight ? "px-4 py-3 text-right" : "px-4 py-3";
+}

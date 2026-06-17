@@ -1,0 +1,23 @@
+@namespace Mimo.Ui.Components
+
+@* Encabezado de página: título + descripción a la izquierda y acciones a la derecha. *@
+<div class="mb-6 flex items-start justify-between gap-4">
+    <MimoHeading Level="1" Text="@Title" Description="@Description" />
+    @if (Actions is not null)
+    {
+        <div class="flex shrink-0 items-center gap-2">
+            @Actions
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Título de la página.</summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>Descripción opcional.</summary>
+    [Parameter] public string? Description { get; set; }
+
+    /// <summary>Acciones a la derecha (botones).</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
+}
