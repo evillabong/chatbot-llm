@@ -1,8 +1,8 @@
-# MIMO — Propuesta de valor y alcance
+# CHATBOT/AI CRM — Propuesta de valor y alcance
 
 **Atención al cliente omnicanal, potenciada con IA generativa.**
 
-MIMO es una plataforma para que las organizaciones centralicen y profesionalicen la atención a
+CHATBOT/AI CRM es una plataforma para que las organizaciones centralicen y profesionalicen la atención a
 sus clientes y ciudadanos: un asistente con IA responde al instante las consultas frecuentes y,
 cuando hace falta una persona, entrega la conversación a tu equipo con todo el contexto, sin
 fricción y desde una sola bandeja.
@@ -18,7 +18,7 @@ Las organizaciones reciben consultas por muchos canales (web, redes sociales, me
 distintos temas (soporte, información, ventas). Responder a tiempo, con calidad y sin perder el
 hilo es costoso y difícil de escalar.
 
-**MIMO unifica toda esa atención en un solo lugar** y combina dos fuerzas:
+**CHATBOT/AI CRM unifica toda esa atención en un solo lugar** y combina dos fuerzas:
 
 - **Un asistente conversacional con IA generativa (modelos de lenguaje / LLM)** que atiende 24/7,
   entiende en lenguaje natural y responde con la información oficial de tu organización, resolviendo
@@ -62,7 +62,7 @@ El resultado: **respuestas más rápidas, equipos más productivos y clientes m�
 Vista general de los módulos del sistema y para qué sirve cada uno:
 
 ```text
-MIMO
+CHATBOT/AI CRM
 ├─ Atención omnicanal                       # Recibe y responde por todos los canales desde una sola bandeja
 │  ├─ Canales (web, redes, mensajería)      # El cliente escribe por el canal que prefiere
 │  └─ Bandeja unificada                     # Todas las conversaciones en un único lugar
@@ -165,7 +165,7 @@ bienvenida, identidad visual).
 
 ### 4.10 Ventas (capacidad opcional)
 El núcleo es la atención; la **venta surge de ella**. Es activable por plan y añade **lo mínimo
-para no perder oportunidades**, sin convertir MIMO en un CRM pesado:
+para no perder oportunidades**, sin convertir CHATBOT/AI CRM en un CRM pesado:
 - **Captura de oportunidades (leads):** desde la conversación, el agente —o el propio asistente—
   crea una oportunidad con los datos del cliente y el interés detectado.
 - **Pipeline básico por etapas:** seguimiento del avance (p. ej. *nueva → en negociación →
@@ -319,7 +319,7 @@ profesionalizar y escalar esa atención. Por ejemplo:
 
 ## 10. Evolución: el asistente mejora con el uso *(capacidad en evolución)*
 
-MIMO está pensado para **mejorar con la operación diaria**, no para quedarse estático. A partir de
+CHATBOT/AI CRM está pensado para **mejorar con la operación diaria**, no para quedarse estático. A partir de
 las conversaciones resueltas, las calificaciones de satisfacción y las decisiones del equipo, la
 plataforma evoluciona en dos frentes:
 
@@ -345,4 +345,4 @@ Principios de esta capacidad:
 2. **Definición del alcance** para la organización (canales, departamentos, base de conocimiento).
 3. **Puesta en marcha** y acompañamiento inicial.
 
-> ¿Conversamos sobre cómo MIMO puede transformar la atención de tu organización?
+> ¿Conversamos sobre cómo CHATBOT/AI CRM puede transformar la atención de tu organización?

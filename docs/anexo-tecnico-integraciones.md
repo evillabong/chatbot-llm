@@ -75,12 +75,12 @@ reales**.
   explícito.
 
 > Por qué MCP: estandariza cómo se exponen las herramientas al modelo, desacopla las integraciones
-> del cliente del núcleo de MIMO y permite que cada organización conecte sus sistemas sin tocar el
+> del cliente del núcleo de CHATBOT/AI CRM y permite que cada organización conecte sus sistemas sin tocar el
 > producto.
 
 **Servidores MCP externos (▹):** además de las herramientas declaradas por el tenant, se podrán
 **registrar servidores MCP de terceros** (catálogo por organización) para sumar capacidades sin
-desarrollarlas en MIMO. Cada servidor se habilita con su *endpoint*, autenticación, allowlist de
+desarrollarlas en CHATBOT/AI CRM. Cada servidor se habilita con su *endpoint*, autenticación, allowlist de
 herramientas y límites; el gateway sigue mediando y auditando. Aislado por organización.
 
 ## 4.bis. Modo de respuesta del bot y agentes de IA — ▹/✅
@@ -113,7 +113,7 @@ organización y aislado.
 
 ## 6. Ventas / integración con CRM — ▹
 
-- Captura de oportunidades y **pipeline básico** dentro de MIMO (ver propuesta §4.10).
+- Captura de oportunidades y **pipeline básico** dentro de CHATBOT/AI CRM (ver propuesta §4.10).
 - **Sincronización opcional con CRM externo** vía su API (salida) cuando la organización ya opera
   un CRM; evita duplicar la gestión.
 
