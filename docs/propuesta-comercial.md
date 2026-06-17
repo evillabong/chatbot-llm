@@ -66,9 +66,16 @@ MIMO
 ├─ Atención omnicanal                       # Recibe y responde por todos los canales desde una sola bandeja
 │  ├─ Canales (web, redes, mensajería)      # El cliente escribe por el canal que prefiere
 │  └─ Bandeja unificada                     # Todas las conversaciones en un único lugar
-├─ Asistente con IA generativa (LLM)        # Responde al instante, 24/7, en lenguaje natural
-│  ├─ Base de conocimiento                  # Fuente oficial de las respuestas (responde con TU información)
-│  └─ Acciones e integración con sistemas ▹ # Consulta datos y ejecuta acciones reales (pedido, saldo, cita)
+├─ Bot de atención (modo configurable)      # La organización elige cómo responde el bot (uno u otro, o ambos)
+│  ├─ Modo catálogo de opciones ▹           # Flujos guiados por menús/botones; deterministas, sin IA
+│  │  ├─ Constructor de flujos              # Diseña el árbol de opciones y los pasos sin programar
+│  │  ├─ Captura de datos                   # Pide y valida datos del cliente dentro del flujo
+│  │  └─ Consumo de APIs externas           # Consulta/registra en tus sistemas dentro del flujo
+│  └─ Modo IA generativa (LLM)              # Entiende lenguaje natural y responde con tu conocimiento
+│     ├─ Base de conocimiento (semántica)   # Fuente oficial; búsqueda por significado, no por palabra exacta
+│     ├─ Herramientas y acciones ▹          # Consulta datos y ejecuta acciones reales (pedido, saldo, cita)
+│     ├─ Agentes de IA por rol / atención ▹ # Asistentes especializados (instrucciones, conocimiento y tono propios)
+│     └─ Conectores de capacidades externas ▹  # Suma herramientas y servicios externos para potenciar la IA
 ├─ Consola de agentes                       # El puesto de trabajo del equipo
 │  ├─ Conversación en tiempo real           # Chat en vivo con el cliente, con todo el historial
 │  └─ Acciones de atención                  # Tomar, responder, transferir, resolver y cerrar
@@ -111,12 +118,15 @@ sociales) desde **una sola bandeja**. El cliente usa el canal que prefiere; el e
 un único lugar.
 
 ### 4.2 Asistente conversacional con IA generativa (LLM)
-El corazón de MIMO es un asistente basado en **modelos de lenguaje (LLM)**: entiende las consultas
-en **lenguaje natural** —no menús rígidos ni palabras clave— y **genera** respuestas claras a
-partir de la **información oficial** de la organización. Conversa con naturalidad, se adapta a cómo
-pregunta cada persona, atiende de inmediato a cualquier hora y descarga al equipo de lo repetitivo.
-Es la diferencia entre un bot tradicional de respuestas predefinidas y un **asistente que realmente
-entiende y responde**.
+**El modo de respuesta del bot es opcional y configurable** por la organización: puede operar como
+**chatbot por catálogo de opciones** (sin IA, ver §4.16), en **modo IA generativa** (lo que se
+describe aquí), o combinar ambos (p. ej. un menú que deriva a la IA cuando la consulta es abierta).
+
+En modo IA, el asistente se basa en **modelos de lenguaje (LLM)**: entiende las consultas en
+**lenguaje natural** —no menús rígidos ni palabras clave— y **genera** respuestas claras a partir de
+la **información oficial** de la organización. Conversa con naturalidad, se adapta a cómo pregunta
+cada persona, atiende a cualquier hora y descarga al equipo de lo repetitivo. Es la diferencia entre
+un bot de respuestas predefinidas y un **asistente que realmente entiende y responde**.
 
 ### 4.3 Base de conocimiento (respuestas fundamentadas en tu información)
 La organización publica sus políticas, procedimientos y respuestas (envíos, devoluciones,
@@ -195,6 +205,30 @@ las respuestas usen **datos reales y actualizados**, no solo información public
 **configura y autoriza por organización**. *(El mecanismo de integración se detalla en el anexo
 técnico.)*
 
+### 4.16 Chatbot por catálogo de opciones (flujos guiados)
+Modo de atención **sin IA**: el cliente avanza por **menús y botones** siguiendo un **árbol de
+opciones** diseñado por la organización. Es **determinista y predecible**, ideal para procesos
+estructurados (elegir un trámite, FAQ guiada, capturar datos, derivar al área correcta). Incluye:
+- **Constructor de flujos** visual (sin programar): pasos, opciones y bifurcaciones.
+- **Captura y validación de datos** dentro del flujo.
+- **Consumo de APIs externas**: el flujo puede **consultar o registrar** en tus sistemas (p. ej.
+  estado de un pedido) y continuar según la respuesta.
+
+Puede usarse solo, o combinado con la IA (un menú que deriva a la IA para consultas abiertas, o la
+IA que ofrece un menú cuando conviene). La organización elige qué modo usar por canal o por caso.
+
+### 4.17 Agentes de IA y conectores de capacidades externas
+Para el modo IA, la organización puede ir más allá de un único asistente:
+- **Agentes de IA por rol o tipo de atención:** asistentes **especializados** con sus propias
+  instrucciones, tono, conocimiento y herramientas (p. ej. un agente de soporte y otro de ventas,
+  cada uno experto en lo suyo).
+- **Conectores de capacidades externas:** se pueden **agregar herramientas y servicios externos**
+  para potenciar a la IA (acceso a sistemas, fuentes o servicios especializados), habilitados y
+  autorizados por organización.
+
+> Resultado: una IA **a la medida de cada atención**, que crece conectando nuevas capacidades sin
+> rehacer la plataforma. *(Detalle de integración en el anexo técnico.)*
+
 ---
 
 ## 5. Beneficios
@@ -240,6 +274,10 @@ técnico.)*
 
 - **Servicio en la nube, multi-organización:** cada organización opera en su propio espacio, con
   sus datos **aislados y privados**, su equipo y su configuración.
+- **Modular: actívalo según lo que necesites.** Los módulos son **independientes** y se habilitan
+  por organización a la medida de su operación. Se puede empezar, por ejemplo, solo con el chatbot
+  por opciones y la consola, y luego sumar IA, campañas, ventas u otros. No se paga ni se opera lo
+  que no se usa.
 - **Autogestión:** cada organización administra su conocimiento, su equipo y sus reglas de
   atención sin depender del proveedor para el día a día.
 - **Planes por capacidades:** la propuesta se estructura en planes que habilitan distintos niveles

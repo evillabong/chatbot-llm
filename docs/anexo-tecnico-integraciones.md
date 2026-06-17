@@ -78,6 +78,28 @@ reales**.
 > del cliente del núcleo de MIMO y permite que cada organización conecte sus sistemas sin tocar el
 > producto.
 
+**Servidores MCP externos (▹):** además de las herramientas declaradas por el tenant, se podrán
+**registrar servidores MCP de terceros** (catálogo por organización) para sumar capacidades sin
+desarrollarlas en MIMO. Cada servidor se habilita con su *endpoint*, autenticación, allowlist de
+herramientas y límites; el gateway sigue mediando y auditando. Aislado por organización.
+
+## 4.bis. Modo de respuesta del bot y agentes de IA — ▹/✅
+
+**El modo de respuesta es configurable por organización** (propuesta §4.2/§4.16):
+
+- **Modo catálogo de opciones (▹):** motor de **flujos guiados** (árbol de opciones/menús),
+  **determinista, sin IA**. Pasos de menú, captura/validación de datos y **pasos de llamada a API
+  externa** (consultar/registrar y bifurcar según la respuesta). Puede **derivar a la IA** o a un
+  funcionario. Constructor visual de flujos.
+- **Modo IA generativa (✅ base; extensiones ▹):** el `ConversationOrchestrator` resuelve con LLM +
+  **búsqueda semántica** (`pgvector`) sobre el conocimiento; extensible con herramientas/MCP.
+
+**Agentes de IA por rol / tipo de atención (▹):** en lugar de un único asistente, se podrán definir
+**perfiles de agente** por rol o por tipo de atención, cada uno con su *system prompt*/instrucciones,
+**subconjunto de conocimiento**, **herramientas/MCP autorizados** y tono. El gateway selecciona el
+agente según el contexto (rol destino, canal, categoría) y aplica los límites del plan. Todo por
+organización y aislado.
+
 ## 5. Automatización: flujos, campañas y tareas — ▹
 
 - **Flujos de trabajo:** motor de reglas "evento → condición → acción" (enrutar, etiquetar,
@@ -116,6 +138,8 @@ reales**.
 | Enrutamiento, colas, tickets, equipos/roles, encuestas, configuración | ✅ |
 | Conectores WhatsApp / Telegram / Facebook / Instagram | 🟡 andamiado |
 | Acciones del asistente vía MCP (tool-use) | ▹ diseño |
+| Chatbot por catálogo de opciones (flujos guiados, sin IA) | ▹ roadmap |
+| Agentes de IA por rol/atención + servidores MCP externos | ▹ diseño |
 | Flujos de trabajo / Campañas / Tareas | ▹ roadmap |
 | Ventas (leads + pipeline) e integración con CRM | ▹ roadmap |
 | Mejora continua (aprende con el uso) | ▹ ver [vision-mejora-continua.md](vision-mejora-continua.md) |
