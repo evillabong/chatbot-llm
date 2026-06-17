@@ -172,8 +172,14 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
     enriquecieron `TicketResponse`/`ConversationResponse` con datos del cliente. Sumó al catálogo:
     `MimoSplitPane`, `MimoTabs`, `MimoChatBubble`, `MimoListButton`, `MimoBar`, `MimoScroll`,
     `MimoRow`, `MimoEmptyState`.
-  - **Pendiente (corte 2):** mensajería en vivo con SignalR (enviar/recibir), notificación de
-    cola, transferencias, chat interno y encuesta. Requiere CORS para SignalR (pendiente #5).
+  - **Corte 2 (SignalR): hecho.** Mensajería en vivo en la conversación abierta: recibe del
+    ciudadano y del agente vía ChatHub (`MessageReceived`) y envía vía TicketHub
+    (`SendMessageToCitizen`), con `ConsoleHubClient` (`Microsoft.AspNetCore.SignalR.Client`,
+    token por `access_token`). Indicador "En vivo". Prerrequisito de backend: `TenantHubFilter`
+    fija el `search_path` por invocación de hub ([ADR 0014](../adr/0014-resolucion-de-tenant-en-hubs-signalr.md)).
+  - **Pendiente (corte 3):** notificación de cola en vivo (`TicketEnqueued`/`TicketAssigned`/
+    `TicketResolved`, requiere IDs de rol del agente), transferencias, chat interno y encuesta;
+    CORS para SignalR en producción (pendiente #5).
 - **Fase D — `Mimo.Admin.App` (SuperAdmin):** tenants, planes, conectores de IA, uso.
 - **Fase E — WebChat embebible** (ciudadano).
 

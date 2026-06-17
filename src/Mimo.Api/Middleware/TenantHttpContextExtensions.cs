@@ -15,6 +15,11 @@ public static class TenantHttpContextExtensions
     internal const string TenantIdKey            = "TenantId";
     internal const string TenantSlugKey          = "TenantSlug";
     internal const string TenantConfigurationKey = "TenantConfiguration";
+    internal const string TenantSchemaKey        = "TenantSchema";
+
+    /// <summary>Nombre del esquema PostgreSQL del tenant resuelto, si está disponible.</summary>
+    public static string? GetTenantSchema(this HttpContext context) =>
+        context.Items[TenantSchemaKey] as string;
 
     /// <summary>Id del tenant resuelto. Lanza si el middleware no lo estableció.</summary>
     public static Guid GetTenantId(this HttpContext context) =>

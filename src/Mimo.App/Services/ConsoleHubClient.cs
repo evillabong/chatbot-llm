@@ -1,0 +1,76 @@
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Configuration;
+using Mimo.App.Auth;
+
+namespace Mimo.App.Services;
+
+/// <summary>
+/// Conexiones SignalR de la consola de agente. Usa DOS hubs (por el diseño del backend):
+///   - ChatHub (/hubs/chat): se une a la conversación abierta y RECIBE "MessageReceived"
+///     (mensajes del ciudadano y eco de los del agente).
+///   - TicketHub (/hubs/tickets): ENVÍA mensajes al ciudadano (SendMessageToCitizen).
+/// El token JWT viaja por el parámetro access_token (lo lee el handler de JwtBearer para /hubs).
+/// </summary>
+public sealed class ConsoleHubClient(SessionState session, IConfiguration config) : IAsyncDisposable
+{
+    private HubConnection? _tickets;
+    private HubConnection? _chat;
+    private string? _joinedConversation;
+
+    /// <summary>Mensaje recibido en la conversación abierta.</summary>
+    public event Action<IncomingMessage>? MessageReceived;
+
+    public bool IsConnected =>
+        _chat?.State == HubConnectionState.Connected && _tickets?.State == HubConnectionState.Connected;
+
+    public async Task StartAsync()
+    {
+        if (_tickets is not null) return; // ya iniciado
+
+        var baseUrl = config["Api:BaseUrl"] ?? string.Empty;
+        var token   = session.Token ?? string.Empty;
+
+        _tickets = Build($"{baseUrl}/hubs/tickets", token);
+        _chat    = Build($"{baseUrl}/hubs/chat", token);
+
+        _chat.On<IncomingMessage>("MessageReceived", msg => MessageReceived?.Invoke(msg));
+
+        await _tickets.StartAsync();
+        await _chat.StartAsync();
+    }
+
+    /// <summary>Se une (o cambia) a la conversación cuyos mensajes se quieren recibir en vivo.</summary>
+    public async Task OpenConversationAsync(Guid conversationId)
+    {
+        if (_chat is null) return;
+        var id = conversationId.ToString();
+        if (_joinedConversation == id) return;
+
+        if (_joinedConversation is not null)
+            await _chat.InvokeAsync("LeaveConversation", _joinedConversation);
+
+        _joinedConversation = id;
+        await _chat.InvokeAsync("JoinConversation", id);
+    }
+
+    /// <summary>Envía un mensaje del agente al ciudadano (se persiste y se emite a la conversación).</summary>
+    public Task SendMessageAsync(Guid conversationId, string content) =>
+        _tickets is null
+            ? Task.CompletedTask
+            : _tickets.InvokeAsync("SendMessageToCitizen", conversationId.ToString(), content);
+
+    private static HubConnection Build(string url, string token) =>
+        new HubConnectionBuilder()
+            .WithUrl(url, options => options.AccessTokenProvider = () => Task.FromResult<string?>(token))
+            .WithAutomaticReconnect()
+            .Build();
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_chat is not null)    await _chat.DisposeAsync();
+        if (_tickets is not null) await _tickets.DisposeAsync();
+    }
+
+    /// <summary>Mensaje entrante por SignalR (espejo de MessageResponse del backend).</summary>
+    public sealed record IncomingMessage(Guid Id, int Role, string Content, DateTime CreatedAt);
+}

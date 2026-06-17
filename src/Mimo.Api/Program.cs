@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -113,7 +114,9 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 }));
 
 // ── SignalR ──────────────────────────────────────────────────────────────────
-builder.Services.AddSignalR();
+// El filtro fija el search_path del tenant en cada invocación de hub (los hubs no pasan
+// por TenantResolutionMiddleware salvo en el handshake; ver TenantHubFilter).
+builder.Services.AddSignalR(options => options.AddFilter<Mimo.Api.Hubs.TenantHubFilter>());
 
 // ── Workers de background ─────────────────────────────────────────────────────
 builder.Services.AddHostedService<InactivityTimeoutWorker>();

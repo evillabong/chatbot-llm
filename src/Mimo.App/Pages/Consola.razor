@@ -1,13 +1,18 @@
 @page "/consola"
 @attribute [Authorize]
+@implements IDisposable
 @using Microsoft.Kiota.Abstractions
 @inject ConsoleService Console
+@inject ConsoleHubClient Hub
 
 <PageTitle>Consola · MIMO</PageTitle>
 
 <MimoPageHeader Title="Consola de atención"
-                Description="Bandeja de tickets y conversaciones omnicanal.">
+                Description="Bandeja de tickets y conversaciones omnicanal en vivo.">
     <Actions>
+        <MimoBadge Variant="@(_live ? MimoBadgeVariant.Success : MimoBadgeVariant.Neutral)">
+            @(_live ? "En vivo" : "Sin conexión")
+        </MimoBadge>
         <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="RefreshAsync">Actualizar</MimoButton>
     </Actions>
 </MimoPageHeader>
@@ -88,14 +93,14 @@
                 {
                     <MimoEmptyState><MimoSpinner /></MimoEmptyState>
                 }
-                else if (_conversation?.Messages is { Count: > 0 } msgs)
+                else if (_lines.Count > 0)
                 {
-                    @foreach (var m in msgs)
+                    @foreach (var line in _lines)
                     {
-                        <MimoChatBubble Variant="BubbleVariant(m.Role)"
-                                        Content="@m.Content"
-                                        Author="@AuthorLabel(m.Role)"
-                                        Time="@m.CreatedAt?.ToLocalTime().ToString("dd/MM HH:mm")" />
+                        <MimoChatBubble Variant="BubbleVariant(line.Role)"
+                                        Content="@line.Content"
+                                        Author="@AuthorLabel(line.Role)"
+                                        Time="@line.Time" />
                     }
                 }
                 else
@@ -105,7 +110,13 @@
             </MimoScroll>
 
             <MimoBar Footer="true">
-                <MimoText Muted Small>La respuesta en vivo se habilita en el siguiente paso (SignalR).</MimoText>
+                <MimoTextField WrapperClass="flex-1" TValue="string" @bind-Value="_reply"
+                               Placeholder="@(_live ? "Escribe una respuesta…" : "Conectando…")"
+                               Disabled="@(!_live)" />
+                <MimoButton Variant="MimoButtonVariant.Primary" Loading="_sending"
+                            Disabled="@(!_live || string.IsNullOrWhiteSpace(_reply))" OnClick="SendReplyAsync">
+                    Enviar
+                </MimoButton>
             </MimoBar>
         }
     </ChildContent>
@@ -125,11 +136,22 @@
 
     private TicketResponse? _selected;
     private ConversationResponse? _conversation;
+    private readonly List<ChatLine> _lines = [];
     private bool _convLoading;
     private bool _acting;
+    private bool _sending;
+    private bool _live;
+    private string _reply = "";
     private string? _pageError;
 
-    protected override Task OnInitializedAsync() => RefreshAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        Hub.MessageReceived += OnHubMessage;
+        await RefreshAsync();
+        try { await Hub.StartAsync(); }
+        catch { /* la consola funciona sin tiempo real; el badge lo refleja */ }
+        _live = Hub.IsConnected;
+    }
 
     private async Task RefreshAsync()
     {
@@ -140,35 +162,49 @@
             _mine = await Console.MyTicketsAsync();
             _team = await Console.VisibleTicketsAsync();
         }
-        catch (Exception ex)
-        {
-            _pageError = Describe(ex);
-        }
-        finally
-        {
-            _loading = false;
-        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
     }
 
     private async Task SelectAsync(TicketResponse t)
     {
         _selected = t;
         _conversation = null;
+        _lines.Clear();
         if (t.ConversationId is null) return;
 
         _convLoading = true;
         try
         {
             _conversation = await Console.ConversationAsync(t.ConversationId.Value);
+            if (_conversation?.Messages is { } msgs)
+                _lines.AddRange(msgs.Select(m =>
+                    new ChatLine(m.Role ?? 0, m.Content ?? "", Fmt(m.CreatedAt))));
+
+            if (_live)
+                await Hub.OpenConversationAsync(t.ConversationId.Value);
         }
-        catch (Exception ex)
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _convLoading = false; }
+    }
+
+    private void OnHubMessage(ConsoleHubClient.IncomingMessage m)
+    {
+        _lines.Add(new ChatLine(m.Role, m.Content, Fmt(m.CreatedAt)));
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SendReplyAsync()
+    {
+        if (_selected?.ConversationId is null || string.IsNullOrWhiteSpace(_reply)) return;
+        _sending = true;
+        try
         {
-            _pageError = Describe(ex);
+            await Hub.SendMessageAsync(_selected.ConversationId.Value, _reply.Trim());
+            _reply = "";   // el mensaje vuelve por SignalR y se agrega al hilo
         }
-        finally
-        {
-            _convLoading = false;
-        }
+        catch (Exception ex) { _pageError = $"No se pudo enviar: {ex.Message}"; }
+        finally { _sending = false; }
     }
 
     private Task ClaimAsync()   => ActAsync(id => Console.ClaimAsync(id));
@@ -187,20 +223,21 @@
             await RefreshAsync();
             _selected = _mine.Concat(_team).FirstOrDefault(x => x.Id == id) ?? _selected;
         }
-        catch (Exception ex)
-        {
-            _pageError = Describe(ex);
-        }
-        finally
-        {
-            _acting = false;
-        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _acting = false; }
     }
 
-    // ── Mapeos de presentación (TicketStatus/Channel/Priority/MessageRole como int) ──
+    public void Dispose() => Hub.MessageReceived -= OnHubMessage;
 
-    private static bool CanResolve(int? status) => status is 2 or 3 or 8;       // Assigned, InProgress, Reopened
-    private static bool CanClose(int? status)   => status is 2 or 3 or 5 or 8;  // + Resolved
+    private static string Fmt(DateTimeOffset? dt) => (dt ?? DateTimeOffset.UtcNow).ToLocalTime().ToString("dd/MM HH:mm");
+    private static string Fmt(DateTime dt) => dt.ToLocalTime().ToString("dd/MM HH:mm");
+
+    private sealed record ChatLine(int Role, string Content, string Time);
+
+    // ── Mapeos de presentación (enums como int) ────────────────────────────────
+
+    private static bool CanResolve(int? status) => status is 2 or 3 or 8;
+    private static bool CanClose(int? status)   => status is 2 or 3 or 5 or 8;
 
     private static MimoChatBubbleVariant BubbleVariant(int? role) => role switch
     {

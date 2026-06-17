@@ -46,6 +46,7 @@ builder.Services.AddScoped<RolesService>();
 builder.Services.AddScoped<DocumentsService>();
 builder.Services.AddScoped<TenantConfigService>();
 builder.Services.AddScoped<ConsoleService>();
+builder.Services.AddScoped<ConsoleHubClient>();
 
 // HttpClient genérico (recursos estáticos de la propia app).
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

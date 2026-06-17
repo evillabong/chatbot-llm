@@ -103,6 +103,7 @@ public partial class TenantResolutionMiddleware(
         context.Items[TenantHttpContextExtensions.TenantIdKey]            = tenant.Id;
         context.Items[TenantHttpContextExtensions.TenantSlugKey]          = tenant.Slug;
         context.Items[TenantHttpContextExtensions.TenantConfigurationKey] = tenant.Configuration;
+        context.Items[TenantHttpContextExtensions.TenantSchemaKey]        = schemaName;
 
         logger.LogDebug("Tenant resuelto: {Slug} (schema: {Schema})", slug, schemaName);
 
