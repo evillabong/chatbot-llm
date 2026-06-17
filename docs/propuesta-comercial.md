@@ -1,6 +1,6 @@
 # MIMO — Propuesta de valor y alcance
 
-**Atención al cliente omnicanal, potenciada con inteligencia artificial.**
+**Atención al cliente omnicanal, potenciada con IA generativa.**
 
 MIMO es una plataforma para que las organizaciones centralicen y profesionalicen la atención a
 sus clientes y ciudadanos: un asistente con IA responde al instante las consultas frecuentes y,
@@ -20,8 +20,9 @@ hilo es costoso y difícil de escalar.
 
 **MIMO unifica toda esa atención en un solo lugar** y combina dos fuerzas:
 
-- **Un asistente con IA** que atiende 24/7, responde con la información oficial de tu organización
-  y resuelve lo repetitivo sin intervención humana.
+- **Un asistente conversacional con IA generativa (modelos de lenguaje / LLM)** que atiende 24/7,
+  entiende en lenguaje natural y responde con la información oficial de tu organización, resolviendo
+  lo repetitivo sin intervención humana.
 - **Un equipo humano** que entra solo cuando aporta valor, con la conversación completa, enrutada
   al área correcta y con herramientas para resolver rápido.
 
@@ -63,15 +64,19 @@ Recibe y responde conversaciones de múltiples canales (chat web embebible y men
 sociales) desde **una sola bandeja**. El cliente usa el canal que prefiere; el equipo trabaja en
 un único lugar.
 
-### 4.2 Asistente con inteligencia artificial
-Un bot que entiende las preguntas en lenguaje natural y responde con la **información oficial** de
-la organización. Atiende de inmediato, a cualquier hora, y descarga al equipo de lo repetitivo.
+### 4.2 Asistente conversacional con IA generativa (LLM)
+El corazón de MIMO es un asistente basado en **modelos de lenguaje (LLM)**: entiende las consultas
+en **lenguaje natural** —no menús rígidos ni palabras clave— y **genera** respuestas claras a
+partir de la **información oficial** de la organización. Conversa con naturalidad, se adapta a cómo
+pregunta cada persona, atiende de inmediato a cualquier hora y descarga al equipo de lo repetitivo.
+Es la diferencia entre un bot tradicional de respuestas predefinidas y un **asistente que realmente
+entiende y responde**.
 
-### 4.3 Base de conocimiento
+### 4.3 Base de conocimiento (respuestas fundamentadas en tu información)
 La organización publica sus políticas, procedimientos y respuestas (envíos, devoluciones,
-horarios, preguntas frecuentes, etc.). El asistente responde a partir de ese contenido, de modo
-que las respuestas son **consistentes y siempre actualizadas**. El conocimiento puede marcarse
-como público o interno.
+horarios, preguntas frecuentes, etc.). El asistente **responde apoyándose en ese contenido, no
+improvisa**: así las respuestas son **pertinentes, consistentes y verificables**, y se mantienen al
+día con solo actualizar el conocimiento. El contenido puede marcarse como público o interno.
 
 ### 4.4 Consola de agentes (bandeja de trabajo)
 Una vista tipo bandeja moderna donde cada agente ve:
@@ -159,9 +164,11 @@ planes y dar seguimiento al uso de forma centralizada.
 - **Autogestión:** cada organización administra su conocimiento, su equipo y sus reglas de
   atención sin depender del proveedor para el día a día.
 - **Planes por capacidades:** la propuesta se estructura en planes que habilitan distintos niveles
-  de uso y funcionalidades (por ejemplo, canales disponibles, volumen de atención asistida por IA,
-  tamaño del equipo y capacidades opcionales como ventas). *Las condiciones comerciales se tratan
-  por separado.*
+  de uso y funcionalidades (por ejemplo, canales disponibles, tamaño del equipo y capacidades
+  opcionales como ventas). *Las condiciones comerciales se tratan por separado.*
+- **Capacidad de IA gobernada por plan:** los **modelos de lenguaje (LLM)** disponibles y el
+  **volumen de atención asistida** se definen según el plan de cada organización. Es una palanca
+  clave del modelo: más capacidad de IA, mayor automatización de la atención.
 - **Listo para crecer:** la organización puede empezar simple y ampliar capacidades a medida que
   evoluciona su operación.
 
@@ -181,6 +188,9 @@ profesionalizar y escalar esa atención. Por ejemplo:
 
 ## 9. Diferenciadores
 
+- **IA generativa que responde con TU conocimiento:** modelos de lenguaje que entienden y conversan,
+  pero fundamentados en la información de la organización —ni respuestas rígidas de menú ni
+  contenido genérico inventado.
 - **IA + humano, bien combinados:** la IA no reemplaza al equipo; lo potencia y le entrega los
   casos listos para resolver.
 - **Una sola bandeja, de verdad omnicanal:** menos herramientas, más foco.
