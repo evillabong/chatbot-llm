@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Mimo.Admin.Api.Endpoints;
 using Mimo.Core.Authorization;
+using Mimo.Core.Interfaces;
 using Mimo.Infrastructure;
 using Mimo.Infrastructure.Data;
 using Mimo.Infrastructure.Data.Seeding;
@@ -100,6 +101,14 @@ await using (var scope = app.Services.CreateAsyncScope())
 
     // Catálogo de planes por defecto: necesario para crear tenants desde este API.
     await PlanSeeder.SeedDefaultAsync(globalDb);
+
+    // Datos de desarrollo: SuperAdmin con credenciales conocidas + políticas de IA por plan.
+    if (app.Environment.IsDevelopment())
+    {
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+        await SuperAdminSeeder.SeedDevAsync(globalDb, passwordHasher);
+        await AiPlanPolicySeeder.SeedDevAsync(globalDb);
+    }
 }
 
 if (app.Environment.IsDevelopment())

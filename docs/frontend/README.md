@@ -151,6 +151,8 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
   - **CRUD de roles: hecho.** Página `/roles` (listar, crear, editar, desactivar) sobre
     `RolesService`, reutilizando los componentes de la página de funcionarios.
   - **Fase A completa** (login + admin de tenant: funcionarios y roles).
+  - **Datos de prueba:** ambas APIs siembran datos de demo en Development (credenciales conocidas);
+    ver [docs/dev-seed.md](../dev-seed.md). Para entrar: tenant `acme`, `tenantadmin@acme.local` / `Mimo123$`.
 - **Fase B — Admin de tenant completo** (en `Mimo.App`): documentos (con estados), configuración.
 - **Fase C — Consola de agente (Callbell)** (en `Mimo.App`): inbox omnicanal en vivo (SignalR),
   conversación, cola, transferencias, chat interno.

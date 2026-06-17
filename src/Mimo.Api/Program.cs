@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Mimo.Api.Channels;
 using Mimo.Api.Endpoints;
@@ -142,6 +143,17 @@ await using (var scope = app.Services.CreateAsyncScope())
     // Migrar la configuración de IA de appsettings a la BD si aún no existe ningún conector.
     var secretProtector = scope.ServiceProvider.GetRequiredService<ISecretProtector>();
     await AiConnectorSeeder.SeedDefaultAsync(globalDb, app.Configuration, secretProtector);
+
+    // Datos de desarrollo (funcionarios/roles/conocimiento de demo, credenciales conocidas).
+    if (app.Environment.IsDevelopment())
+    {
+        var tenantSeeder = new TenantDevDataSeeder(
+            scope.ServiceProvider.GetRequiredService<IDbContextFactory<TenantDbContext>>(),
+            globalDb,
+            scope.ServiceProvider.GetRequiredService<IPasswordHasher>(),
+            scope.ServiceProvider.GetRequiredService<ILogger<TenantDevDataSeeder>>());
+        await tenantSeeder.SeedAsync();
+    }
 }
 
 if (app.Environment.IsDevelopment())
