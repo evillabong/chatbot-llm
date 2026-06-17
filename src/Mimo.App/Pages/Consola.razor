@@ -155,6 +155,8 @@
         new("team", "Equipo")
     ];
 
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
     private List<TicketResponse> _mine = [];
     private List<TicketResponse> _team = [];
     private bool _loading = true;
@@ -180,6 +182,7 @@
     protected override async Task OnInitializedAsync()
     {
         Hub.MessageReceived += OnHubMessage;
+        Hub.QueueChanged += OnQueueChanged;
         await RefreshAsync();
         try
         {
@@ -188,7 +191,17 @@
                 .Select(r => new MimoSelectOption(r.Id!.Value.ToString(), r.Name ?? "")).ToList();
         }
         catch { /* el desplegable de transferencia queda vacío si falla */ }
-        try { await Hub.StartAsync(); }
+        try
+        {
+            await Hub.StartAsync();
+            // Suscribirse a las colas de los roles del agente (claims role_id del token) para
+            // recibir en vivo nuevos tickets, asignaciones y resoluciones.
+            if (AuthState is not null)
+            {
+                var roleIds = (await AuthState).User.FindAll("role_id").Select(c => c.Value).ToList();
+                await Hub.JoinRoleQueuesAsync(roleIds);
+            }
+        }
         catch { /* la consola funciona sin tiempo real; el badge lo refleja */ }
         _live = Hub.IsConnected;
     }
@@ -233,6 +246,18 @@
         _lines.Add(new ChatLine(m.Role, m.Content, Fmt(m.CreatedAt)));
         InvokeAsync(StateHasChanged);
     }
+
+    // La cola cambió (nuevo ticket / asignación / resolución): refrescar la bandeja sin spinner.
+    private void OnQueueChanged() => _ = InvokeAsync(async () =>
+    {
+        try
+        {
+            _mine = await Console.MyTicketsAsync();
+            _team = await Console.VisibleTicketsAsync();
+            StateHasChanged();
+        }
+        catch { /* ignorar; el botón Actualizar permite recuperación manual */ }
+    });
 
     private async Task SendReplyAsync()
     {
@@ -295,7 +320,11 @@
         finally { _transferring = false; }
     }
 
-    public void Dispose() => Hub.MessageReceived -= OnHubMessage;
+    public void Dispose()
+    {
+        Hub.MessageReceived -= OnHubMessage;
+        Hub.QueueChanged -= OnQueueChanged;
+    }
 
     private static string Fmt(DateTimeOffset? dt) => (dt ?? DateTimeOffset.UtcNow).ToLocalTime().ToString("dd/MM HH:mm");
     private static string Fmt(DateTime dt) => dt.ToLocalTime().ToString("dd/MM HH:mm");

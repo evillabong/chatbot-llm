@@ -48,7 +48,9 @@ public static class AuthEndpoints
             .Select(name => name!)
             .ToList();
 
-        var token = jwtTokenService.GenerateAgentToken(agent, tenantSlug, roleNames);
+        var roleIds = agent.AgentRoles.Select(ar => ar.RoleId).ToList();
+
+        var token = jwtTokenService.GenerateAgentToken(agent, tenantSlug, roleNames, roleIds);
 
         return Results.Ok(new LoginResponse(
             token.Token, token.ExpiresAtUtc, agent.Id, agent.Email, agent.FullName, roleNames));

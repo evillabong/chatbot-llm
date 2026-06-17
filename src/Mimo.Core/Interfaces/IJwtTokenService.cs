@@ -16,9 +16,10 @@ public interface IJwtTokenService
 {
     /// <summary>
     /// Genera un token para un funcionario autenticado, incluyendo los claims
-    /// "agent_id", "tenant_slug" y un claim "role" por cada rol asignado.
+    /// "agent_id", "tenant_slug", un claim "role" por cada rol asignado (por nombre) y un
+    /// claim "role_id" por cada rol asignado (por id; p. ej. para suscribirse a las colas en vivo).
     /// </summary>
-    AuthToken GenerateAgentToken(Agent agent, string tenantSlug, IEnumerable<string> roleNames);
+    AuthToken GenerateAgentToken(Agent agent, string tenantSlug, IEnumerable<string> roleNames, IEnumerable<Guid> roleIds);
 
     /// <summary>
     /// Genera un token para un super administrador, incluyendo el claim "role" = "SuperAdmin".

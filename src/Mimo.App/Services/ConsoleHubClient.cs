@@ -20,6 +20,9 @@ public sealed class ConsoleHubClient(SessionState session, IConfiguration config
     /// <summary>Mensaje recibido en la conversación abierta.</summary>
     public event Action<IncomingMessage>? MessageReceived;
 
+    /// <summary>Cambió la cola del rol (nuevo ticket, asignación o resolución). Útil para refrescar la bandeja.</summary>
+    public event Action? QueueChanged;
+
     public bool IsConnected =>
         _chat?.State == HubConnectionState.Connected && _tickets?.State == HubConnectionState.Connected;
 
@@ -35,8 +38,21 @@ public sealed class ConsoleHubClient(SessionState session, IConfiguration config
 
         _chat.On<IncomingMessage>("MessageReceived", msg => MessageReceived?.Invoke(msg));
 
+        // Eventos de cola del TicketHub: solo disparan un refresco de la bandeja (payload ignorado).
+        _tickets.On<object?>("TicketEnqueued", _ => QueueChanged?.Invoke());
+        _tickets.On<object?>("TicketAssigned", _ => QueueChanged?.Invoke());
+        _tickets.On<object?>("TicketResolved", _ => QueueChanged?.Invoke());
+
         await _tickets.StartAsync();
         await _chat.StartAsync();
+    }
+
+    /// <summary>Se suscribe a las colas de los roles indicados para recibir notificaciones en vivo.</summary>
+    public async Task JoinRoleQueuesAsync(IEnumerable<string> roleIds)
+    {
+        if (_tickets is null) return;
+        foreach (var roleId in roleIds)
+            await _tickets.InvokeAsync("JoinRoleQueue", roleId);
     }
 
     /// <summary>Se une (o cambia) a la conversación cuyos mensajes se quieren recibir en vivo.</summary>

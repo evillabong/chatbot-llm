@@ -18,7 +18,7 @@ public class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
 {
     private readonly JwtOptions _options = options.Value;
 
-    public AuthToken GenerateAgentToken(Agent agent, string tenantSlug, IEnumerable<string> roleNames)
+    public AuthToken GenerateAgentToken(Agent agent, string tenantSlug, IEnumerable<string> roleNames, IEnumerable<Guid> roleIds)
     {
         var claims = new List<Claim>
         {
@@ -31,6 +31,7 @@ public class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
         };
 
         claims.AddRange(roleNames.Select(role => new Claim("role", role)));
+        claims.AddRange(roleIds.Select(id => new Claim("role_id", id.ToString())));
 
         return GenerateToken(claims);
     }

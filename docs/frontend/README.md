@@ -181,9 +181,11 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
     motivo); reasignación automática a un funcionario del rol destino. Se tipó `/tickets/transfer`
     (`TransferTicketResponse`) y se abrió la **lectura de `/roles` a agentes** (escritura sigue
     siendo TenantAdmin) para poblar el desplegable.
-  - **Pendiente (corte 3 restante):** notificación de cola en vivo (`TicketEnqueued`/
-    `TicketAssigned`/`TicketResolved`, requiere IDs de rol del agente), chat interno y encuesta;
-    CORS para SignalR en producción (pendiente #5).
+  - **Cola en vivo: hecho.** El token incluye claims `role_id`; la consola se suscribe a las colas
+    de sus roles (`JoinRoleQueue`) y refresca la bandeja al recibir `TicketEnqueued`/`TicketAssigned`/
+    `TicketResolved`.
+  - **Pendiente (corte 3 restante):** chat interno entre funcionarios y encuesta; CORS para SignalR
+    en producción (pendiente #5).
 - **Fase D — `Mimo.Admin.App` (SuperAdmin):** tenants, planes, conectores de IA, uso.
 - **Fase E — WebChat embebible** (ciudadano).
 

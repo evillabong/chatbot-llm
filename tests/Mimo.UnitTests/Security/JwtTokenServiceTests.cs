@@ -39,7 +39,9 @@ public class JwtTokenServiceTests
             FullName = "Agente Uno"
         };
 
-        var result = service.GenerateAgentToken(agent, "municipio", ["Administrador", "Soporte"]);
+        var roleId1 = Guid.NewGuid();
+        var roleId2 = Guid.NewGuid();
+        var result = service.GenerateAgentToken(agent, "municipio", ["Administrador", "Soporte"], [roleId1, roleId2]);
         var jwt    = Parse(result.Token);
 
         Assert.Equal(agent.Id.ToString(), jwt.Claims.Single(c => c.Type == "agent_id").Value);
@@ -48,6 +50,10 @@ public class JwtTokenServiceTests
         var roles = jwt.Claims.Where(c => c.Type == "role").Select(c => c.Value).ToList();
         Assert.Contains("Administrador", roles);
         Assert.Contains("Soporte", roles);
+
+        var roleIds = jwt.Claims.Where(c => c.Type == "role_id").Select(c => c.Value).ToList();
+        Assert.Contains(roleId1.ToString(), roleIds);
+        Assert.Contains(roleId2.ToString(), roleIds);
     }
 
     [Fact]
@@ -76,7 +82,7 @@ public class JwtTokenServiceTests
         var service = CreateService(expiryMinutes: 30);
         var agent   = new Agent { Id = Guid.NewGuid(), Email = "a@b.com", FullName = "A" };
 
-        var result   = service.GenerateAgentToken(agent, "slug", []);
+        var result   = service.GenerateAgentToken(agent, "slug", [], []);
         var esperado = DateTime.UtcNow.AddMinutes(30);
 
         // Tolerancia amplia para evitar fragilidad por el tiempo de ejecución.
