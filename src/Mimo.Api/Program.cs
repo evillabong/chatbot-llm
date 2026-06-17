@@ -147,12 +147,22 @@ await using (var scope = app.Services.CreateAsyncScope())
     // Datos de desarrollo (funcionarios/roles/conocimiento de demo, credenciales conocidas).
     if (app.Environment.IsDevelopment())
     {
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+        var contextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TenantDbContext>>();
+
         var tenantSeeder = new TenantDevDataSeeder(
-            scope.ServiceProvider.GetRequiredService<IDbContextFactory<TenantDbContext>>(),
-            globalDb,
-            scope.ServiceProvider.GetRequiredService<IPasswordHasher>(),
+            contextFactory, globalDb, passwordHasher,
             scope.ServiceProvider.GetRequiredService<ILogger<TenantDevDataSeeder>>());
         await tenantSeeder.SeedAsync();
+
+        // Negocio de demostración coherente (AndinaShop): admin, funcionarios, clientes,
+        // conversaciones, tickets, encuestas y conocimiento.
+        var businessSeeder = new BusinessDemoSeeder(
+            globalDb,
+            scope.ServiceProvider.GetRequiredService<ITenantProvisioningService>(),
+            contextFactory, passwordHasher,
+            scope.ServiceProvider.GetRequiredService<ILogger<BusinessDemoSeeder>>());
+        await businessSeeder.SeedAsync();
     }
 }
 

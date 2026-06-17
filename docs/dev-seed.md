@@ -40,9 +40,42 @@ Además: roles `Administrador` (del aprovisionamiento), `Supervisor`, `Soporte`,
 > El admin original del aprovisionamiento (`admin@{slug}.local`) tiene una contraseña distinta
 > (la que se usó al crear el tenant); para pruebas usa `tenantadmin@{slug}.local`.
 
+## Negocio de demostración: AndinaShop (tenant `andinashop`)
+
+`BusinessDemoSeeder` aprovisiona un tenant completo y coherente (tienda online de electrónica,
+plan `pro`) con los cuatro actores. Se excluye del seeder genérico de tenants para mantenerlo
+limpio. Contraseña común: **`Mimo123$`**.
+
+**SuperAdmin (plataforma):** `dev@mimo.local` (en `Mimo.Admin.Api`).
+
+**Admin del tenant:** `admin@andinashop.com` (rol Administrador).
+
+**Funcionarios:**
+
+| Nombre | Email | Rol |
+|---|---|---|
+| Laura Gómez | `laura.gomez@andinashop.com` | Ventas |
+| Carlos Ruiz | `carlos.ruiz@andinashop.com` | Soporte |
+| Sofía Martínez | `sofia.martinez@andinashop.com` | Envíos |
+| Diego Herrera | `diego.herrera@andinashop.com` | Supervisor (ve todos los tickets) |
+
+**Clientes (conversaciones con mensajes / tickets / encuesta):**
+
+| Cliente | Canal | Caso | Estado | Atiende |
+|---|---|---|---|---|
+| Pedro Ramírez | WhatsApp | Consulta de envío | Resuelto por el bot (sin ticket) | — |
+| Ana Torres | WebChat | Lead de compra (nevera 400L) | Asignado · prioridad alta | Laura (Ventas) |
+| María González | WhatsApp | Estado de pedido #10532 | En progreso | Sofía (Envíos) |
+| Juan Pérez | WebChat | Devolución de producto | Cerrado + encuesta ★5 | Carlos (Soporte) |
+
+**Conocimiento:** políticas de envíos, devoluciones, métodos de pago, garantía y guía de
+compatibilidad. **Configuración:** asignación automática balanceada, encuesta habilitada, horario
+de atención y personalización del WebChat (bienvenida + color).
+
 ## Probar el login en `Mimo.App`
 
 1. `dotnet run --project src/Mimo.Api` (queda en `https://localhost:7209`, Development → CORS abierto).
 2. `dotnet run --project src/Mimo.App`.
-3. En la pantalla de login: **Organización** `acme`, **Correo** `tenantadmin@acme.local`,
-   **Contraseña** `Mimo123$`.
+3. En la pantalla de login, usa el negocio de demo: **Organización** `andinashop`,
+   **Correo** `admin@andinashop.com`, **Contraseña** `Mimo123$`.
+   (También sirve el tenant genérico `acme` con `tenantadmin@acme.local`.)

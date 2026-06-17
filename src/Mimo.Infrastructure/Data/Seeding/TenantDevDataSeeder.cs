@@ -22,10 +22,12 @@ public partial class TenantDevDataSeeder(
     public async Task SeedAsync(CancellationToken ct = default)
     {
         var tenants = await globalDb.Tenants
-            .Where(t => t.IsActive)
+            .Where(t => t.IsActive && t.Slug != DevSeedDefaults.BusinessTenantSlug)
             .Select(t => new { t.Id, t.Slug })
             .ToListAsync(ct);
 
+        // El tenant del negocio de demo (AndinaShop) tiene su propio seeder coherente
+        // (BusinessDemoSeeder); aquí se excluye para no mezclar datos genéricos.
         foreach (var tenant in tenants)
             await SeedTenantAsync(tenant.Id, tenant.Slug, ct);
     }

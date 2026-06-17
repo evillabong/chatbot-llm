@@ -12,4 +12,14 @@ public static class DevSeedDefaults
 
     /// <summary>SuperAdmin de demo para Mimo.Admin.Api.</summary>
     public const string SuperAdminEmail = "dev@mimo.local";
+
+    // ── Negocio de demostración (AndinaShop) ───────────────────────────────────
+    /// <summary>Slug del tenant del negocio de demo. Excluido del seeder genérico de tenants.</summary>
+    public const string BusinessTenantSlug = "andinashop";
+
+    /// <summary>Nombre visible del negocio de demo.</summary>
+    public const string BusinessTenantName = "AndinaShop";
+
+    /// <summary>Admin del tenant del negocio de demo.</summary>
+    public const string BusinessAdminEmail = "admin@andinashop.com";
 }
