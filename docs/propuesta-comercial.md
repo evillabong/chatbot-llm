@@ -59,6 +59,41 @@ El resultado: **respuestas más rápidas, equipos más productivos y clientes m�
 
 ## 4. Funcionalidades
 
+Vista general de los módulos del sistema y para qué sirve cada uno:
+
+```text
+MIMO
+├─ Atención omnicanal                      # Recibe y responde por todos los canales desde una sola bandeja
+│  ├─ Canales (web, redes, mensajería)     # El cliente escribe por el canal que prefiere
+│  └─ Bandeja unificada                    # Todas las conversaciones en un único lugar
+├─ Asistente con IA generativa (LLM)       # Responde al instante, 24/7, en lenguaje natural
+│  └─ Base de conocimiento                 # Fuente oficial de las respuestas (responde con TU información)
+├─ Consola de agentes                      # El puesto de trabajo del equipo
+│  ├─ Conversación en tiempo real          # Chat en vivo con el cliente, con todo el historial
+│  └─ Acciones de atención                 # Tomar, responder, transferir, resolver y cerrar
+├─ Enrutamiento y colas                    # Cada consulta llega al área y a la persona correcta
+│  ├─ Departamentos / áreas                # Soporte, ventas, envíos, etc.
+│  ├─ Asignación manual o automática       # Reparte la carga entre los agentes disponibles
+│  └─ Transferencias                       # Pasa el caso a otro equipo sin perder el contexto
+├─ Tickets y seguimiento                   # Ciclo de vida del caso: estado, prioridad y trazabilidad
+├─ Equipos y permisos                      # Define roles/departamentos y qué ve y hace cada uno
+├─ Encuestas de satisfacción               # Mide la calidad y recoge comentarios del cliente
+├─ Configuración de la organización        # Adapta la operación sin depender del proveedor
+│  ├─ Horarios de atención                 # Cuándo atiende el equipo y mensajes fuera de horario
+│  ├─ Reglas de asignación y encuestas     # Cómo se reparten los casos y cómo se evalúan
+│  └─ Personalización del chat             # Marca, color y mensaje de bienvenida
+├─ Ventas  (opcional)                      # Convierte consultas en oportunidades sin cambiar de herramienta
+├─ Administración de la plataforma         # Operación centralizada para varias organizaciones
+│  ├─ Organizaciones                       # Alta y gestión de cada cliente
+│  ├─ Planes y capacidades                 # Qué funciones y volúmenes habilita cada plan
+│  └─ Uso y seguimiento                    # Visibilidad del consumo y la actividad
+└─ Mejora continua  (en evolución/premium) # El asistente mejora con el uso de la organización
+   ├─ Sugerencia de conocimiento           # Propone nuevas respuestas a partir de lo ya resuelto
+   └─ Derivación inteligente               # Aprende cuándo basta la IA y cuándo entra un funcionario
+```
+
+A continuación, el detalle de cada módulo:
+
 ### 4.1 Atención omnicanal unificada
 Recibe y responde conversaciones de múltiples canales (chat web embebible y mensajería/redes
 sociales) desde **una sola bandeja**. El cliente usa el canal que prefiere; el equipo trabaja en
