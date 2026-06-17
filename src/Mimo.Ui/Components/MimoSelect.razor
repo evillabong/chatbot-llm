@@ -1,0 +1,51 @@
+@namespace Mimo.Ui.Components
+
+@* Lista desplegable estándar de MIMO. Envuelve el Select de Flowbite. Soporta @bind-Value (string).
+   Las opciones se pasan por la propiedad Options; el valor es el string de cada opción. *@
+<div class="@(WrapperClass ?? "mb-4")">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <div class="mb-2">
+            <Label Value="@Label" />
+        </div>
+    }
+    <Select Value="Value"
+            ValueChanged="ValueChanged"
+            ValueExpression="ValueExpression"
+            Disabled="Disabled">
+        @if (Placeholder is not null)
+        {
+            <option value="">@Placeholder</option>
+        }
+        @foreach (var option in Options)
+        {
+            <option value="@option.Value">@option.Label</option>
+        }
+    </Select>
+</div>
+
+@code {
+    /// <summary>Texto de la etiqueta.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>Valor seleccionado (usar @bind-Value).</summary>
+    [Parameter] public string? Value { get; set; }
+
+    /// <summary>Callback de cambio (parte de @bind-Value).</summary>
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    /// <summary>Expresión del valor (parte de @bind-Value).</summary>
+    [Parameter] public System.Linq.Expressions.Expression<Func<string>>? ValueExpression { get; set; }
+
+    /// <summary>Opciones disponibles.</summary>
+    [Parameter] public IReadOnlyList<MimoSelectOption> Options { get; set; } = [];
+
+    /// <summary>Opción vacía inicial (placeholder); si es null no se muestra.</summary>
+    [Parameter] public string? Placeholder { get; set; }
+
+    /// <summary>Deshabilitado.</summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Clases del contenedor.</summary>
+    [Parameter] public string? WrapperClass { get; set; }
+}

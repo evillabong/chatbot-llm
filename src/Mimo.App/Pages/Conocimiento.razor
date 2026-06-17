@@ -1,0 +1,331 @@
+@page "/conocimiento"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.Kiota.Abstractions
+@inject DocumentsService Documents
+@inject RolesService RolesApi
+
+<PageTitle>Conocimiento · MIMO</PageTitle>
+
+<MimoPageHeader Title="Conocimiento"
+                Description="Documentos que alimentan las respuestas del bot y la consulta de los agentes.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nuevo documento</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+@if (_pageOk is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Success" Text="@_pageOk" OnDismiss="() => _pageOk = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_docs.Count == 0)" EmptyText="Aún no hay documentos. Crea el primero.">
+    <Header>
+        <MimoTh>Título</MimoTh>
+        <MimoTh>Visibilidad</MimoTh>
+        <MimoTh>Indexado</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var d in _docs)
+        {
+            <MimoTr>
+                <MimoTd>@d.Title</MimoTd>
+                <MimoTd>
+                    @if (d.Visibility == 0)
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Info">Público</MimoBadge>
+                    }
+                    else
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Neutral">Privado</MimoBadge>
+                    }
+                </MimoTd>
+                <MimoTd>
+                    @if (d.HasEmbedding == true)
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Success">Indexado</MimoBadge>
+                    }
+                    else
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Warning">Sin indexar</MimoBadge>
+                    }
+                </MimoTd>
+                <MimoTd>
+                    @if (d.IsActive == true)
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Success">Activo</MimoBadge>
+                    }
+                    else
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Neutral">Inactivo</MimoBadge>
+                    }
+                </MimoTd>
+                <MimoTd AlignRight="true">
+                    <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(d)">Editar</MimoButton>
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => ReindexAsync(d)">Reindexar</MimoButton>
+                        @if (d.IsActive == true)
+                        {
+                            <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDeactivate(d)">Desactivar</MimoButton>
+                        }
+                    </MimoActions>
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+@* ── Modal crear/editar ─────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showForm" Title="@(_editingId is null ? "Nuevo documento" : "Editar documento")" Size="MimoModalSize.Large">
+    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+
+        <MimoTextField Label="Título" @bind-Value="_form.Title" Required="true" />
+        <MimoTextArea Label="Contenido" @bind-Value="_form.Content" Rows="6" Required="true" />
+        <MimoSelect Label="Visibilidad" @bind-Value="_form.Visibility" Options="_visibilityOptions" />
+        <MimoSelect Label="Rol relacionado" @bind-Value="_form.RelatedRoleId" Options="_roleOptions" Placeholder="(ninguno)" />
+        <MimoTextField Label="Prioridad" Type="number" @bind-Value="_form.PriorityLevel" />
+        <MimoTextField Label="Etiquetas" @bind-Value="_form.TagsCsv" Placeholder="separadas por coma"
+                       HelperText="Ej.: horarios, soporte, faq" />
+
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" Loading="_saving">Guardar</MimoButton>
+        </MimoActions>
+    </EditForm>
+</MimoModal>
+
+@* ── Modal confirmar desactivación ──────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showDeactivate" Title="Desactivar documento" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Seguro que deseas desactivar el documento @_deactivateTarget?.Title? Podrá reactivarse después.</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showDeactivate = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmDeactivateAsync">Desactivar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<DocumentResponse> _docs = [];
+    private bool _loading = true;
+    private string? _pageError;
+    private string? _pageOk;
+
+    private static readonly IReadOnlyList<MimoSelectOption> _visibilityOptions =
+    [
+        new("0", "Público"),
+        new("1", "Privado")
+    ];
+    private IReadOnlyList<MimoSelectOption> _roleOptions = [];
+
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private Guid? _editingId;
+    private readonly DocumentForm _form = new();
+
+    private bool _showDeactivate;
+    private DocumentResponse? _deactivateTarget;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        try
+        {
+            var roles = await RolesApi.ListAsync(isActive: true);
+            _roleOptions = roles
+                .Where(r => r.Id is not null)
+                .Select(r => new MimoSelectOption(r.Id!.Value.ToString(), r.Name ?? ""))
+                .ToList();
+        }
+        catch { /* el rol relacionado es opcional */ }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try
+        {
+            _docs = await Documents.ListAsync();
+        }
+        catch (Exception ex)
+        {
+            _pageError = Describe(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form.Reset();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private void OpenEdit(DocumentResponse d)
+    {
+        _editingId = d.Id;
+        _form.Title = d.Title ?? "";
+        _form.Content = d.Content ?? "";
+        _form.Visibility = (d.Visibility ?? 0).ToString();
+        _form.RelatedRoleId = d.RelatedRoleId?.ToString() ?? "";
+        _form.PriorityLevel = d.PriorityLevel ?? 0;
+        _form.TagsCsv = d.Tags is { Count: > 0 } ? string.Join(", ", d.Tags) : "";
+        _form.IsActive = d.IsActive ?? true;
+        _formError = null;
+        _showForm = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _formError = null;
+        var visibility = int.TryParse(_form.Visibility, out var v) ? v : 0;
+        Guid? relatedRole = Guid.TryParse(_form.RelatedRoleId, out var rid) ? rid : null;
+        var tags = _form.TagsCsv
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+        try
+        {
+            if (_editingId is null)
+            {
+                await Documents.CreateAsync(new CreateDocumentRequest
+                {
+                    Title = _form.Title,
+                    Content = _form.Content,
+                    Visibility = visibility,
+                    RelatedRoleId = relatedRole,
+                    PriorityLevel = _form.PriorityLevel,
+                    Tags = tags
+                });
+            }
+            else
+            {
+                await Documents.UpdateAsync(_editingId.Value, new UpdateDocumentRequest
+                {
+                    Title = _form.Title,
+                    Content = _form.Content,
+                    Visibility = visibility,
+                    RelatedRoleId = relatedRole,
+                    PriorityLevel = _form.PriorityLevel,
+                    Tags = tags,
+                    IsActive = _form.IsActive
+                });
+            }
+
+            _showForm = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _formError = Describe(ex);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task ReindexAsync(DocumentResponse d)
+    {
+        if (d.Id is null) return;
+        _pageError = null;
+        _pageOk = null;
+        try
+        {
+            await Documents.ReindexAsync(d.Id.Value);
+            _pageOk = $"Documento «{d.Title}» reindexado.";
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _pageError = $"No se pudo reindexar: {Describe(ex)}";
+        }
+    }
+
+    private void OpenDeactivate(DocumentResponse d)
+    {
+        _deactivateTarget = d;
+        _showDeactivate = true;
+    }
+
+    private async Task ConfirmDeactivateAsync()
+    {
+        if (_deactivateTarget?.Id is null) return;
+        _saving = true;
+        try
+        {
+            await Documents.DeactivateAsync(_deactivateTarget.Id.Value);
+            _showDeactivate = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _pageError = Describe(ex);
+            _showDeactivate = false;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 404 } => "El documento no existe.",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class DocumentForm
+    {
+        [Required(ErrorMessage = "Indica el título.")]
+        public string Title { get; set; } = "";
+
+        [Required(ErrorMessage = "Indica el contenido.")]
+        public string Content { get; set; } = "";
+
+        public string Visibility { get; set; } = "0";
+
+        public string RelatedRoleId { get; set; } = "";
+
+        [Range(0, 100, ErrorMessage = "Entre 0 y 100.")]
+        public int PriorityLevel { get; set; }
+
+        public string TagsCsv { get; set; } = "";
+
+        public bool IsActive { get; set; } = true;
+
+        public void Reset()
+        {
+            Title = "";
+            Content = "";
+            Visibility = "0";
+            RelatedRoleId = "";
+            PriorityLevel = 0;
+            TagsCsv = "";
+            IsActive = true;
+        }
+    }
+}

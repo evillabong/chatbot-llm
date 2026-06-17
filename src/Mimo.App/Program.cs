@@ -43,6 +43,7 @@ builder.Services.AddScoped(sp =>
 // ── Servicios de dominio (sobre el cliente Kiota) ──────────────────────────────
 builder.Services.AddScoped<AgentsService>();
 builder.Services.AddScoped<RolesService>();
+builder.Services.AddScoped<DocumentsService>();
 
 // HttpClient genérico (recursos estáticos de la propia app).
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

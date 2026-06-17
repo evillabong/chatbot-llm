@@ -1,0 +1,51 @@
+@namespace Mimo.Ui.Components
+
+@* Área de texto multilínea estándar de MIMO. Envuelve el Textarea de Flowbite. Soporta @bind-Value. *@
+<div class="@(WrapperClass ?? "mb-4")">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <div class="mb-2">
+            <Label Value="@Label" />
+        </div>
+    }
+    <Textarea Value="Value"
+              ValueChanged="ValueChanged"
+              ValueExpression="ValueExpression"
+              Rows="Rows"
+              Placeholder="@Placeholder"
+              Required="Required"
+              Disabled="Disabled"
+              HelperText="@HelperText" />
+</div>
+
+@code {
+    /// <summary>Texto de la etiqueta.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>Valor enlazado (usar @bind-Value).</summary>
+    [Parameter] public string? Value { get; set; }
+
+    /// <summary>Callback de cambio (parte de @bind-Value).</summary>
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    /// <summary>Expresión del valor (parte de @bind-Value; habilita validación).</summary>
+    [Parameter] public System.Linq.Expressions.Expression<Func<string>>? ValueExpression { get; set; }
+
+    /// <summary>Número de filas visibles.</summary>
+    [Parameter] public int Rows { get; set; } = 4;
+
+    /// <summary>Marcador de posición.</summary>
+    [Parameter] public string? Placeholder { get; set; }
+
+    /// <summary>Texto de ayuda.</summary>
+    [Parameter] public string? HelperText { get; set; }
+
+    /// <summary>Campo requerido.</summary>
+    [Parameter] public bool Required { get; set; }
+
+    /// <summary>Deshabilitado.</summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Clases del contenedor.</summary>
+    [Parameter] public string? WrapperClass { get; set; }
+}

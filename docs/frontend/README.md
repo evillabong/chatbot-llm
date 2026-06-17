@@ -71,8 +71,8 @@ un cambio de *framework* Blazor→JS reescribiría `Mimo.Ui` igual.)
 
 Implementados (al cerrar la Fase A de funcionarios):
 
-- **Formularios:** `MimoTextField` (genérico, soporta `@bind-Value`), `MimoCheckbox`,
-  `MimoFormGroup`.
+- **Formularios:** `MimoTextField` (genérico, soporta `@bind-Value`), `MimoTextArea`, `MimoSelect`,
+  `MimoCheckbox`, `MimoFormGroup`.
 - **Datos:** `MimoTable` (con estados de carga/vacío) + `MimoTr`/`MimoTh`/`MimoTd`, `MimoBadge`,
   `MimoCard`.
 - **Feedback:** `MimoAlert`, `MimoModal`, `MimoSpinner`.
@@ -81,7 +81,7 @@ Implementados (al cerrar la Fase A de funcionarios):
 - **Enums propios** para no filtrar tipos de Flowbite a las apps: `MimoButtonVariant`,
   `MimoAlertVariant`, `MimoBadgeVariant`, `MimoModalSize`.
 
-Pendientes del catálogo (siguientes fases): `MimoSelect`, `MimoDropdown`, `MimoTabs`,
+Pendientes del catálogo (siguientes fases): `MimoDropdown`, `MimoTabs`,
 `MimoSidebar`/`MimoBreadcrumb`, `MimoToast`, `MimoAvatar`, `MimoEmptyState`, paginación
 server-side en `MimoTable`.
 
@@ -154,6 +154,11 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
   - **Datos de prueba:** ambas APIs siembran datos de demo en Development (credenciales conocidas);
     ver [docs/dev-seed.md](../dev-seed.md). Para entrar: tenant `acme`, `tenantadmin@acme.local` / `Mimo123$`.
 - **Fase B — Admin de tenant completo** (en `Mimo.App`): documentos (con estados), configuración.
+  - **Conocimiento (documentos): hecho.** Página `/conocimiento` (listar, crear, editar, reindexar,
+    desactivar) sobre `DocumentsService`; visibilidad pública/privada, etiquetas, rol relacionado,
+    estado de indexado (embedding). Sumó `MimoTextArea` y `MimoSelect` al catálogo.
+  - **Pendiente de Fase B:** configuración del tenant; CRUD de categorías de documentos (hoy no hay
+    endpoint de categorías, ver `docs/pendings`).
 - **Fase C — Consola de agente (Callbell)** (en `Mimo.App`): inbox omnicanal en vivo (SignalR),
   conversación, cola, transferencias, chat interno.
 - **Fase D — `Mimo.Admin.App` (SuperAdmin):** tenants, planes, conectores de IA, uso.
