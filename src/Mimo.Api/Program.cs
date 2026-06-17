@@ -94,16 +94,21 @@ builder.Services.AddAuthorization(options =>
 });
 
 // ── CORS ───────────────────────────────────────────────────────────────────────
-// Las apps WASM (Mimo.App) consumen esta API desde otro origen. Los orígenes permitidos
-// se configuran en "Cors:AllowedOrigins"; sin configurar (dev) se permite cualquier origen.
-// Autenticación por Bearer (no cookies), por lo que AllowAnyOrigin es admisible en dev.
-var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+// En Development (dotnet run o publicación local en IIS con ASPNETCORE_ENVIRONMENT=Development)
+// se permite cualquier origen/encabezado/método. En otros entornos se restringe a los orígenes
+// declarados en "Cors:AllowedOrigins". Autenticación por Bearer (no cookies).
+var isDevelopment = builder.Environment.IsDevelopment();
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 {
-    if (corsOrigins.Length > 0)
-        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod();
-    else
+    if (isDevelopment)
+    {
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    }
+    else
+    {
+        var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod();
+    }
 }));
 
 // ── SignalR ──────────────────────────────────────────────────────────────────

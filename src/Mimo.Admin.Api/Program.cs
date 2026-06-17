@@ -64,15 +64,22 @@ builder.Services.AddAuthorization(options =>
 });
 
 // ── CORS ───────────────────────────────────────────────────────────────────────
-// Mimo.Admin.App (WASM) consume esta API desde otro origen. Orígenes en "Cors:AllowedOrigins";
-// sin configurar (dev) se permite cualquier origen (autenticación por Bearer, no cookies).
-var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+// En Development (dotnet run o publicación local en IIS con ASPNETCORE_ENVIRONMENT=Development)
+// se permite cualquier origen/encabezado/método. En otros entornos se restringe a los orígenes
+// declarados en "Cors:AllowedOrigins". Mimo.Admin.App (WASM) consume esta API desde otro origen.
+// Autenticación por Bearer (no cookies).
+var isDevelopment = builder.Environment.IsDevelopment();
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 {
-    if (corsOrigins.Length > 0)
-        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod();
-    else
+    if (isDevelopment)
+    {
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    }
+    else
+    {
+        var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod();
+    }
 }));
 
 // ── OpenAPI ──────────────────────────────────────────────────────────────────
