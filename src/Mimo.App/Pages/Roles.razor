@@ -1,0 +1,278 @@
+@page "/roles"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.Kiota.Abstractions
+@inject RolesService RolesApi
+
+<PageTitle>Roles · MIMO</PageTitle>
+
+<MimoPageHeader Title="Roles"
+                Description="Define los roles/departamentos del tenant y sus permisos.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nuevo rol</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_roles.Count == 0)" EmptyText="Aún no hay roles. Crea el primero.">
+    <Header>
+        <MimoTh>Nombre</MimoTh>
+        <MimoTh>Descripción</MimoTh>
+        <MimoTh>Prioridad</MimoTh>
+        <MimoTh>Ve todos los tickets</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var r in _roles)
+        {
+            <MimoTr>
+                <MimoTd>@r.Name</MimoTd>
+                <MimoTd>
+                    @if (!string.IsNullOrWhiteSpace(r.Description))
+                    {
+                        @r.Description
+                    }
+                    else
+                    {
+                        <MimoText Muted Small>—</MimoText>
+                    }
+                </MimoTd>
+                <MimoTd>@r.PriorityLevel</MimoTd>
+                <MimoTd>
+                    @if (r.CanViewAllTickets == true)
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Info">Sí</MimoBadge>
+                    }
+                    else
+                    {
+                        <MimoText Muted Small>No</MimoText>
+                    }
+                </MimoTd>
+                <MimoTd>
+                    @if (r.IsActive == true)
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Success">Activo</MimoBadge>
+                    }
+                    else
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Neutral">Inactivo</MimoBadge>
+                    }
+                </MimoTd>
+                <MimoTd AlignRight="true">
+                    <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(r)">Editar</MimoButton>
+                        @if (r.IsActive == true)
+                        {
+                            <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDeactivate(r)">Desactivar</MimoButton>
+                        }
+                    </MimoActions>
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+@* ── Modal crear/editar ─────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showForm" Title="@(_editingId is null ? "Nuevo rol" : "Editar rol")">
+    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+
+        <MimoTextField Label="Nombre" @bind-Value="_form.Name" Required="true" />
+        <MimoTextField Label="Descripción" @bind-Value="_form.Description" Placeholder="Opcional" />
+        <MimoTextField Label="Prioridad" Type="number" @bind-Value="_form.PriorityLevel"
+                       HelperText="Mayor número, mayor prioridad de atención." />
+
+        <MimoFormGroup>
+            <MimoCheckbox Label="Puede ver todos los tickets" @bind-Checked="_form.CanViewAllTickets" />
+            @if (_editingId is not null)
+            {
+                <MimoCheckbox Label="Activo" @bind-Checked="_form.IsActive" />
+            }
+        </MimoFormGroup>
+
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" Loading="_saving">Guardar</MimoButton>
+        </MimoActions>
+    </EditForm>
+</MimoModal>
+
+@* ── Modal confirmar desactivación ──────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showDeactivate" Title="Desactivar rol" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Seguro que deseas desactivar el rol @_deactivateTarget?.Name? Podrá reactivarse después.</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showDeactivate = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmDeactivateAsync">Desactivar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<RoleResponse> _roles = [];
+    private bool _loading = true;
+    private string? _pageError;
+
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private Guid? _editingId;
+    private readonly RoleForm _form = new();
+
+    private bool _showDeactivate;
+    private RoleResponse? _deactivateTarget;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try
+        {
+            _roles = await RolesApi.ListAsync();
+        }
+        catch (Exception ex)
+        {
+            _pageError = Describe(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form.Reset();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private void OpenEdit(RoleResponse r)
+    {
+        _editingId = r.Id;
+        _form.Name = r.Name ?? "";
+        _form.Description = r.Description ?? "";
+        _form.PriorityLevel = r.PriorityLevel ?? 0;
+        _form.CanViewAllTickets = r.CanViewAllTickets ?? false;
+        _form.IsActive = r.IsActive ?? true;
+        _formError = null;
+        _showForm = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _formError = null;
+        var description = string.IsNullOrWhiteSpace(_form.Description) ? null : _form.Description;
+        try
+        {
+            if (_editingId is null)
+            {
+                await RolesApi.CreateAsync(new CreateRoleRequest
+                {
+                    Name = _form.Name,
+                    Description = description,
+                    PriorityLevel = _form.PriorityLevel,
+                    CanViewAllTickets = _form.CanViewAllTickets
+                });
+            }
+            else
+            {
+                await RolesApi.UpdateAsync(_editingId.Value, new UpdateRoleRequest
+                {
+                    Name = _form.Name,
+                    Description = description,
+                    PriorityLevel = _form.PriorityLevel,
+                    CanViewAllTickets = _form.CanViewAllTickets,
+                    IsActive = _form.IsActive
+                });
+            }
+
+            _showForm = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _formError = Describe(ex);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void OpenDeactivate(RoleResponse r)
+    {
+        _deactivateTarget = r;
+        _showDeactivate = true;
+    }
+
+    private async Task ConfirmDeactivateAsync()
+    {
+        if (_deactivateTarget?.Id is null) return;
+        _saving = true;
+        try
+        {
+            await RolesApi.DeactivateAsync(_deactivateTarget.Id.Value);
+            _showDeactivate = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _pageError = Describe(ex);
+            _showDeactivate = false;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 409 } => "Ya existe un rol con ese nombre.",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class RoleForm
+    {
+        [Required(ErrorMessage = "Indica el nombre.")]
+        public string Name { get; set; } = "";
+
+        public string Description { get; set; } = "";
+
+        [Range(0, 100, ErrorMessage = "Entre 0 y 100.")]
+        public int PriorityLevel { get; set; }
+
+        public bool CanViewAllTickets { get; set; }
+
+        public bool IsActive { get; set; } = true;
+
+        public void Reset()
+        {
+            Name = "";
+            Description = "";
+            PriorityLevel = 0;
+            CanViewAllTickets = false;
+            IsActive = true;
+        }
+    }
+}
