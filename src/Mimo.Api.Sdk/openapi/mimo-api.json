@@ -645,6 +645,85 @@
         }
       }
     },
+    "/integration/api-keys": {
+      "get": {
+        "tags": [
+          "Integration"
+        ],
+        "summary": "Lista las API keys del tenant (sin exponer la clave).",
+        "operationId": "ListApiKeys",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Integration"
+        ],
+        "summary": "Genera una API key; la clave en claro se devuelve UNA sola vez.",
+        "operationId": "CreateApiKey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApiKeyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedApiKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Integration"
+        ],
+        "summary": "Revoca una API key del tenant (query: id).",
+        "operationId": "RevokeApiKey",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/conversations": {
       "post": {
         "tags": [
@@ -1425,6 +1504,41 @@
           }
         }
       },
+      "ApiKeyResponse": {
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "isActive",
+          "createdAt",
+          "lastUsedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
       "AssignmentMode": {
         "type": "integer"
       },
@@ -1578,6 +1692,46 @@
               "format": "uuid"
             },
             "nullable": true
+          }
+        }
+      },
+      "CreateApiKeyRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatedApiKeyResponse": {
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "apiKey",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "apiKey": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -2408,6 +2562,9 @@
     },
     {
       "name": "Tenant"
+    },
+    {
+      "name": "Integration"
     },
     {
       "name": "Conversations"

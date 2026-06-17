@@ -59,6 +59,7 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<IApiKeyService, ApiKeyService>();
 
         // Cifrado de secretos en reposo (API keys de conectores de IA). Requiere que la app
         // configure Data Protection con anillo de llaves compartido (ver Program.cs / ADR 0010).

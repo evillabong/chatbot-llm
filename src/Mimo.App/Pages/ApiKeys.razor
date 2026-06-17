@@ -1,0 +1,182 @@
+@page "/api-keys"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.Kiota.Abstractions
+@inject ApiKeysService ApiKeysApi
+
+<PageTitle>Interoperabilidad · API keys</PageTitle>
+
+<MimoPageHeader Title="API keys"
+                Description="Credenciales para que tus sistemas se integren con la plataforma.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nueva API key</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_keys.Count == 0)" EmptyText="Aún no hay API keys.">
+    <Header>
+        <MimoTh>Nombre</MimoTh>
+        <MimoTh>Prefijo</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh>Creada</MimoTh>
+        <MimoTh>Último uso</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var k in _keys)
+        {
+            <MimoTr>
+                <MimoTd>@k.Name</MimoTd>
+                <MimoTd><MimoText Muted Small>@k.Prefix…</MimoText></MimoTd>
+                <MimoTd>
+                    @if (k.IsActive == true) { <MimoBadge Variant="MimoBadgeVariant.Success">Activa</MimoBadge> }
+                    else { <MimoBadge Variant="MimoBadgeVariant.Neutral">Revocada</MimoBadge> }
+                </MimoTd>
+                <MimoTd><MimoText Muted Small>@k.CreatedAt?.ToLocalTime().ToString("dd/MM/yyyy")</MimoText></MimoTd>
+                <MimoTd><MimoText Muted Small>@(k.LastUsedAt is null ? "—" : k.LastUsedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm"))</MimoText></MimoTd>
+                <MimoTd AlignRight="true">
+                    @if (k.IsActive == true)
+                    {
+                        <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenRevoke(k)">Revocar</MimoButton>
+                    }
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+@* ── Modal crear ────────────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showCreate" Title="Nueva API key">
+    <EditForm Model="_form" OnValidSubmit="CreateAsync">
+        <DataAnnotationsValidator />
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+        <MimoTextField Label="Nombre" @bind-Value="_form.Name" Placeholder="Integración ERP" Required="true" />
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showCreate = false">Cancelar</MimoButton>
+            <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" Loading="_saving">Generar</MimoButton>
+        </MimoActions>
+    </EditForm>
+</MimoModal>
+
+@* ── Modal: clave generada (se muestra una sola vez) ────────────────────────── *@
+<MimoModal @bind-Show="_showCreated" Title="API key generada">
+    <ChildContent>
+        <MimoAlert Variant="MimoAlertVariant.Warning"
+                   Text="Copia esta clave ahora. Por seguridad no se volverá a mostrar." />
+        <MimoFormGroup Label="@(_created?.Name)">
+            <MimoTextField TValue="string" Value="@_created?.ApiKey" ValueChanged="_ => {}" WrapperClass="" />
+        </MimoFormGroup>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Primary" OnClick="() => _showCreated = false">Entendido</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@* ── Modal revocar ──────────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showRevoke" Title="Revocar API key" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Revocar la API key @_revokeTarget?.Name? Los sistemas que la usen dejarán de tener acceso.</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showRevoke = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmRevokeAsync">Revocar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<ApiKeyResponse> _keys = [];
+    private bool _loading = true;
+    private string? _pageError;
+
+    private bool _showCreate;
+    private bool _saving;
+    private string? _formError;
+    private readonly KeyForm _form = new();
+
+    private bool _showCreated;
+    private CreatedApiKeyResponse? _created;
+
+    private bool _showRevoke;
+    private ApiKeyResponse? _revokeTarget;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try { _keys = await ApiKeysApi.ListAsync(); }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+    }
+
+    private void OpenCreate()
+    {
+        _form.Name = "";
+        _formError = null;
+        _showCreate = true;
+    }
+
+    private async Task CreateAsync()
+    {
+        _saving = true;
+        _formError = null;
+        try
+        {
+            _created = await ApiKeysApi.CreateAsync(_form.Name.Trim());
+            _showCreate = false;
+            _showCreated = true;   // muestra la clave una sola vez
+            await LoadAsync();
+        }
+        catch (Exception ex) { _formError = Describe(ex); }
+        finally { _saving = false; }
+    }
+
+    private void OpenRevoke(ApiKeyResponse k)
+    {
+        _revokeTarget = k;
+        _showRevoke = true;
+    }
+
+    private async Task ConfirmRevokeAsync()
+    {
+        if (_revokeTarget?.Id is null) return;
+        _saving = true;
+        try
+        {
+            await ApiKeysApi.RevokeAsync(_revokeTarget.Id.Value);
+            _showRevoke = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); _showRevoke = false; }
+        finally { _saving = false; }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException { ResponseStatusCode: 404 } => "API key no encontrada.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class KeyForm
+    {
+        [Required(ErrorMessage = "Indica un nombre.")]
+        [MaxLength(120)]
+        public string Name { get; set; } = "";
+    }
+}

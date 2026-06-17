@@ -187,6 +187,7 @@ app.MapAgentEndpoints();
 app.MapRoleEndpoints();
 app.MapDocumentEndpoints();
 app.MapTenantConfigurationEndpoints();
+app.MapIntegrationEndpoints();
 app.MapConversationEndpoints();
 app.MapTicketEndpoints();
 app.MapInternalChatEndpoints();

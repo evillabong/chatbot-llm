@@ -27,6 +27,8 @@ public class GlobalDbContext(DbContextOptions<GlobalDbContext> options) : DbCont
 
     public DbSet<Plan> Plans => Set<Plan>();
 
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -37,5 +39,6 @@ public class GlobalDbContext(DbContextOptions<GlobalDbContext> options) : DbCont
         modelBuilder.ApplyConfiguration(new AiConnectorEntityConfiguration());
         modelBuilder.ApplyConfiguration(new AiPlanPolicyEntityConfiguration());
         modelBuilder.ApplyConfiguration(new AiUsageRecordEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new ApiKeyEntityConfiguration());
     }
 }
