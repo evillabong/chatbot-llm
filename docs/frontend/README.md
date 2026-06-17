@@ -157,8 +157,12 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
   - **Conocimiento (documentos): hecho.** Página `/conocimiento` (listar, crear, editar, reindexar,
     desactivar) sobre `DocumentsService`; visibilidad pública/privada, etiquetas, rol relacionado,
     estado de indexado (embedding). Sumó `MimoTextArea` y `MimoSelect` al catálogo.
-  - **Pendiente de Fase B:** configuración del tenant; CRUD de categorías de documentos (hoy no hay
-    endpoint de categorías, ver `docs/pendings`).
+  - **Configuración del tenant: hecho.** Página `/configuracion` (atención, asignación, encuestas,
+    horario, WebChat) sobre el nuevo endpoint `/tenant/configuration` ([ADR 0013](../adr/0013-configuracion-self-service-del-tenant-en-mimo-api.md));
+    edita un subconjunto y reenvía el objeto completo (round-trip que preserva lo no editado).
+  - **Fase B completa** (admin de tenant: conocimiento + configuración).
+  - **Pendiente:** CRUD de categorías de documentos; edición de hora/días de atención y de los
+    campos `int?` (hoy se preservan por round-trip pero no se editan en la UI). Ver `docs/pendings`.
 - **Fase C — Consola de agente (Callbell)** (en `Mimo.App`): inbox omnicanal en vivo (SignalR),
   conversación, cola, transferencias, chat interno.
 - **Fase D — `Mimo.Admin.App` (SuperAdmin):** tenants, planes, conectores de IA, uso.

@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5080/"
+      "url": "http://localhost:5099/"
     }
   ],
   "paths": {
@@ -585,6 +585,59 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/tenant/configuration": {
+      "get": {
+        "tags": [
+          "Tenant"
+        ],
+        "summary": "Obtiene la configuración del tenant autenticado.",
+        "operationId": "GetTenantConfiguration",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantConfiguration"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tenant"
+        ],
+        "summary": "Actualiza la configuración del tenant autenticado.",
+        "operationId": "UpdateTenantConfiguration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenantConfiguration"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantConfiguration"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not Found"
@@ -1188,6 +1241,24 @@
   },
   "components": {
     "schemas": {
+      "AgentInterventionConfig": {
+        "type": "object",
+        "properties": {
+          "allowIntervention": {
+            "type": "boolean"
+          },
+          "canViewBotConversations": {
+            "type": "boolean"
+          },
+          "canViewOtherRolesSessions": {
+            "type": "boolean"
+          },
+          "interventionSuggestionThreshold": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          }
+        }
+      },
       "AgentResponse": {
         "required": [
           "id",
@@ -1233,9 +1304,70 @@
           }
         }
       },
+      "AssignmentMode": {
+        "type": "integer"
+      },
+      "BusinessHoursConfig": {
+        "type": "object",
+        "properties": {
+          "businessHoursEnabled": {
+            "type": "boolean"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "time"
+          },
+          "workingDays": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "format": "int32"
+            }
+          },
+          "outOfHoursMessage": {
+            "type": "string"
+          }
+        }
+      },
       "Channel": {
         "type": "integer",
         "default": 0
+      },
+      "ChannelCustomizationConfig": {
+        "type": "object",
+        "properties": {
+          "primaryColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "welcomeMessage": {
+            "type": "string"
+          },
+          "facebookPageId": {
+            "type": "string",
+            "nullable": true
+          },
+          "whatsAppPhoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "telegramBotToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "instagramAccountId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       },
       "CreateAgentRequest": {
         "required": [
@@ -1334,6 +1466,27 @@
           "canViewAllTickets": {
             "type": "boolean",
             "default": false
+          }
+        }
+      },
+      "CustomerAttentionConfig": {
+        "type": "object",
+        "properties": {
+          "maxQueueWaitTimeMinutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32",
+            "nullable": true
+          },
+          "queueWaitMessage": {
+            "type": "string"
+          },
+          "transferMessage": {
+            "type": "string"
+          },
+          "inactivityTimeoutMinutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32",
+            "nullable": true
           }
         }
       },
@@ -1513,6 +1666,27 @@
           }
         }
       },
+      "SatisfactionSurveyConfig": {
+        "type": "object",
+        "properties": {
+          "surveyEnabled": {
+            "type": "boolean"
+          },
+          "surveyRequired": {
+            "type": "boolean"
+          },
+          "allowObservations": {
+            "type": "boolean"
+          },
+          "reopenOnLowRating": {
+            "type": "boolean"
+          },
+          "reopenRatingThreshold": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          }
+        }
+      },
       "SendInternalMessageRequest": {
         "required": [
           "toAgentId",
@@ -1543,6 +1717,30 @@
         "properties": {
           "content": {
             "type": "string"
+          }
+        }
+      },
+      "SessionAssignmentConfig": {
+        "type": "object",
+        "properties": {
+          "assignmentMode": {
+            "$ref": "#/components/schemas/AssignmentMode"
+          },
+          "notifyPendingByEmail": {
+            "type": "boolean"
+          },
+          "notificationFrequencyMinutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "maxConcurrentSessionsPerAgent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "defaultEscalationRoleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         }
       },
@@ -1581,8 +1779,59 @@
           }
         }
       },
+      "TenantConfiguration": {
+        "type": "object",
+        "properties": {
+          "customerAttention": {
+            "$ref": "#/components/schemas/CustomerAttentionConfig"
+          },
+          "sessionAssignment": {
+            "$ref": "#/components/schemas/SessionAssignmentConfig"
+          },
+          "transfers": {
+            "$ref": "#/components/schemas/TransfersConfig"
+          },
+          "agentIntervention": {
+            "$ref": "#/components/schemas/AgentInterventionConfig"
+          },
+          "satisfactionSurvey": {
+            "$ref": "#/components/schemas/SatisfactionSurveyConfig"
+          },
+          "unattendedSessions": {
+            "$ref": "#/components/schemas/UnattendedSessionsConfig"
+          },
+          "businessHours": {
+            "$ref": "#/components/schemas/BusinessHoursConfig"
+          },
+          "channelCustomization": {
+            "$ref": "#/components/schemas/ChannelCustomizationConfig"
+          }
+        }
+      },
       "TicketStatus": {
         "type": "integer"
+      },
+      "TimeoutAction": {
+        "type": "integer"
+      },
+      "TransfersConfig": {
+        "type": "object",
+        "properties": {
+          "allowPartialTransfer": {
+            "type": "boolean"
+          },
+          "requireCustomerConfirmation": {
+            "type": "boolean"
+          },
+          "enableInternalChat": {
+            "type": "boolean"
+          },
+          "maxTransfersPerSession": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32",
+            "nullable": true
+          }
+        }
       },
       "TransferTicketRequest": {
         "required": [
@@ -1612,6 +1861,25 @@
             "nullable": true
           },
           "isPartial": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UnattendedSessionsConfig": {
+        "type": "object",
+        "properties": {
+          "unattendedTimeoutMinutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32",
+            "nullable": true
+          },
+          "timeoutAction": {
+            "$ref": "#/components/schemas/TimeoutAction"
+          },
+          "timeoutCustomerMessage": {
+            "type": "string"
+          },
+          "autoRetry": {
             "type": "boolean"
           }
         }
@@ -1753,6 +2021,9 @@
     },
     {
       "name": "Documents"
+    },
+    {
+      "name": "Tenant"
     },
     {
       "name": "Conversations"

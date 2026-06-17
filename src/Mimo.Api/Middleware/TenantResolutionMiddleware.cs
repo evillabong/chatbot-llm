@@ -34,8 +34,10 @@ public partial class TenantResolutionMiddleware(
     public async Task InvokeAsync(HttpContext context, GlobalDbContext globalDb, ITenantSchemaProvider schemaProvider)
     {
         var path = context.Request.Path.Value ?? string.Empty;
+        var normalizedPath = path.ToLowerInvariant();
 
-        if (BypassPaths.Contains(path.ToLowerInvariant()))
+        // Rutas no asociadas a un tenant: health/ready y el documento OpenAPI (solo Development).
+        if (BypassPaths.Contains(normalizedPath) || normalizedPath.StartsWith("/openapi"))
         {
             await next(context);
             return;

@@ -1,0 +1,231 @@
+@page "/configuracion"
+@attribute [Authorize]
+@using Microsoft.Kiota.Abstractions
+@inject TenantConfigService Config
+
+<PageTitle>Configuración · MIMO</PageTitle>
+
+<MimoPageHeader Title="Configuración"
+                Description="Parámetros de atención, asignación, encuestas, horario y personalización del tenant." />
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+@if (_pageOk is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Success" Text="@_pageOk" OnDismiss="() => _pageOk = null" />
+}
+
+@if (_loading)
+{
+    <MimoCard><MimoText Muted>Cargando configuración…</MimoText></MimoCard>
+}
+else if (_config is not null)
+{
+    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+
+        <MimoCard CssClass="mb-6">
+            <MimoHeading Level="2" Text="Atención al ciudadano" />
+            <div class="mt-4">
+                <MimoTextField Label="Mensaje en cola" @bind-Value="_form.QueueWaitMessage" />
+                <MimoTextField Label="Mensaje de transferencia" @bind-Value="_form.TransferMessage" />
+            </div>
+        </MimoCard>
+
+        <MimoCard CssClass="mb-6">
+            <MimoHeading Level="2" Text="Asignación de sesiones" />
+            <div class="mt-4">
+                <MimoSelect Label="Modo de asignación" @bind-Value="_form.AssignmentMode" Options="_assignmentOptions" />
+                <MimoTextField Label="Sesiones concurrentes máx. por funcionario" Type="number" @bind-Value="_form.MaxConcurrentSessionsPerAgent" />
+                <MimoTextField Label="Frecuencia de notificación (min)" Type="number" @bind-Value="_form.NotificationFrequencyMinutes" />
+                <MimoFormGroup>
+                    <MimoCheckbox Label="Notificar pendientes por correo" @bind-Checked="_form.NotifyPendingByEmail" />
+                </MimoFormGroup>
+            </div>
+        </MimoCard>
+
+        <MimoCard CssClass="mb-6">
+            <MimoHeading Level="2" Text="Encuesta de satisfacción" />
+            <div class="mt-4">
+                <MimoFormGroup>
+                    <MimoCheckbox Label="Encuesta habilitada" @bind-Checked="_form.SurveyEnabled" />
+                    <MimoCheckbox Label="Encuesta obligatoria" @bind-Checked="_form.SurveyRequired" />
+                    <MimoCheckbox Label="Permitir observaciones" @bind-Checked="_form.AllowObservations" />
+                    <MimoCheckbox Label="Reabrir ticket con baja calificación" @bind-Checked="_form.ReopenOnLowRating" />
+                </MimoFormGroup>
+                <MimoTextField Label="Umbral de calificación para reabrir (1-5)" Type="number" @bind-Value="_form.ReopenRatingThreshold" />
+            </div>
+        </MimoCard>
+
+        <MimoCard CssClass="mb-6">
+            <MimoHeading Level="2" Text="Horario de atención" />
+            <div class="mt-4">
+                <MimoFormGroup>
+                    <MimoCheckbox Label="Aplicar horario de atención" @bind-Checked="_form.BusinessHoursEnabled" />
+                </MimoFormGroup>
+                <MimoTextArea Label="Mensaje fuera de horario" @bind-Value="_form.OutOfHoursMessage" Rows="2" />
+                <MimoText Small Muted>Las horas y días de atención se ajustan próximamente; sus valores actuales se conservan.</MimoText>
+            </div>
+        </MimoCard>
+
+        <MimoCard CssClass="mb-6">
+            <MimoHeading Level="2" Text="Personalización del WebChat" />
+            <div class="mt-4">
+                <MimoTextField Label="Mensaje de bienvenida" @bind-Value="_form.WelcomeMessage" />
+                <MimoTextField Label="Color primario" @bind-Value="_form.PrimaryColor" Placeholder="#2563eb" />
+                <MimoTextField Label="URL del logo" @bind-Value="_form.LogoUrl" Placeholder="https://…" />
+            </div>
+        </MimoCard>
+
+        <MimoActions AlignRight="true">
+            <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" Loading="_saving">Guardar cambios</MimoButton>
+        </MimoActions>
+    </EditForm>
+}
+
+@code {
+    private TenantConfiguration? _config;
+    private readonly ConfigForm _form = new();
+    private bool _loading = true;
+    private bool _saving;
+    private string? _pageError;
+    private string? _pageOk;
+
+    private static readonly IReadOnlyList<MimoSelectOption> _assignmentOptions =
+    [
+        new("0", "Manual"),
+        new("1", "Automática balanceada")
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _config = await Config.GetAsync() ?? new TenantConfiguration();
+            LoadForm(_config);
+        }
+        catch (Exception ex)
+        {
+            _pageError = Describe(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void LoadForm(TenantConfiguration c)
+    {
+        var ca = c.CustomerAttention;
+        _form.QueueWaitMessage = ca?.QueueWaitMessage ?? "";
+        _form.TransferMessage  = ca?.TransferMessage ?? "";
+
+        var sa = c.SessionAssignment;
+        _form.AssignmentMode                = (sa?.AssignmentMode ?? 0).ToString();
+        _form.MaxConcurrentSessionsPerAgent = sa?.MaxConcurrentSessionsPerAgent ?? 5;
+        _form.NotificationFrequencyMinutes  = sa?.NotificationFrequencyMinutes ?? 5;
+        _form.NotifyPendingByEmail          = sa?.NotifyPendingByEmail ?? false;
+
+        var ss = c.SatisfactionSurvey;
+        _form.SurveyEnabled         = ss?.SurveyEnabled ?? true;
+        _form.SurveyRequired        = ss?.SurveyRequired ?? false;
+        _form.AllowObservations     = ss?.AllowObservations ?? true;
+        _form.ReopenOnLowRating     = ss?.ReopenOnLowRating ?? false;
+        _form.ReopenRatingThreshold = ss?.ReopenRatingThreshold ?? 3;
+
+        var bh = c.BusinessHours;
+        _form.BusinessHoursEnabled = bh?.BusinessHoursEnabled ?? false;
+        _form.OutOfHoursMessage    = bh?.OutOfHoursMessage ?? "";
+
+        var cc = c.ChannelCustomization;
+        _form.WelcomeMessage = cc?.WelcomeMessage ?? "";
+        _form.PrimaryColor   = cc?.PrimaryColor ?? "";
+        _form.LogoUrl        = cc?.LogoUrl ?? "";
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_config is null) return;
+        _saving = true;
+        _pageError = null;
+        _pageOk = null;
+
+        // Reescribir solo los campos editados sobre el objeto completo (round-trip):
+        // las secciones/valores no editados (horas, días, secretos de canal) se conservan.
+        _config.CustomerAttention ??= new CustomerAttentionConfig();
+        _config.CustomerAttention.QueueWaitMessage = _form.QueueWaitMessage;
+        _config.CustomerAttention.TransferMessage  = _form.TransferMessage;
+
+        _config.SessionAssignment ??= new SessionAssignmentConfig();
+        _config.SessionAssignment.AssignmentMode                = int.TryParse(_form.AssignmentMode, out var am) ? am : 0;
+        _config.SessionAssignment.MaxConcurrentSessionsPerAgent = _form.MaxConcurrentSessionsPerAgent;
+        _config.SessionAssignment.NotificationFrequencyMinutes  = _form.NotificationFrequencyMinutes;
+        _config.SessionAssignment.NotifyPendingByEmail          = _form.NotifyPendingByEmail;
+
+        _config.SatisfactionSurvey ??= new SatisfactionSurveyConfig();
+        _config.SatisfactionSurvey.SurveyEnabled         = _form.SurveyEnabled;
+        _config.SatisfactionSurvey.SurveyRequired        = _form.SurveyRequired;
+        _config.SatisfactionSurvey.AllowObservations     = _form.AllowObservations;
+        _config.SatisfactionSurvey.ReopenOnLowRating     = _form.ReopenOnLowRating;
+        _config.SatisfactionSurvey.ReopenRatingThreshold = _form.ReopenRatingThreshold;
+
+        _config.BusinessHours ??= new BusinessHoursConfig();
+        _config.BusinessHours.BusinessHoursEnabled = _form.BusinessHoursEnabled;
+        _config.BusinessHours.OutOfHoursMessage    = _form.OutOfHoursMessage;
+
+        _config.ChannelCustomization ??= new ChannelCustomizationConfig();
+        _config.ChannelCustomization.WelcomeMessage = _form.WelcomeMessage;
+        _config.ChannelCustomization.PrimaryColor   = _form.PrimaryColor;
+        _config.ChannelCustomization.LogoUrl        = _form.LogoUrl;
+
+        try
+        {
+            var updated = await Config.UpdateAsync(_config);
+            if (updated is not null) { _config = updated; LoadForm(_config); }
+            _pageOk = "Configuración guardada.";
+        }
+        catch (Exception ex)
+        {
+            _pageError = Describe(ex);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException { ResponseStatusCode: 404 } => "Tenant no encontrado.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class ConfigForm
+    {
+        public string QueueWaitMessage { get; set; } = "";
+        public string TransferMessage { get; set; } = "";
+
+        public string AssignmentMode { get; set; } = "0";
+        public int MaxConcurrentSessionsPerAgent { get; set; } = 5;
+        public int NotificationFrequencyMinutes { get; set; } = 5;
+        public bool NotifyPendingByEmail { get; set; }
+
+        public bool SurveyEnabled { get; set; } = true;
+        public bool SurveyRequired { get; set; }
+        public bool AllowObservations { get; set; } = true;
+        public bool ReopenOnLowRating { get; set; }
+        public int ReopenRatingThreshold { get; set; } = 3;
+
+        public bool BusinessHoursEnabled { get; set; }
+        public string OutOfHoursMessage { get; set; } = "";
+
+        public string WelcomeMessage { get; set; } = "";
+        public string PrimaryColor { get; set; } = "";
+        public string LogoUrl { get; set; } = "";
+    }
+}

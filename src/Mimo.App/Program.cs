@@ -44,6 +44,7 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddScoped<AgentsService>();
 builder.Services.AddScoped<RolesService>();
 builder.Services.AddScoped<DocumentsService>();
+builder.Services.AddScoped<TenantConfigService>();
 
 // HttpClient genérico (recursos estáticos de la propia app).
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

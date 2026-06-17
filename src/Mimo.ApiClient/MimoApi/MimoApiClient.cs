@@ -12,6 +12,7 @@ using Mimo.ApiClient.MimoApi.Conversations;
 using Mimo.ApiClient.MimoApi.Documents;
 using Mimo.ApiClient.MimoApi.InternalChat;
 using Mimo.ApiClient.MimoApi.Roles;
+using Mimo.ApiClient.MimoApi.Tenant;
 using Mimo.ApiClient.MimoApi.Tickets;
 using Mimo.ApiClient.MimoApi.Webhooks;
 using System.Collections.Generic;
@@ -56,6 +57,11 @@ namespace Mimo.ApiClient.MimoApi
         {
             get => new global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder(PathParameters, RequestAdapter);
         }
+        /// <summary>The tenant property</summary>
+        public global::Mimo.ApiClient.MimoApi.Tenant.TenantRequestBuilder Tenant
+        {
+            get => new global::Mimo.ApiClient.MimoApi.Tenant.TenantRequestBuilder(PathParameters, RequestAdapter);
+        }
         /// <summary>The tickets property</summary>
         public global::Mimo.ApiClient.MimoApi.Tickets.TicketsRequestBuilder Tickets
         {
@@ -81,7 +87,7 @@ namespace Mimo.ApiClient.MimoApi
             ApiClientBuilder.RegisterDefaultDeserializer<FormParseNodeFactory>();
             if (string.IsNullOrEmpty(RequestAdapter.BaseUrl))
             {
-                RequestAdapter.BaseUrl = "http://localhost:5080";
+                RequestAdapter.BaseUrl = "http://localhost:5099";
             }
             PathParameters.TryAdd("baseurl", RequestAdapter.BaseUrl);
         }

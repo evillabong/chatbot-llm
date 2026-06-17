@@ -32,3 +32,4 @@ decisión se revierte o cambia, se crea un ADR nuevo que marca al anterior como
 | [0010](0010-cifrado-de-api-keys-de-conectores-de-ia.md) | Cifrado de las API keys de conectores de IA en reposo | Aceptado |
 | [0011](0011-arquitectura-frontend-blazor-wasm-aislado.md) | Arquitectura de frontend: Blazor WASM aislado con biblioteca de UI y cliente generado | Aceptado |
 | [0012](0012-autenticacion-en-frontend-wasm-con-jwt-en-sessionstorage.md) | Autenticación en el frontend WASM: JWT en sessionStorage e inyección por handler | Aceptado |
+| [0013](0013-configuracion-self-service-del-tenant-en-mimo-api.md) | Configuración self-service del tenant en Mimo.Api | Aceptado |
