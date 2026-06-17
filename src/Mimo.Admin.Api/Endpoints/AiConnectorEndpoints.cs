@@ -19,16 +19,20 @@ public static class AiConnectorEndpoints
             .RequireAuthorization(MimoAuthorization.Policies.SuperAdmin);
 
         group.MapGet("/", ListAsync)
-            .WithName("ListAiConnectors").WithSummary("Lista los conectores de IA.");
+            .WithName("ListAiConnectors").WithSummary("Lista los conectores de IA.")
+            .Produces<List<AiConnectorResponse>>();
 
         group.MapPost("/", CreateAsync)
-            .WithName("CreateAiConnector").WithSummary("Registra un nuevo conector de IA.");
+            .WithName("CreateAiConnector").WithSummary("Registra un nuevo conector de IA.")
+            .Produces<AiConnectorResponse>(StatusCodes.Status201Created).Produces(StatusCodes.Status409Conflict);
 
         group.MapPut("/", UpdateAsync)
-            .WithName("UpdateAiConnector").WithSummary("Actualiza nombre y configuración de un conector (query: id).");
+            .WithName("UpdateAiConnector").WithSummary("Actualiza nombre y configuración de un conector (query: id).")
+            .Produces<AiConnectorResponse>().Produces(StatusCodes.Status404NotFound);
 
         group.MapPost("/activate", ActivateAsync)
-            .WithName("ActivateAiConnector").WithSummary("Marca un conector como el activo de la plataforma (query: id).");
+            .WithName("ActivateAiConnector").WithSummary("Marca un conector como el activo de la plataforma (query: id).")
+            .Produces(StatusCodes.Status200OK).Produces(StatusCodes.Status404NotFound);
 
         return app;
     }

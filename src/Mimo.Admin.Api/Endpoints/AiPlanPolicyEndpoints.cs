@@ -18,16 +18,20 @@ public static class AiPlanPolicyEndpoints
             .RequireAuthorization(MimoAuthorization.Policies.SuperAdmin);
 
         group.MapGet("/", ListAsync)
-            .WithName("ListAiPlanPolicies").WithSummary("Lista las políticas de IA por plan.");
+            .WithName("ListAiPlanPolicies").WithSummary("Lista las políticas de IA por plan.")
+            .Produces<List<AiPlanPolicyResponse>>();
 
         group.MapGet("/detail", GetAsync)
-            .WithName("GetAiPlanPolicy").WithSummary("Obtiene la política de un plan (query: planCode).");
+            .WithName("GetAiPlanPolicy").WithSummary("Obtiene la política de un plan (query: planCode).")
+            .Produces<AiPlanPolicyResponse>().Produces(StatusCodes.Status404NotFound);
 
         group.MapPut("/", UpsertAsync)
-            .WithName("UpsertAiPlanPolicy").WithSummary("Crea o actualiza la política de IA de un plan (query: planCode).");
+            .WithName("UpsertAiPlanPolicy").WithSummary("Crea o actualiza la política de IA de un plan (query: planCode).")
+            .Produces<AiPlanPolicyResponse>().Produces(StatusCodes.Status400BadRequest);
 
         group.MapDelete("/", DeleteAsync)
-            .WithName("DeleteAiPlanPolicy").WithSummary("Elimina la política de IA de un plan (query: planCode).");
+            .WithName("DeleteAiPlanPolicy").WithSummary("Elimina la política de IA de un plan (query: planCode).")
+            .Produces(StatusCodes.Status204NoContent).Produces(StatusCodes.Status404NotFound);
 
         return app;
     }

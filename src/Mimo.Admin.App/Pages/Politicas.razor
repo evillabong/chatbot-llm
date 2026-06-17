@@ -1,0 +1,215 @@
+@page "/politicas"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.Kiota.Abstractions
+@inject PoliciesService Policies
+@inject PlansService Plans
+
+<PageTitle>Políticas de IA · Administración</PageTitle>
+
+<MimoPageHeader Title="Políticas de IA por plan"
+                Description="Cuotas mensuales y proveedores permitidos por plan.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nueva política</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_policies.Count == 0)" EmptyText="Aún no hay políticas de IA.">
+    <Header>
+        <MimoTh>Plan</MimoTh>
+        <MimoTh>Proveedores</MimoTh>
+        <MimoTh>Cuota solicitudes/mes</MimoTh>
+        <MimoTh>Cuota tokens/mes</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var p in _policies)
+        {
+            <MimoTr>
+                <MimoTd><MimoBadge Variant="MimoBadgeVariant.Info">@p.PlanCode</MimoBadge></MimoTd>
+                <MimoTd><MimoText Small>@(p.AllowedProviders is { Count: > 0 } ? string.Join(", ", p.AllowedProviders) : "—")</MimoText></MimoTd>
+                <MimoTd>@p.MonthlyRequestQuota</MimoTd>
+                <MimoTd>@p.MonthlyTokenQuota</MimoTd>
+                <MimoTd>
+                    @if (p.IsActive == true) { <MimoBadge Variant="MimoBadgeVariant.Success">Activa</MimoBadge> }
+                    else { <MimoBadge Variant="MimoBadgeVariant.Neutral">Inactiva</MimoBadge> }
+                </MimoTd>
+                <MimoTd AlignRight="true">
+                    <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(p)">Editar</MimoButton>
+                        <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDelete(p)">Eliminar</MimoButton>
+                    </MimoActions>
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+<MimoModal @bind-Show="_showForm" Title="@(_editingCode is null ? "Nueva política" : "Editar política")">
+    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+        @if (_editingCode is null)
+        {
+            <MimoSelect Label="Plan" @bind-Value="_form.PlanCode" Options="_planOptions" Placeholder="Selecciona un plan" />
+        }
+        else
+        {
+            <MimoFormGroup Label="Plan"><MimoText>@_editingCode</MimoText></MimoFormGroup>
+        }
+        <MimoTextField Label="Proveedores permitidos" @bind-Value="_form.ProvidersCsv"
+                       Placeholder="deepseek, openai" HelperText="Separados por coma." />
+        <MimoTextField Label="Cuota de solicitudes/mes" Type="number" @bind-Value="_form.MonthlyRequestQuota" />
+        <MimoTextField Label="Cuota de tokens/mes" Type="number" @bind-Value="_form.MonthlyTokenQuota" />
+        <MimoFormGroup>
+            <MimoCheckbox Label="Activa" @bind-Checked="_form.IsActive" />
+        </MimoFormGroup>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" Loading="_saving">Guardar</MimoButton>
+        </MimoActions>
+    </EditForm>
+</MimoModal>
+
+<MimoModal @bind-Show="_showDelete" Title="Eliminar política" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Eliminar la política de IA del plan @_deleteTarget?.PlanCode?</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showDelete = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmDeleteAsync">Eliminar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<AiPlanPolicyResponse> _policies = [];
+    private IReadOnlyList<MimoSelectOption> _planOptions = [];
+    private bool _loading = true;
+    private string? _pageError;
+
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private string? _editingCode;
+    private readonly PolicyForm _form = new();
+
+    private bool _showDelete;
+    private AiPlanPolicyResponse? _deleteTarget;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        try
+        {
+            var plans = await Plans.ListAsync(isActive: true);
+            _planOptions = plans.Where(p => p.Code is not null)
+                .Select(p => new MimoSelectOption(p.Code!, $"{p.Code} — {p.Name}")).ToList();
+        }
+        catch { /* el selector de plan queda vacío si falla */ }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try { _policies = await Policies.ListAsync(); }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+    }
+
+    private void OpenCreate()
+    {
+        _editingCode = null;
+        _form.Reset();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private void OpenEdit(AiPlanPolicyResponse p)
+    {
+        _editingCode = p.PlanCode;
+        _form.PlanCode = p.PlanCode ?? "";
+        _form.ProvidersCsv = p.AllowedProviders is { Count: > 0 } ? string.Join(", ", p.AllowedProviders) : "";
+        _form.MonthlyRequestQuota = p.MonthlyRequestQuota ?? 0;
+        _form.MonthlyTokenQuota = p.MonthlyTokenQuota ?? 0;
+        _form.IsActive = p.IsActive ?? true;
+        _formError = null;
+        _showForm = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        var code = _editingCode ?? _form.PlanCode;
+        if (string.IsNullOrWhiteSpace(code)) { _formError = "Selecciona un plan."; return; }
+        _saving = true;
+        _formError = null;
+        var providers = _form.ProvidersCsv
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        try
+        {
+            await Policies.UpsertAsync(code, new UpsertAiPlanPolicyRequest
+            {
+                AllowedProviders = providers,
+                MonthlyRequestQuota = _form.MonthlyRequestQuota,
+                MonthlyTokenQuota = _form.MonthlyTokenQuota,
+                IsActive = _form.IsActive
+            });
+            _showForm = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _formError = Describe(ex); }
+        finally { _saving = false; }
+    }
+
+    private void OpenDelete(AiPlanPolicyResponse p)
+    {
+        _deleteTarget = p;
+        _showDelete = true;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteTarget?.PlanCode is null) return;
+        _saving = true;
+        try
+        {
+            await Policies.DeleteAsync(_deleteTarget.PlanCode);
+            _showDelete = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); _showDelete = false; }
+        finally { _saving = false; }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 400 } => "Datos inválidos (¿el plan existe?).",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException { ResponseStatusCode: 404 } => "Política no encontrada.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class PolicyForm
+    {
+        public string PlanCode { get; set; } = "";
+        public string ProvidersCsv { get; set; } = "";
+        [Range(0, int.MaxValue, ErrorMessage = "No negativo.")] public int MonthlyRequestQuota { get; set; }
+        [Range(0, long.MaxValue, ErrorMessage = "No negativo.")] public long MonthlyTokenQuota { get; set; }
+        public bool IsActive { get; set; } = true;
+
+        public void Reset() { PlanCode = ""; ProvidersCsv = ""; MonthlyRequestQuota = 0; MonthlyTokenQuota = 0; IsActive = true; }
+    }
+}

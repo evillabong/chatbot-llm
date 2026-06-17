@@ -430,7 +430,17 @@
         "operationId": "ListAiConnectors",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AiConnectorResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -451,8 +461,18 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiConnectorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict"
           }
         }
       },
@@ -485,7 +505,17 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiConnectorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -511,6 +541,9 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -524,7 +557,17 @@
         "operationId": "ListAiPlanPolicies",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AiPlanPolicyResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -556,7 +599,17 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiPlanPolicyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
           }
         }
       },
@@ -577,8 +630,11 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -602,7 +658,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiPlanPolicyResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -663,6 +729,67 @@
   },
   "components": {
     "schemas": {
+      "AiConnectorResponse": {
+        "required": [
+          "id",
+          "provider",
+          "displayName",
+          "isActive",
+          "baseUrl",
+          "chatModel",
+          "embeddingModel",
+          "temperature",
+          "maxTokens",
+          "hasApiKey",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "baseUrl": {
+            "type": "string"
+          },
+          "chatModel": {
+            "type": "string"
+          },
+          "embeddingModel": {
+            "type": "string"
+          },
+          "temperature": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "format": "float"
+          },
+          "maxTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "hasApiKey": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
       "AiConnectorSettingsDto": {
         "required": [
           "apiKey",
@@ -693,6 +820,38 @@
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "format": "int32",
             "default": 1024
+          }
+        }
+      },
+      "AiPlanPolicyResponse": {
+        "required": [
+          "planCode",
+          "allowedProviders",
+          "monthlyRequestQuota",
+          "monthlyTokenQuota",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "planCode": {
+            "type": "string"
+          },
+          "allowedProviders": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "monthlyRequestQuota": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "monthlyTokenQuota": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int64"
+          },
+          "isActive": {
+            "type": "boolean"
           }
         }
       },

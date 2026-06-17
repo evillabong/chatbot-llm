@@ -1,0 +1,209 @@
+@page "/conectores"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.Kiota.Abstractions
+@inject ConnectorsService Connectors
+
+<PageTitle>Conectores de IA · Administración</PageTitle>
+
+<MimoPageHeader Title="Conectores de IA"
+                Description="Proveedores de modelos de lenguaje de la plataforma. La API key nunca se muestra.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nuevo conector</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+@if (_pageOk is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Success" Text="@_pageOk" OnDismiss="() => _pageOk = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_connectors.Count == 0)" EmptyText="Aún no hay conectores.">
+    <Header>
+        <MimoTh>Proveedor</MimoTh>
+        <MimoTh>Nombre</MimoTh>
+        <MimoTh>Modelo chat</MimoTh>
+        <MimoTh>API key</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var c in _connectors)
+        {
+            <MimoTr>
+                <MimoTd><MimoBadge Variant="MimoBadgeVariant.Info">@c.Provider</MimoBadge></MimoTd>
+                <MimoTd>@c.DisplayName</MimoTd>
+                <MimoTd><MimoText Muted Small>@c.ChatModel</MimoText></MimoTd>
+                <MimoTd>
+                    @if (c.HasApiKey == true) { <MimoBadge Variant="MimoBadgeVariant.Success">Configurada</MimoBadge> }
+                    else { <MimoBadge Variant="MimoBadgeVariant.Warning">Sin configurar</MimoBadge> }
+                </MimoTd>
+                <MimoTd>
+                    @if (c.IsActive == true) { <MimoBadge Variant="MimoBadgeVariant.Success">Activo</MimoBadge> }
+                    else { <MimoBadge Variant="MimoBadgeVariant.Neutral">Inactivo</MimoBadge> }
+                </MimoTd>
+                <MimoTd AlignRight="true">
+                    <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(c)">Editar</MimoButton>
+                        @if (c.IsActive != true)
+                        {
+                            <MimoButton Variant="MimoButtonVariant.Primary" Loading="_acting" OnClick="() => ActivateAsync(c)">Activar</MimoButton>
+                        }
+                    </MimoActions>
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+<MimoModal @bind-Show="_showForm" Title="@(_editingId is null ? "Nuevo conector" : "Editar conector")" Size="MimoModalSize.Large">
+    <EditForm Model="_form" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+        @if (_editingId is null)
+        {
+            <MimoTextField Label="Proveedor" @bind-Value="_form.Provider" Placeholder="deepseek / openai" Required="true" />
+        }
+        else
+        {
+            <MimoFormGroup Label="Proveedor"><MimoText>@_form.Provider</MimoText></MimoFormGroup>
+        }
+        <MimoTextField Label="Nombre visible" @bind-Value="_form.DisplayName" Required="true" />
+        <MimoTextField Label="API key" Type="password" @bind-Value="_form.ApiKey" Required="true"
+                       HelperText="No se muestra la actual; vuelve a ingresarla para guardar." />
+        <MimoTextField Label="URL base" @bind-Value="_form.BaseUrl" Placeholder="https://api.deepseek.com" Required="true" />
+        <MimoTextField Label="Modelo de chat" @bind-Value="_form.ChatModel" Required="true" />
+        <MimoTextField Label="Modelo de embeddings" @bind-Value="_form.EmbeddingModel" Required="true" />
+        <MimoTextField Label="Temperatura (0-2)" Type="number" @bind-Value="_form.Temperature" />
+        <MimoTextField Label="Máx. tokens" Type="number" @bind-Value="_form.MaxTokens" />
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" Loading="_saving">Guardar</MimoButton>
+        </MimoActions>
+    </EditForm>
+</MimoModal>
+
+@code {
+    private List<AiConnectorResponse> _connectors = [];
+    private bool _loading = true;
+    private bool _acting;
+    private string? _pageError;
+    private string? _pageOk;
+
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private Guid? _editingId;
+    private readonly ConnectorForm _form = new();
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try { _connectors = await Connectors.ListAsync(); }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+    }
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form.Reset();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private void OpenEdit(AiConnectorResponse c)
+    {
+        _editingId = c.Id;
+        _form.Provider = c.Provider ?? "";
+        _form.DisplayName = c.DisplayName ?? "";
+        _form.ApiKey = "";
+        _form.BaseUrl = c.BaseUrl ?? "";
+        _form.ChatModel = c.ChatModel ?? "";
+        _form.EmbeddingModel = c.EmbeddingModel ?? "";
+        _form.Temperature = c.Temperature ?? 0.7f;
+        _form.MaxTokens = c.MaxTokens ?? 1024;
+        _formError = null;
+        _showForm = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _formError = null;
+        var settings = new AiConnectorSettingsDto
+        {
+            ApiKey = _form.ApiKey,
+            BaseUrl = _form.BaseUrl,
+            ChatModel = _form.ChatModel,
+            EmbeddingModel = _form.EmbeddingModel,
+            Temperature = _form.Temperature,
+            MaxTokens = _form.MaxTokens
+        };
+        try
+        {
+            if (_editingId is null)
+                await Connectors.CreateAsync(new CreateAiConnectorRequest { Provider = _form.Provider, DisplayName = _form.DisplayName, Settings = settings });
+            else
+                await Connectors.UpdateAsync(_editingId.Value, new UpdateAiConnectorRequest { DisplayName = _form.DisplayName, Settings = settings });
+            _showForm = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _formError = Describe(ex); }
+        finally { _saving = false; }
+    }
+
+    private async Task ActivateAsync(AiConnectorResponse c)
+    {
+        if (c.Id is null) return;
+        _acting = true;
+        _pageError = null;
+        _pageOk = null;
+        try
+        {
+            await Connectors.ActivateAsync(c.Id.Value);
+            _pageOk = $"Conector «{c.DisplayName}» activado.";
+            await LoadAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _acting = false; }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 409 } => "Ya existe un conector para ese proveedor.",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class ConnectorForm
+    {
+        [Required(ErrorMessage = "Indica el proveedor.")] public string Provider { get; set; } = "";
+        [Required(ErrorMessage = "Indica el nombre.")] public string DisplayName { get; set; } = "";
+        [Required(ErrorMessage = "Indica la API key.")] public string ApiKey { get; set; } = "";
+        [Required(ErrorMessage = "Indica la URL base.")] public string BaseUrl { get; set; } = "";
+        [Required(ErrorMessage = "Indica el modelo de chat.")] public string ChatModel { get; set; } = "";
+        [Required(ErrorMessage = "Indica el modelo de embeddings.")] public string EmbeddingModel { get; set; } = "";
+        [Range(0, 2, ErrorMessage = "Entre 0 y 2.")] public float Temperature { get; set; } = 0.7f;
+        [Range(1, 32000, ErrorMessage = "Entre 1 y 32000.")] public int MaxTokens { get; set; } = 1024;
+
+        public void Reset()
+        {
+            Provider = DisplayName = ApiKey = BaseUrl = ChatModel = EmbeddingModel = "";
+            Temperature = 0.7f;
+            MaxTokens = 1024;
+        }
+    }
+}

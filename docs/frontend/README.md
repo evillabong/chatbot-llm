@@ -199,8 +199,10 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
     aprovisionamiento, desactivar). Nuevo SDK `Mimo.Admin.Api.Sdk` (Kiota) + `generate-admin-apiclient.ps1`;
     se tiparon Auth y Tenants del admin.
   - **Corte 2: hecho.** **Planes** (CRUD) y **Uso de IA** (resumen por organización del mes, con
-    nombres de tenant). Se tiparon `Plans` y `Ai/Usage` del admin y se regeneró el SDK.
-  - **Pendiente (cortes siguientes):** conectores de IA (CRUD + activar) y políticas/cuotas de IA por plan.
+    nombres de tenant).
+  - **Corte 3: hecho.** **Conectores de IA** (CRUD + activar; la API key es write-only, nunca se
+    muestra) y **Políticas de IA por plan** (cuotas + proveedores, upsert/eliminar).
+  - **Fase D completa** (organizaciones, planes, uso, conectores y políticas de IA).
 - **Fase E — WebChat embebible** (ciudadano).
 
 ## 9. Directrices de código (frontend)
