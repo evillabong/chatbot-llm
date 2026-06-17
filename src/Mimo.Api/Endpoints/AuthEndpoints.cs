@@ -19,7 +19,9 @@ public static class AuthEndpoints
         group.MapPost("/login", LoginAsync)
             .WithName("AgentLogin")
             .WithSummary("Autentica a un funcionario y emite un token JWT.")
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized);
 
         return app;
     }

@@ -20,23 +20,32 @@ public static class AgentEndpoints
 
         group.MapGet("/", ListAgentsAsync)
             .WithName("ListAgents")
-            .WithSummary("Lista los funcionarios del tenant.");
+            .WithSummary("Lista los funcionarios del tenant.")
+            .Produces<List<AgentResponse>>();
 
         group.MapGet("/detail", GetAgentAsync)
             .WithName("GetAgent")
-            .WithSummary("Obtiene un funcionario por su ID (query: id).");
+            .WithSummary("Obtiene un funcionario por su ID (query: id).")
+            .Produces<AgentResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapPost("/", CreateAgentAsync)
             .WithName("CreateAgent")
-            .WithSummary("Crea un nuevo funcionario en el tenant.");
+            .WithSummary("Crea un nuevo funcionario en el tenant.")
+            .Produces<AgentResponse>(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status409Conflict);
 
         group.MapPut("/", UpdateAgentAsync)
             .WithName("UpdateAgent")
-            .WithSummary("Actualiza los datos de un funcionario (query: id).");
+            .WithSummary("Actualiza los datos de un funcionario (query: id).")
+            .Produces<AgentResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapDelete("/", DeactivateAgentAsync)
             .WithName("DeactivateAgent")
-            .WithSummary("Desactiva un funcionario / borrado lógico (query: id).");
+            .WithSummary("Desactiva un funcionario / borrado lógico (query: id).")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound);
 
         return app;
     }

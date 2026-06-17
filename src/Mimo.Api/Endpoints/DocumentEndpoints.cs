@@ -24,32 +24,42 @@ public static class DocumentEndpoints
 
         group.MapGet("/", ListDocumentsAsync)
             .WithName("ListDocuments")
-            .WithSummary("Lista documentos del tenant con filtros opcionales.");
+            .WithSummary("Lista documentos del tenant con filtros opcionales.")
+            .Produces<List<DocumentResponse>>();
 
         group.MapGet("/detail", GetDocumentAsync)
             .WithName("GetDocument")
-            .WithSummary("Obtiene un documento por su ID (query: id).");
+            .WithSummary("Obtiene un documento por su ID (query: id).")
+            .Produces<DocumentResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapPost("/", CreateDocumentAsync)
             .WithName("CreateDocument")
             .WithSummary("Crea un documento y genera su embedding para búsqueda semántica.")
-            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin)
+            .Produces<DocumentResponse>(StatusCodes.Status201Created);
 
         group.MapPut("/", UpdateDocumentAsync)
             .WithName("UpdateDocument")
             .WithSummary("Actualiza un documento; regenera embedding si cambia el contenido (query: id).")
-            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin)
+            .Produces<DocumentResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapDelete("/", DeactivateDocumentAsync)
             .WithName("DeactivateDocument")
             .WithSummary("Desactiva un documento / borrado lógico (query: id).")
-            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound);
 
         // Endpoint para regenerar el embedding manualmente
         group.MapPost("/reindex", ReindexDocumentAsync)
             .WithName("ReindexDocument")
             .WithSummary("Regenera el embedding de un documento existente (query: id).")
-            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin)
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
 
         return app;
     }

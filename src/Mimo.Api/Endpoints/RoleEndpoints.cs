@@ -20,23 +20,32 @@ public static class RoleEndpoints
 
         group.MapGet("/", ListRolesAsync)
             .WithName("ListRoles")
-            .WithSummary("Lista los roles/departamentos del tenant.");
+            .WithSummary("Lista los roles/departamentos del tenant.")
+            .Produces<List<RoleResponse>>();
 
         group.MapGet("/detail", GetRoleAsync)
             .WithName("GetRole")
-            .WithSummary("Obtiene un rol por su ID (query: id).");
+            .WithSummary("Obtiene un rol por su ID (query: id).")
+            .Produces<RoleResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapPost("/", CreateRoleAsync)
             .WithName("CreateRole")
-            .WithSummary("Crea un nuevo rol/departamento.");
+            .WithSummary("Crea un nuevo rol/departamento.")
+            .Produces<RoleResponse>(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status409Conflict);
 
         group.MapPut("/", UpdateRoleAsync)
             .WithName("UpdateRole")
-            .WithSummary("Actualiza los datos de un rol (query: id).");
+            .WithSummary("Actualiza los datos de un rol (query: id).")
+            .Produces<RoleResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapDelete("/", DeactivateRoleAsync)
             .WithName("DeactivateRole")
-            .WithSummary("Desactiva un rol / borrado lógico (query: id).");
+            .WithSummary("Desactiva un rol / borrado lógico (query: id).")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound);
 
         return app;
     }

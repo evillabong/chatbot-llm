@@ -42,78 +42,78 @@ namespace Mimo.ApiClient.MimoApi.Roles
         /// <summary>
         /// Desactiva un rol / borrado lógico (query: id).
         /// </summary>
-        /// <returns>A <see cref="Stream"/></returns>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<Stream?> DeleteAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderDeleteQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task DeleteAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderDeleteQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<Stream> DeleteAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderDeleteQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task DeleteAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderDeleteQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             var requestInfo = ToDeleteRequestInformation(requestConfiguration);
-            return await RequestAdapter.SendPrimitiveAsync<Stream>(requestInfo, default, cancellationToken).ConfigureAwait(false);
+            await RequestAdapter.SendNoContentAsync(requestInfo, default, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
         /// Lista los roles/departamentos del tenant.
         /// </summary>
-        /// <returns>A <see cref="Stream"/></returns>
+        /// <returns>A List&lt;global::Mimo.ApiClient.MimoApi.Models.RoleResponse&gt;</returns>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<Stream?> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderGetQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<List<global::Mimo.ApiClient.MimoApi.Models.RoleResponse>?> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderGetQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<Stream> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderGetQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<List<global::Mimo.ApiClient.MimoApi.Models.RoleResponse>> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderGetQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             var requestInfo = ToGetRequestInformation(requestConfiguration);
-            return await RequestAdapter.SendPrimitiveAsync<Stream>(requestInfo, default, cancellationToken).ConfigureAwait(false);
+            var collectionResult = await RequestAdapter.SendCollectionAsync<global::Mimo.ApiClient.MimoApi.Models.RoleResponse>(requestInfo, global::Mimo.ApiClient.MimoApi.Models.RoleResponse.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
+            return collectionResult?.AsList();
         }
         /// <summary>
         /// Crea un nuevo rol/departamento.
         /// </summary>
-        /// <returns>A <see cref="Stream"/></returns>
+        /// <returns>A <see cref="global::Mimo.ApiClient.MimoApi.Models.RoleResponse"/></returns>
         /// <param name="body">The request body</param>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<Stream?> PostAsync(global::Mimo.ApiClient.MimoApi.Models.CreateRoleRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.ApiClient.MimoApi.Models.RoleResponse?> PostAsync(global::Mimo.ApiClient.MimoApi.Models.CreateRoleRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<Stream> PostAsync(global::Mimo.ApiClient.MimoApi.Models.CreateRoleRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.ApiClient.MimoApi.Models.RoleResponse> PostAsync(global::Mimo.ApiClient.MimoApi.Models.CreateRoleRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
             var requestInfo = ToPostRequestInformation(body, requestConfiguration);
-            return await RequestAdapter.SendPrimitiveAsync<Stream>(requestInfo, default, cancellationToken).ConfigureAwait(false);
+            return await RequestAdapter.SendAsync<global::Mimo.ApiClient.MimoApi.Models.RoleResponse>(requestInfo, global::Mimo.ApiClient.MimoApi.Models.RoleResponse.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
         /// Actualiza los datos de un rol (query: id).
         /// </summary>
-        /// <returns>A <see cref="Stream"/></returns>
+        /// <returns>A <see cref="global::Mimo.ApiClient.MimoApi.Models.RoleResponse"/></returns>
         /// <param name="body">The request body</param>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<Stream?> PutAsync(global::Mimo.ApiClient.MimoApi.Models.UpdateRoleRequest body, Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderPutQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.ApiClient.MimoApi.Models.RoleResponse?> PutAsync(global::Mimo.ApiClient.MimoApi.Models.UpdateRoleRequest body, Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderPutQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<Stream> PutAsync(global::Mimo.ApiClient.MimoApi.Models.UpdateRoleRequest body, Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderPutQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.ApiClient.MimoApi.Models.RoleResponse> PutAsync(global::Mimo.ApiClient.MimoApi.Models.UpdateRoleRequest body, Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Roles.RolesRequestBuilder.RolesRequestBuilderPutQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
             var requestInfo = ToPutRequestInformation(body, requestConfiguration);
-            return await RequestAdapter.SendPrimitiveAsync<Stream>(requestInfo, default, cancellationToken).ConfigureAwait(false);
+            return await RequestAdapter.SendAsync<global::Mimo.ApiClient.MimoApi.Models.RoleResponse>(requestInfo, global::Mimo.ApiClient.MimoApi.Models.RoleResponse.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
         /// Desactiva un rol / borrado lógico (query: id).
@@ -149,6 +149,7 @@ namespace Mimo.ApiClient.MimoApi.Roles
 #endif
             var requestInfo = new RequestInformation(Method.GET, UrlTemplate, PathParameters);
             requestInfo.Configure(requestConfiguration);
+            requestInfo.Headers.TryAdd("Accept", "application/json");
             return requestInfo;
         }
         /// <summary>
@@ -169,6 +170,7 @@ namespace Mimo.ApiClient.MimoApi.Roles
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
             var requestInfo = new RequestInformation(Method.POST, UrlTemplate, PathParameters);
             requestInfo.Configure(requestConfiguration);
+            requestInfo.Headers.TryAdd("Accept", "application/json");
             requestInfo.SetContentFromParsable(RequestAdapter, "application/json", body);
             return requestInfo;
         }
@@ -190,6 +192,7 @@ namespace Mimo.ApiClient.MimoApi.Roles
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
             var requestInfo = new RequestInformation(Method.PUT, "{+baseurl}/roles?id={id}", PathParameters);
             requestInfo.Configure(requestConfiguration);
+            requestInfo.Headers.TryAdd("Accept", "application/json");
             requestInfo.SetContentFromParsable(RequestAdapter, "application/json", body);
             return requestInfo;
         }

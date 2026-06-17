@@ -48,78 +48,78 @@ namespace Mimo.ApiClient.MimoApi.Documents
         /// <summary>
         /// Desactiva un documento / borrado lógico (query: id).
         /// </summary>
-        /// <returns>A <see cref="Stream"/></returns>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<Stream?> DeleteAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderDeleteQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task DeleteAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderDeleteQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<Stream> DeleteAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderDeleteQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task DeleteAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderDeleteQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             var requestInfo = ToDeleteRequestInformation(requestConfiguration);
-            return await RequestAdapter.SendPrimitiveAsync<Stream>(requestInfo, default, cancellationToken).ConfigureAwait(false);
+            await RequestAdapter.SendNoContentAsync(requestInfo, default, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
         /// Lista documentos del tenant con filtros opcionales.
         /// </summary>
-        /// <returns>A <see cref="Stream"/></returns>
+        /// <returns>A List&lt;global::Mimo.ApiClient.MimoApi.Models.DocumentResponse&gt;</returns>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<Stream?> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderGetQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<List<global::Mimo.ApiClient.MimoApi.Models.DocumentResponse>?> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderGetQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<Stream> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderGetQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<List<global::Mimo.ApiClient.MimoApi.Models.DocumentResponse>> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderGetQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             var requestInfo = ToGetRequestInformation(requestConfiguration);
-            return await RequestAdapter.SendPrimitiveAsync<Stream>(requestInfo, default, cancellationToken).ConfigureAwait(false);
+            var collectionResult = await RequestAdapter.SendCollectionAsync<global::Mimo.ApiClient.MimoApi.Models.DocumentResponse>(requestInfo, global::Mimo.ApiClient.MimoApi.Models.DocumentResponse.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
+            return collectionResult?.AsList();
         }
         /// <summary>
         /// Crea un documento y genera su embedding para búsqueda semántica.
         /// </summary>
-        /// <returns>A <see cref="Stream"/></returns>
+        /// <returns>A <see cref="global::Mimo.ApiClient.MimoApi.Models.DocumentResponse"/></returns>
         /// <param name="body">The request body</param>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<Stream?> PostAsync(global::Mimo.ApiClient.MimoApi.Models.CreateDocumentRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.ApiClient.MimoApi.Models.DocumentResponse?> PostAsync(global::Mimo.ApiClient.MimoApi.Models.CreateDocumentRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<Stream> PostAsync(global::Mimo.ApiClient.MimoApi.Models.CreateDocumentRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.ApiClient.MimoApi.Models.DocumentResponse> PostAsync(global::Mimo.ApiClient.MimoApi.Models.CreateDocumentRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
             var requestInfo = ToPostRequestInformation(body, requestConfiguration);
-            return await RequestAdapter.SendPrimitiveAsync<Stream>(requestInfo, default, cancellationToken).ConfigureAwait(false);
+            return await RequestAdapter.SendAsync<global::Mimo.ApiClient.MimoApi.Models.DocumentResponse>(requestInfo, global::Mimo.ApiClient.MimoApi.Models.DocumentResponse.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
         /// Actualiza un documento; regenera embedding si cambia el contenido (query: id).
         /// </summary>
-        /// <returns>A <see cref="Stream"/></returns>
+        /// <returns>A <see cref="global::Mimo.ApiClient.MimoApi.Models.DocumentResponse"/></returns>
         /// <param name="body">The request body</param>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<Stream?> PutAsync(global::Mimo.ApiClient.MimoApi.Models.UpdateDocumentRequest body, Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderPutQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.ApiClient.MimoApi.Models.DocumentResponse?> PutAsync(global::Mimo.ApiClient.MimoApi.Models.UpdateDocumentRequest body, Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderPutQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<Stream> PutAsync(global::Mimo.ApiClient.MimoApi.Models.UpdateDocumentRequest body, Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderPutQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.ApiClient.MimoApi.Models.DocumentResponse> PutAsync(global::Mimo.ApiClient.MimoApi.Models.UpdateDocumentRequest body, Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Documents.DocumentsRequestBuilder.DocumentsRequestBuilderPutQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
             var requestInfo = ToPutRequestInformation(body, requestConfiguration);
-            return await RequestAdapter.SendPrimitiveAsync<Stream>(requestInfo, default, cancellationToken).ConfigureAwait(false);
+            return await RequestAdapter.SendAsync<global::Mimo.ApiClient.MimoApi.Models.DocumentResponse>(requestInfo, global::Mimo.ApiClient.MimoApi.Models.DocumentResponse.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
         /// Desactiva un documento / borrado lógico (query: id).
@@ -155,6 +155,7 @@ namespace Mimo.ApiClient.MimoApi.Documents
 #endif
             var requestInfo = new RequestInformation(Method.GET, UrlTemplate, PathParameters);
             requestInfo.Configure(requestConfiguration);
+            requestInfo.Headers.TryAdd("Accept", "application/json");
             return requestInfo;
         }
         /// <summary>
@@ -175,6 +176,7 @@ namespace Mimo.ApiClient.MimoApi.Documents
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
             var requestInfo = new RequestInformation(Method.POST, UrlTemplate, PathParameters);
             requestInfo.Configure(requestConfiguration);
+            requestInfo.Headers.TryAdd("Accept", "application/json");
             requestInfo.SetContentFromParsable(RequestAdapter, "application/json", body);
             return requestInfo;
         }
@@ -196,6 +198,7 @@ namespace Mimo.ApiClient.MimoApi.Documents
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
             var requestInfo = new RequestInformation(Method.PUT, "{+baseurl}/documents?id={id}", PathParameters);
             requestInfo.Configure(requestConfiguration);
+            requestInfo.Headers.TryAdd("Accept", "application/json");
             requestInfo.SetContentFromParsable(RequestAdapter, "application/json", body);
             return requestInfo;
         }
