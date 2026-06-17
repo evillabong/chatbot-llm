@@ -1,0 +1,19 @@
+@namespace Mimo.Ui.Components
+
+@* Área que ocupa el espacio restante con scroll vertical. Para listas y conversaciones. *@
+<div class="@Css">@ChildContent</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Aplica padding interno estándar.</summary>
+    [Parameter] public bool Padded { get; set; }
+
+    /// <summary>Fondo atenuado (p. ej. hilo de conversación).</summary>
+    [Parameter] public bool Muted { get; set; }
+
+    private string Css =>
+        "flex-1 overflow-y-auto " +
+        (Padded ? "px-4 py-3 " : "") +
+        (Muted ? "bg-gray-50 dark:bg-gray-900/40" : "");
+}

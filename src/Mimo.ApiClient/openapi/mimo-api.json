@@ -724,7 +724,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -749,7 +759,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TicketResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -774,7 +794,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -797,7 +827,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TicketResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -820,7 +860,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TicketResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -845,7 +895,20 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
           }
         }
       }
@@ -886,7 +949,14 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -911,7 +981,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -936,7 +1013,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -1334,8 +1418,7 @@
         }
       },
       "Channel": {
-        "type": "integer",
-        "default": 0
+        "type": "integer"
       },
       "ChannelCustomizationConfig": {
         "type": "object",
@@ -1366,6 +1449,62 @@
           "instagramAccountId": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "ConversationResponse": {
+        "required": [
+          "id",
+          "channel",
+          "status",
+          "isAuthenticated",
+          "createdAt",
+          "messages",
+          "customerName",
+          "customerEmail",
+          "customerPhone",
+          "lastMessageAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TicketStatus"
+          },
+          "isAuthenticated": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageResponse"
+            }
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -1611,6 +1750,34 @@
           }
         }
       },
+      "MessageResponse": {
+        "required": [
+          "id",
+          "role",
+          "content",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "$ref": "#/components/schemas/MessageRole"
+          },
+          "content": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MessageRole": {
+        "type": "integer"
+      },
       "RoleResponse": {
         "required": [
           "id",
@@ -1805,6 +1972,97 @@
           },
           "channelCustomization": {
             "$ref": "#/components/schemas/ChannelCustomizationConfig"
+          }
+        }
+      },
+      "TicketPriority": {
+        "type": "integer"
+      },
+      "TicketResponse": {
+        "required": [
+          "id",
+          "conversationId",
+          "assignedRoleId",
+          "assignedAgentId",
+          "priority",
+          "status",
+          "escalationReason",
+          "internalNotes",
+          "createdAt",
+          "assignedAt",
+          "firstResponseAt",
+          "resolvedAt",
+          "queuePosition",
+          "customerName",
+          "channel",
+          "lastMessageAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conversationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignedRoleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignedAgentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "priority": {
+            "$ref": "#/components/schemas/TicketPriority"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TicketStatus"
+          },
+          "escalationReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "internalNotes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "assignedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "firstResponseAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "queuePosition": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "channel": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

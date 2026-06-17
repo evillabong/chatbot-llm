@@ -23,42 +23,53 @@ public static class TicketEndpoints
         // GET /tickets/queue?roleId=
         group.MapGet("/queue", GetRoleQueueAsync)
             .WithName("GetRoleQueue")
-            .WithSummary("Lista los tickets en cola para un rol (query: roleId).");
+            .WithSummary("Lista los tickets en cola para un rol (query: roleId).")
+            .Produces<List<TicketResponse>>();
 
         // GET /tickets/detail?id=
         group.MapGet("/detail", GetTicketAsync)
             .WithName("GetTicket")
-            .WithSummary("Obtiene un ticket por ID con su historial de transferencias (query: id).");
+            .WithSummary("Obtiene un ticket por ID con su historial de transferencias (query: id).")
+            .Produces<TicketResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         // GET /tickets/my
         group.MapGet("/my", GetMyTicketsAsync)
             .WithName("GetMyTickets")
-            .WithSummary("Lista los tickets asignados al funcionario autenticado.");
+            .WithSummary("Lista los tickets asignados al funcionario autenticado.")
+            .Produces<List<TicketResponse>>();
 
         // GET /tickets/visible
         group.MapGet("/visible", GetVisibleTicketsAsync)
             .WithName("GetVisibleTickets")
-            .WithSummary("Lista los tickets visibles para el funcionario según sus roles (todos si tiene CanViewAllTickets).");
+            .WithSummary("Lista los tickets visibles para el funcionario según sus roles (todos si tiene CanViewAllTickets).")
+            .Produces<List<TicketResponse>>();
 
         // POST /tickets/claim?id=
         group.MapPost("/claim", ClaimTicketAsync)
             .WithName("ClaimTicket")
-            .WithSummary("El funcionario toma el ticket de la cola / asignación manual (query: id).");
+            .WithSummary("El funcionario toma el ticket de la cola / asignación manual (query: id).")
+            .Produces<TicketResponse>()
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict);
 
         // POST /tickets/resolve?id=
         group.MapPost("/resolve", ResolveTicketAsync)
             .WithName("ResolveTicket")
-            .WithSummary("Marca el ticket como resuelto (query: id).");
+            .WithSummary("Marca el ticket como resuelto (query: id).")
+            .Produces<TicketResponse>();
 
         // POST /tickets/close?id=
         group.MapPost("/close", CloseTicketAsync)
             .WithName("CloseTicket")
-            .WithSummary("Cierra definitivamente el ticket (query: id).");
+            .WithSummary("Cierra definitivamente el ticket (query: id).")
+            .Produces<TicketResponse>();
 
         // POST /tickets/reopen?id=
         group.MapPost("/reopen", ReopenTicketAsync)
             .WithName("ReopenTicket")
-            .WithSummary("Reabre un ticket resuelto (query: id).");
+            .WithSummary("Reabre un ticket resuelto (query: id).")
+            .Produces<TicketResponse>();
 
         // POST /tickets/transfer?id=
         group.MapPost("/transfer", TransferTicketAsync)
@@ -298,5 +309,8 @@ public static class TicketEndpoints
         new(t.Id, t.ConversationId, t.AssignedRoleId, t.AssignedAgentId,
             t.Priority, t.Status, t.EscalationReason, t.InternalNotes,
             t.CreatedAt, t.AssignedAt, t.FirstResponseAt, t.ResolvedAt,
-            queuePosition);
+            queuePosition,
+            CustomerName:  t.Conversation?.ExternalUserName,
+            Channel:       t.Conversation?.Channel ?? Channel.WebChat,
+            LastMessageAt: t.Conversation?.LastMessageAt ?? t.CreatedAt);
 }

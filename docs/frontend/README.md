@@ -74,10 +74,11 @@ Implementados (al cerrar la Fase A de funcionarios):
 - **Formularios:** `MimoTextField` (genérico, soporta `@bind-Value`), `MimoTextArea`, `MimoSelect`,
   `MimoCheckbox`, `MimoFormGroup`.
 - **Datos:** `MimoTable` (con estados de carga/vacío) + `MimoTr`/`MimoTh`/`MimoTd`, `MimoBadge`,
-  `MimoCard`.
-- **Feedback:** `MimoAlert`, `MimoModal`, `MimoSpinner`.
+  `MimoCard`, `MimoListButton`, `MimoChatBubble`.
+- **Feedback:** `MimoAlert`, `MimoModal`, `MimoSpinner`, `MimoEmptyState`.
 - **Acciones / layout:** `MimoButton` (submit/loading/disabled/full-width), `MimoActions`,
-  `MimoPageHeader`, `MimoHeading`, `MimoText`, `MimoShell`, `MimoNavLink`, `MimoAuthScreen`.
+  `MimoPageHeader`, `MimoHeading`, `MimoText`, `MimoShell`, `MimoNavLink`, `MimoAuthScreen`,
+  `MimoSplitPane`, `MimoTabs`, `MimoBar`, `MimoRow`, `MimoScroll`.
 - **Enums propios** para no filtrar tipos de Flowbite a las apps: `MimoButtonVariant`,
   `MimoAlertVariant`, `MimoBadgeVariant`, `MimoModalSize`.
 
@@ -165,6 +166,14 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
     campos `int?` (hoy se preservan por round-trip pero no se editan en la UI). Ver `docs/pendings`.
 - **Fase C — Consola de agente (Callbell)** (en `Mimo.App`): inbox omnicanal en vivo (SignalR),
   conversación, cola, transferencias, chat interno.
+  - **Corte 1 (REST): hecho.** Página `/consola` con bandeja (Míos / Equipo), detalle de
+    conversación con burbujas por emisor y acciones de triage (reclamar, resolver, cerrar) sobre
+    `ConsoleService`. Se tiparon los endpoints de tickets/conversaciones (`.Produces<T>()`) y se
+    enriquecieron `TicketResponse`/`ConversationResponse` con datos del cliente. Sumó al catálogo:
+    `MimoSplitPane`, `MimoTabs`, `MimoChatBubble`, `MimoListButton`, `MimoBar`, `MimoScroll`,
+    `MimoRow`, `MimoEmptyState`.
+  - **Pendiente (corte 2):** mensajería en vivo con SignalR (enviar/recibir), notificación de
+    cola, transferencias, chat interno y encuesta. Requiere CORS para SignalR (pendiente #5).
 - **Fase D — `Mimo.Admin.App` (SuperAdmin):** tenants, planes, conectores de IA, uso.
 - **Fase E — WebChat embebible** (ciudadano).
 

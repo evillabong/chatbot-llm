@@ -1,0 +1,252 @@
+@page "/consola"
+@attribute [Authorize]
+@using Microsoft.Kiota.Abstractions
+@inject ConsoleService Console
+
+<PageTitle>Consola · MIMO</PageTitle>
+
+<MimoPageHeader Title="Consola de atención"
+                Description="Bandeja de tickets y conversaciones omnicanal.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="RefreshAsync">Actualizar</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+
+<MimoSplitPane>
+    <Sidebar>
+        <MimoTabs Tabs="_tabs" SelectedKey="@_tab" OnSelect="k => _tab = k" />
+        <MimoScroll>
+            @if (_loading)
+            {
+                <MimoEmptyState><MimoSpinner /></MimoEmptyState>
+            }
+            else
+            {
+                var list = _tab == "mine" ? _mine : _team;
+                @if (list.Count == 0)
+                {
+                    <MimoEmptyState Message="Sin tickets aquí." />
+                }
+                else
+                {
+                    @foreach (var t in list)
+                    {
+                        <MimoListButton Selected="@(_selected?.Id == t.Id)" OnClick="() => SelectAsync(t)">
+                            <MimoRow Justify="MimoJustify.Between">
+                                <MimoText>@(t.CustomerName ?? "Cliente")</MimoText>
+                                <MimoBadge Variant="StatusVariant(t.Status)">@StatusLabel(t.Status)</MimoBadge>
+                            </MimoRow>
+                            <MimoRow Gap="1">
+                                <MimoText Muted Small>@ChannelLabel(t.Channel)</MimoText>
+                                <MimoText Muted Small>· @PriorityLabel(t.Priority)</MimoText>
+                            </MimoRow>
+                        </MimoListButton>
+                    }
+                }
+            }
+        </MimoScroll>
+    </Sidebar>
+
+    <ChildContent>
+        @if (_selected is null)
+        {
+            <MimoEmptyState Message="Selecciona un ticket para ver la conversación." />
+        }
+        else
+        {
+            <MimoBar>
+                <div>
+                    <MimoText>@(_conversation?.CustomerName ?? _selected.CustomerName ?? "Cliente")</MimoText>
+                    <MimoRow Gap="1">
+                        <MimoText Muted Small>@ChannelLabel(_selected.Channel)</MimoText>
+                        <MimoBadge Variant="StatusVariant(_selected.Status)">@StatusLabel(_selected.Status)</MimoBadge>
+                    </MimoRow>
+                </div>
+                <MimoActions>
+                    @if (_selected.Status == 1)
+                    {
+                        <MimoButton Variant="MimoButtonVariant.Primary" Loading="_acting" OnClick="ClaimAsync">Reclamar</MimoButton>
+                    }
+                    @if (CanResolve(_selected.Status))
+                    {
+                        <MimoButton Variant="MimoButtonVariant.Secondary" Loading="_acting" OnClick="ResolveAsync">Resolver</MimoButton>
+                    }
+                    @if (CanClose(_selected.Status))
+                    {
+                        <MimoButton Variant="MimoButtonVariant.Danger" Loading="_acting" OnClick="CloseAsync">Cerrar</MimoButton>
+                    }
+                </MimoActions>
+            </MimoBar>
+
+            <MimoScroll Muted Padded>
+                @if (_convLoading)
+                {
+                    <MimoEmptyState><MimoSpinner /></MimoEmptyState>
+                }
+                else if (_conversation?.Messages is { Count: > 0 } msgs)
+                {
+                    @foreach (var m in msgs)
+                    {
+                        <MimoChatBubble Variant="BubbleVariant(m.Role)"
+                                        Content="@m.Content"
+                                        Author="@AuthorLabel(m.Role)"
+                                        Time="@m.CreatedAt?.ToLocalTime().ToString("dd/MM HH:mm")" />
+                    }
+                }
+                else
+                {
+                    <MimoEmptyState Message="Sin mensajes." />
+                }
+            </MimoScroll>
+
+            <MimoBar Footer="true">
+                <MimoText Muted Small>La respuesta en vivo se habilita en el siguiente paso (SignalR).</MimoText>
+            </MimoBar>
+        }
+    </ChildContent>
+</MimoSplitPane>
+
+@code {
+    private static readonly IReadOnlyList<MimoTab> _tabs =
+    [
+        new("mine", "Míos"),
+        new("team", "Equipo")
+    ];
+
+    private List<TicketResponse> _mine = [];
+    private List<TicketResponse> _team = [];
+    private bool _loading = true;
+    private string _tab = "mine";
+
+    private TicketResponse? _selected;
+    private ConversationResponse? _conversation;
+    private bool _convLoading;
+    private bool _acting;
+    private string? _pageError;
+
+    protected override Task OnInitializedAsync() => RefreshAsync();
+
+    private async Task RefreshAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try
+        {
+            _mine = await Console.MyTicketsAsync();
+            _team = await Console.VisibleTicketsAsync();
+        }
+        catch (Exception ex)
+        {
+            _pageError = Describe(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SelectAsync(TicketResponse t)
+    {
+        _selected = t;
+        _conversation = null;
+        if (t.ConversationId is null) return;
+
+        _convLoading = true;
+        try
+        {
+            _conversation = await Console.ConversationAsync(t.ConversationId.Value);
+        }
+        catch (Exception ex)
+        {
+            _pageError = Describe(ex);
+        }
+        finally
+        {
+            _convLoading = false;
+        }
+    }
+
+    private Task ClaimAsync()   => ActAsync(id => Console.ClaimAsync(id));
+    private Task ResolveAsync() => ActAsync(id => Console.ResolveAsync(id));
+    private Task CloseAsync()   => ActAsync(id => Console.CloseAsync(id));
+
+    private async Task ActAsync(Func<Guid, Task<TicketResponse?>> action)
+    {
+        if (_selected?.Id is null) return;
+        var id = _selected.Id.Value;
+        _acting = true;
+        _pageError = null;
+        try
+        {
+            await action(id);
+            await RefreshAsync();
+            _selected = _mine.Concat(_team).FirstOrDefault(x => x.Id == id) ?? _selected;
+        }
+        catch (Exception ex)
+        {
+            _pageError = Describe(ex);
+        }
+        finally
+        {
+            _acting = false;
+        }
+    }
+
+    // ── Mapeos de presentación (TicketStatus/Channel/Priority/MessageRole como int) ──
+
+    private static bool CanResolve(int? status) => status is 2 or 3 or 8;       // Assigned, InProgress, Reopened
+    private static bool CanClose(int? status)   => status is 2 or 3 or 5 or 8;  // + Resolved
+
+    private static MimoChatBubbleVariant BubbleVariant(int? role) => role switch
+    {
+        1 => MimoChatBubbleVariant.Bot,
+        2 => MimoChatBubbleVariant.System,
+        3 => MimoChatBubbleVariant.Agent,
+        _ => MimoChatBubbleVariant.Customer
+    };
+
+    private static string AuthorLabel(int? role) => role switch
+    {
+        1 => "Bot", 2 => "Sistema", 3 => "Agente", _ => "Cliente"
+    };
+
+    private static string ChannelLabel(int? channel) => channel switch
+    {
+        1 => "Facebook", 2 => "Instagram", 3 => "WhatsApp", 4 => "Telegram", _ => "WebChat"
+    };
+
+    private static string PriorityLabel(int? p) => p switch
+    {
+        0 => "Baja", 2 => "Alta", 3 => "Urgente", _ => "Normal"
+    };
+
+    private static string StatusLabel(int? s) => s switch
+    {
+        0 => "Bot", 1 => "En cola", 2 => "Asignado", 3 => "En progreso", 4 => "Sin atender",
+        5 => "Resuelto", 6 => "Encuesta", 7 => "Cerrado", 8 => "Reabierto", _ => "—"
+    };
+
+    private static MimoBadgeVariant StatusVariant(int? s) => s switch
+    {
+        1 => MimoBadgeVariant.Warning,
+        2 or 3 => MimoBadgeVariant.Info,
+        5 => MimoBadgeVariant.Success,
+        4 => MimoBadgeVariant.Danger,
+        _ => MimoBadgeVariant.Neutral
+    };
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 409 } => "El ticket ya no está en cola.",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException { ResponseStatusCode: 404 } => "Recurso no encontrado.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+}

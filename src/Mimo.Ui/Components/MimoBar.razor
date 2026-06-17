@@ -1,0 +1,18 @@
+@namespace Mimo.Ui.Components
+
+@* Barra horizontal (cabecera/pie) con borde y padding. Contenido distribuido a los extremos. *@
+<div class="@Css">
+    <MimoRow Justify="MimoJustify.Between">
+        @ChildContent
+    </MimoRow>
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Borde inferior (cabecera) o superior (pie).</summary>
+    [Parameter] public bool Footer { get; set; }
+
+    private string Css =>
+        "px-4 py-3 border-gray-200 dark:border-gray-700 " + (Footer ? "border-t" : "border-b");
+}

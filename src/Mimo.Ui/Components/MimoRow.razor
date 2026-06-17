@@ -1,0 +1,30 @@
+@namespace Mimo.Ui.Components
+
+@* Fila flexible genérica (alineación vertical centrada). Evita clases Tailwind sueltas en las apps. *@
+<div class="@Css">@ChildContent</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Distribución horizontal.</summary>
+    [Parameter] public MimoJustify Justify { get; set; } = MimoJustify.Start;
+
+    /// <summary>Separación entre elementos (1–6).</summary>
+    [Parameter] public int Gap { get; set; } = 2;
+
+    private string Css
+    {
+        get
+        {
+            var justify = Justify switch
+            {
+                MimoJustify.Between => "justify-between",
+                MimoJustify.End     => "justify-end",
+                MimoJustify.Center  => "justify-center",
+                _                   => "justify-start"
+            };
+            var gap = Gap switch { 0 => "", 1 => "gap-1", 3 => "gap-3", 4 => "gap-4", 6 => "gap-6", _ => "gap-2" };
+            return $"flex items-center {justify} {gap}";
+        }
+    }
+}

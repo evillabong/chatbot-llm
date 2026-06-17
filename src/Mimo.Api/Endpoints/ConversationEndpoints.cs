@@ -34,7 +34,9 @@ public static class ConversationEndpoints
         group.MapGet("/detail", GetConversationAsync)
             .WithName("GetConversation")
             .WithSummary("Obtiene el estado y los mensajes recientes de una conversación (query: id).")
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .Produces<ConversationResponse>()
+            .Produces(StatusCodes.Status404NotFound);
 
         return app;
     }
@@ -112,5 +114,6 @@ public static class ConversationEndpoints
     private static ConversationResponse ToResponse(
         Conversation c, IReadOnlyList<Message> messages) =>
         new(c.Id, c.Channel, c.Status, c.IsAuthenticated, c.CreatedAt,
-            messages.Select(m => new MessageResponse(m.Id, m.Role, m.Content, m.CreatedAt)).ToList());
+            messages.Select(m => new MessageResponse(m.Id, m.Role, m.Content, m.CreatedAt)).ToList(),
+            c.ExternalUserName, c.CustomerEmail, c.CustomerPhone, c.LastMessageAt);
 }

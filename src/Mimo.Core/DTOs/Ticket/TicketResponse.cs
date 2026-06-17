@@ -18,5 +18,9 @@ public record TicketResponse(
     DateTime? AssignedAt,
     DateTime? FirstResponseAt,
     DateTime? ResolvedAt,
-    int QueuePosition
+    int QueuePosition,
+    // Resumen del cliente/conversación para el inbox de la consola de agente.
+    string? CustomerName,
+    Channel Channel,
+    DateTime LastMessageAt
 );

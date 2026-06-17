@@ -1,0 +1,46 @@
+@namespace Mimo.Ui.Components
+
+@* Burbuja de mensaje de chat. La variante define color y alineación
+   (cliente a la izquierda, agente a la derecha, bot/sistema diferenciados). *@
+<div class="mb-2 flex @AlignClass">
+    <div class="max-w-[75%] rounded-2xl px-3 py-2 text-sm @BubbleClass">
+        @if (!string.IsNullOrEmpty(Author))
+        {
+            <div class="mb-0.5 text-xs font-semibold opacity-70">@Author</div>
+        }
+        <div class="whitespace-pre-wrap break-words">@Content</div>
+        @if (!string.IsNullOrEmpty(Time))
+        {
+            <div class="mt-1 text-right text-[10px] opacity-60">@Time</div>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>Texto del mensaje.</summary>
+    [Parameter] public string? Content { get; set; }
+
+    /// <summary>Autor mostrado en pequeño (opcional).</summary>
+    [Parameter] public string? Author { get; set; }
+
+    /// <summary>Marca de tiempo formateada (opcional).</summary>
+    [Parameter] public string? Time { get; set; }
+
+    /// <summary>Variante visual según el emisor.</summary>
+    [Parameter] public MimoChatBubbleVariant Variant { get; set; } = MimoChatBubbleVariant.Customer;
+
+    private string AlignClass => Variant switch
+    {
+        MimoChatBubbleVariant.Agent  => "justify-end",
+        MimoChatBubbleVariant.System => "justify-center",
+        _                            => "justify-start"
+    };
+
+    private string BubbleClass => Variant switch
+    {
+        MimoChatBubbleVariant.Agent  => "bg-blue-600 text-white",
+        MimoChatBubbleVariant.Bot    => "bg-indigo-100 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100",
+        MimoChatBubbleVariant.System => "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300",
+        _                            => "bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100"
+    };
+}

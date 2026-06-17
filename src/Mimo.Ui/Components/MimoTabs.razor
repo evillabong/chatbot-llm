@@ -1,0 +1,28 @@
+@namespace Mimo.Ui.Components
+
+@* Control de pestañas segmentado. Las apps pasan la lista de pestañas y la clave activa. *@
+<div class="flex border-b border-gray-200 dark:border-gray-700">
+    @foreach (var tab in Tabs)
+    {
+        <button type="button" @onclick="() => OnSelect.InvokeAsync(tab.Key)" class="@TabClass(tab.Key)">
+            @tab.Label
+        </button>
+    }
+</div>
+
+@code {
+    /// <summary>Pestañas a mostrar.</summary>
+    [Parameter] public IReadOnlyList<MimoTab> Tabs { get; set; } = [];
+
+    /// <summary>Clave de la pestaña activa.</summary>
+    [Parameter] public string? SelectedKey { get; set; }
+
+    /// <summary>Callback al seleccionar una pestaña.</summary>
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+
+    private string TabClass(string key) =>
+        "flex-1 px-4 py-3 text-sm font-medium transition-colors " +
+        (key == SelectedKey
+            ? "border-b-2 border-blue-600 text-blue-600 dark:text-blue-400"
+            : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200");
+}

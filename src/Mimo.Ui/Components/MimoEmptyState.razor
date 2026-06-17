@@ -1,0 +1,18 @@
+@namespace Mimo.Ui.Components
+
+@* Estado vacío/centrado que ocupa el espacio disponible. Para listas vacías, cargas y placeholders. *@
+<div class="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <MimoText Muted>@Message</MimoText>
+    }
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>Mensaje principal.</summary>
+    [Parameter] public string? Message { get; set; }
+
+    /// <summary>Contenido adicional (spinner, botón de acción…).</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

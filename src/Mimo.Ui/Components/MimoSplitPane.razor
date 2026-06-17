@@ -1,0 +1,20 @@
+@namespace Mimo.Ui.Components
+
+@* Disposición de dos paneles (lista + detalle) tipo bandeja de mensajería.
+   Panel izquierdo de ancho fijo con scroll; panel derecho flexible. *@
+<div class="flex h-[calc(100vh-10rem)] gap-4">
+    <aside class="flex w-80 shrink-0 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+        @Sidebar
+    </aside>
+    <section class="flex flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+        @ChildContent
+    </section>
+</div>
+
+@code {
+    /// <summary>Panel izquierdo (lista/bandeja).</summary>
+    [Parameter] public RenderFragment? Sidebar { get; set; }
+
+    /// <summary>Panel derecho (detalle/conversación).</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

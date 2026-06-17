@@ -69,6 +69,7 @@ public class TicketService(TenantDbContext db) : ITicketService
     public Task<Ticket?> GetByIdAsync(Guid ticketId, CancellationToken ct = default)
         => db.Tickets
             .Include(t => t.TransferRecords)
+            .Include(t => t.Conversation)
             .FirstOrDefaultAsync(t => t.Id == ticketId, ct);
 
     public async Task<IReadOnlyList<Ticket>> GetByRoleAsync(
@@ -82,7 +83,7 @@ public class TicketService(TenantDbContext db) : ITicketService
     public async Task<IReadOnlyList<Ticket>> GetByAgentAsync(
         Guid agentId, TicketStatus? status, CancellationToken ct = default)
     {
-        var q = db.Tickets.Where(t => t.AssignedAgentId == agentId);
+        var q = db.Tickets.Include(t => t.Conversation).Where(t => t.AssignedAgentId == agentId);
         if (status.HasValue) q = q.Where(t => t.Status == status.Value);
         return await q
             .OrderByDescending(t => t.Priority)
@@ -102,7 +103,7 @@ public class TicketService(TenantDbContext db) : ITicketService
         var canViewAll = roles.Any(r => r.CanViewAllTickets);
         var roleIds    = roles.Select(r => r.RoleId).ToList();
 
-        var q = db.Tickets.AsQueryable();
+        var q = db.Tickets.Include(t => t.Conversation).AsQueryable();
         if (!canViewAll)
             q = q.Where(t => roleIds.Contains(t.AssignedRoleId));
         if (status.HasValue)

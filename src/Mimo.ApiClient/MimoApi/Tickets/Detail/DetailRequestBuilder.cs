@@ -3,6 +3,7 @@
 using Microsoft.Kiota.Abstractions.Extensions;
 using Microsoft.Kiota.Abstractions.Serialization;
 using Microsoft.Kiota.Abstractions;
+using Mimo.ApiClient.MimoApi.Models;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -35,20 +36,20 @@ namespace Mimo.ApiClient.MimoApi.Tickets.Detail
         /// <summary>
         /// Obtiene un ticket por ID con su historial de transferencias (query: id).
         /// </summary>
-        /// <returns>A <see cref="Stream"/></returns>
+        /// <returns>A <see cref="global::Mimo.ApiClient.MimoApi.Models.TicketResponse"/></returns>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<Stream?> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Tickets.Detail.DetailRequestBuilder.DetailRequestBuilderGetQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.ApiClient.MimoApi.Models.TicketResponse?> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Tickets.Detail.DetailRequestBuilder.DetailRequestBuilderGetQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<Stream> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Tickets.Detail.DetailRequestBuilder.DetailRequestBuilderGetQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.ApiClient.MimoApi.Models.TicketResponse> GetAsync(Action<RequestConfiguration<global::Mimo.ApiClient.MimoApi.Tickets.Detail.DetailRequestBuilder.DetailRequestBuilderGetQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             var requestInfo = ToGetRequestInformation(requestConfiguration);
-            return await RequestAdapter.SendPrimitiveAsync<Stream>(requestInfo, default, cancellationToken).ConfigureAwait(false);
+            return await RequestAdapter.SendAsync<global::Mimo.ApiClient.MimoApi.Models.TicketResponse>(requestInfo, global::Mimo.ApiClient.MimoApi.Models.TicketResponse.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
         /// Obtiene un ticket por ID con su historial de transferencias (query: id).
@@ -66,6 +67,7 @@ namespace Mimo.ApiClient.MimoApi.Tickets.Detail
 #endif
             var requestInfo = new RequestInformation(Method.GET, UrlTemplate, PathParameters);
             requestInfo.Configure(requestConfiguration);
+            requestInfo.Headers.TryAdd("Accept", "application/json");
             return requestInfo;
         }
         /// <summary>

@@ -11,5 +11,9 @@ public record ConversationResponse(
     TicketStatus Status,
     bool IsAuthenticated,
     DateTime CreatedAt,
-    IReadOnlyList<MessageResponse> Messages
+    IReadOnlyList<MessageResponse> Messages,
+    string? CustomerName,
+    string? CustomerEmail,
+    string? CustomerPhone,
+    DateTime LastMessageAt
 );
