@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Microsoft.Kiota.Http.HttpClientLibrary;
 using Flowbite.Services;
-using Mimo.ApiClient.MimoApi;
+using Mimo.Api.Sdk;
 using Mimo.App;
 using Mimo.App.Auth;
 using Mimo.App.Services;

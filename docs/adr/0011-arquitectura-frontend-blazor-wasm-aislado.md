@@ -49,3 +49,10 @@ plan vive en [docs/frontend/README.md](../frontend/README.md).
 - **Clientes de API a mano:** más mantenimiento y riesgo de desincronización; descartado frente
   a la generación desde OpenAPI.
 - **Usar Flowbite directamente en las apps:** viola la componentización; se envuelve en `Mimo.Ui`.
+
+## Notas posteriores
+
+- **2026-06-17:** el proyecto del cliente generado se renombró de `Mimo.ApiClient` a
+  **`Mimo.Api.Sdk`** (namespace `Mimo.Api.Sdk`), para nombrar la capa por su rol (SDK de consumo
+  del API). El del admin será `Mimo.Admin.Api.Sdk`. La regeneración se automatiza con
+  `scripts/generate-apiclient.ps1`.

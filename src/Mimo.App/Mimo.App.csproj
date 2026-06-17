@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Mimo.Ui\Mimo.Ui.csproj" />
-    <ProjectReference Include="..\Mimo.ApiClient\Mimo.ApiClient.csproj" />
+    <ProjectReference Include="..\Mimo.Api.Sdk\Mimo.Api.Sdk.csproj" />
   </ItemGroup>
 
   <!-- El pipeline de Tailwind vive en Mimo.Ui (sistema de diseño). Esta app no genera CSS:

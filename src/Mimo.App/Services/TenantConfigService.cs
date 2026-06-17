@@ -1,5 +1,5 @@
-using Mimo.ApiClient.MimoApi;
-using Mimo.ApiClient.MimoApi.Models;
+using Mimo.Api.Sdk;
+using Mimo.Api.Sdk.Models;
 
 namespace Mimo.App.Services;
 

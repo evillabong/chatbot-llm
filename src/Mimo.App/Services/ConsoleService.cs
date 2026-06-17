@@ -1,6 +1,6 @@
-using Mimo.ApiClient.MimoApi;
-using Mimo.ApiClient.MimoApi.Models;
-using Mimo.ApiClient.MimoApi.Tickets.Resolve;
+using Mimo.Api.Sdk;
+using Mimo.Api.Sdk.Models;
+using Mimo.Api.Sdk.Tickets.Resolve;
 
 namespace Mimo.App.Services;
 

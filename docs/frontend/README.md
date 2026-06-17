@@ -31,7 +31,7 @@ src/
 ├── Mimo.Ui/            # Razor Class Library: SISTEMA DE DISEÑO.
 │                       # Único proyecto que referencia Flowbite Blazor + Tailwind.
 │                       # Expone componentes propios: <MimoButton>, <MimoTable>, etc.
-├── Mimo.ApiClient/     # Cliente(s) tipados generados de OpenAPI (Mimo.Api y Mimo.Admin.Api)
+├── Mimo.Api.Sdk/     # Cliente(s) tipados generados de OpenAPI (Mimo.Api y Mimo.Admin.Api)
 │                       # + handlers de auth/tenant. Sin lógica de UI.
 ├── Mimo.App/           # WASM tenant-facing: admin de tenant + consola de agente (Callbell).
 │                       # Consume Mimo.Api. Despliega al sitio IIS "mimo.app".
@@ -40,7 +40,7 @@ src/
 ```
 
 El WebChat embebible del ciudadano se resolverá después (ruta/modo dentro de `Mimo.App` o
-proyecto aparte). Regla de dependencias: `App → Mimo.Ui` y `App → Mimo.ApiClient`. **Ninguna
+proyecto aparte). Regla de dependencias: `App → Mimo.Ui` y `App → Mimo.Api.Sdk`. **Ninguna
 app referencia Flowbite ni Tailwind directamente.**
 
 ## 4. Regla de oro (directriz innegociable)
@@ -137,7 +137,7 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
 ## 8. Roadmap por fases
 
 - **Fase A — Cimientos:** crear `Mimo.Ui` (tokens + pipeline Tailwind/Flowbite + ~8 componentes
-  base), `Mimo.ApiClient` (Kiota) y `Mimo.App` con login (JWT + tenant) + 1–2 pantallas CRUD de
+  base), `Mimo.Api.Sdk` (Kiota) y `Mimo.App` con login (JWT + tenant) + 1–2 pantallas CRUD de
   admin de tenant (funcionarios, roles) usando solo `Mimo.Ui`.
   - **Login: hecho.** `Mimo.App` autentica contra `/auth/login` (tenant por `X-Tenant-Slug`),
     persiste el JWT en `sessionStorage` y lo inyecta vía `AuthHeaderHandler`; rutas protegidas con
@@ -183,6 +183,6 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
   (igual que `CONTRIBUTING.md`).
 - Componentes de `Mimo.Ui` con API tipada (parámetros explícitos), documentados y con valores
   por defecto sensatos.
-- Sin llamadas HTTP directas en componentes de página: usar servicios sobre `Mimo.ApiClient`.
+- Sin llamadas HTTP directas en componentes de página: usar servicios sobre `Mimo.Api.Sdk`.
 - Cada pantalla maneja los estados estándar (cargando/vacío/error).
 - Reutilizar la paginación del backend (`PagedResult<T>`) en `MimoTable`.

@@ -18,8 +18,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $repo       = Split-Path $PSScriptRoot -Parent
 $apiProj    = Join-Path $repo 'src/Mimo.Api/Mimo.Api.csproj'
-$specPath   = Join-Path $repo 'src/Mimo.ApiClient/openapi/mimo-api.json'
-$clientDir  = Join-Path $repo 'src/Mimo.ApiClient/MimoApi'
+$specPath   = Join-Path $repo 'src/Mimo.Api.Sdk/openapi/mimo-api.json'
+$clientDir  = Join-Path $repo 'src/Mimo.Api.Sdk/Generated'
 $openApiUrl = "http://localhost:$Port/openapi/v1.json"
 
 Write-Host "Levantando Mimo.Api en :$Port ..." -ForegroundColor Cyan
@@ -52,7 +52,7 @@ kiota generate `
     --openapi $specPath `
     --language CSharp `
     --class-name MimoApiClient `
-    --namespace-name Mimo.ApiClient.MimoApi `
+    --namespace-name Mimo.Api.Sdk `
     --output $clientDir `
     --exclude-backward-compatible `
     --type-access-modifier Public `
