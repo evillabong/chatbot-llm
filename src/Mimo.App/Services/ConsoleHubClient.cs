@@ -23,6 +23,9 @@ public sealed class ConsoleHubClient(SessionState session, IConfiguration config
     /// <summary>Cambió la cola del rol (nuevo ticket, asignación o resolución). Útil para refrescar la bandeja.</summary>
     public event Action? QueueChanged;
 
+    /// <summary>Mensaje de chat interno dirigido a este funcionario.</summary>
+    public event Action<IncomingInternalMessage>? InternalMessageReceived;
+
     public bool IsConnected =>
         _chat?.State == HubConnectionState.Connected && _tickets?.State == HubConnectionState.Connected;
 
@@ -42,6 +45,9 @@ public sealed class ConsoleHubClient(SessionState session, IConfiguration config
         _tickets.On<object?>("TicketEnqueued", _ => QueueChanged?.Invoke());
         _tickets.On<object?>("TicketAssigned", _ => QueueChanged?.Invoke());
         _tickets.On<object?>("TicketResolved", _ => QueueChanged?.Invoke());
+
+        // Chat interno dirigido a este funcionario (grupo agent:{id}, auto-unido al conectar).
+        _tickets.On<IncomingInternalMessage>("InternalMessage", m => InternalMessageReceived?.Invoke(m));
 
         await _tickets.StartAsync();
         await _chat.StartAsync();
@@ -89,4 +95,8 @@ public sealed class ConsoleHubClient(SessionState session, IConfiguration config
 
     /// <summary>Mensaje entrante por SignalR (espejo de MessageResponse del backend).</summary>
     public sealed record IncomingMessage(Guid Id, int Role, string Content, DateTime CreatedAt);
+
+    /// <summary>Mensaje de chat interno entrante (espejo de InternalMessageResponse).</summary>
+    public sealed record IncomingInternalMessage(
+        Guid Id, Guid FromAgentId, Guid ToAgentId, Guid? RelatedTicketId, string Content, bool IsRead, DateTime CreatedAt);
 }

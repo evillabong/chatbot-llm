@@ -14,9 +14,11 @@ public static class AgentEndpoints
 {
     public static IEndpointRouteBuilder MapAgentEndpoints(this IEndpointRouteBuilder app)
     {
+        // Lectura para cualquier funcionario (p. ej. el chat interno necesita listar colegas);
+        // la administración (crear/editar/desactivar) exige TenantAdmin.
         var group = app.MapGroup("/agents")
             .WithTags("Agents")
-            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin);
+            .RequireAuthorization(MimoAuthorization.Policies.Agent);
 
         group.MapGet("/", ListAgentsAsync)
             .WithName("ListAgents")
@@ -32,18 +34,21 @@ public static class AgentEndpoints
         group.MapPost("/", CreateAgentAsync)
             .WithName("CreateAgent")
             .WithSummary("Crea un nuevo funcionario en el tenant.")
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin)
             .Produces<AgentResponse>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status409Conflict);
 
         group.MapPut("/", UpdateAgentAsync)
             .WithName("UpdateAgent")
             .WithSummary("Actualiza los datos de un funcionario (query: id).")
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin)
             .Produces<AgentResponse>()
             .Produces(StatusCodes.Status404NotFound);
 
         group.MapDelete("/", DeactivateAgentAsync)
             .WithName("DeactivateAgent")
             .WithSummary("Desactiva un funcionario / borrado lógico (query: id).")
+            .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin)
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound);
 

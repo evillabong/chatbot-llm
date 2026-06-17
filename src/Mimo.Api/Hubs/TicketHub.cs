@@ -36,6 +36,18 @@ public class TicketHub(
     // ── Gestión de grupos ─────────────────────────────────────────────────────
 
     /// <summary>
+    /// Al conectar, el funcionario se une a su grupo personal "agent:{id}" para recibir
+    /// notificaciones dirigidas a él (p. ej. mensajes de chat interno).
+    /// </summary>
+    public override async Task OnConnectedAsync()
+    {
+        var agentId = GetAgentId();
+        if (agentId is not null)
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"agent:{agentId}");
+        await base.OnConnectedAsync();
+    }
+
+    /// <summary>
     /// El funcionario se suscribe a la cola de un rol para recibir notificaciones en tiempo real.
     /// </summary>
     public Task JoinRoleQueue(string roleId)

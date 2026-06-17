@@ -184,8 +184,12 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
   - **Cola en vivo: hecho.** El token incluye claims `role_id`; la consola se suscribe a las colas
     de sus roles (`JoinRoleQueue`) y refresca la bandeja al recibir `TicketEnqueued`/`TicketAssigned`/
     `TicketResolved`.
-  - **Pendiente (corte 3 restante):** chat interno entre funcionarios y encuesta; CORS para SignalR
-    en producción (pendiente #5).
+  - **Chat interno: hecho.** Página `/chat-interno` (colegas + hilo 1:1 + envío) sobre
+    `InternalChatService`; recepción en vivo por `TicketHub` (`InternalMessage`), con auto-unión al
+    grupo `agent:{id}` al conectar. Se abrió la **lectura de `/agents` a agentes** (escritura sigue
+    TenantAdmin) para listar colegas.
+  - **Pendiente (corte 3 restante):** encuesta de satisfacción en la consola; CORS para SignalR en
+    producción (pendiente #5).
 - **Fase D — `Mimo.Admin.App` (SuperAdmin):** tenants, planes, conectores de IA, uso.
 - **Fase E — WebChat embebible** (ciudadano).
 

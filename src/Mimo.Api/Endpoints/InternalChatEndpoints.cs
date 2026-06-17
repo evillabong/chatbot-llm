@@ -21,17 +21,20 @@ public static class InternalChatEndpoints
         // GET /internal-chat/history?agentId=
         group.MapGet("/history", GetHistoryAsync)
             .WithName("GetInternalChatHistory")
-            .WithSummary("Historial paginado de mensajes con otro funcionario (query: agentId, page, pageSize).");
+            .WithSummary("Historial paginado de mensajes con otro funcionario (query: agentId, page, pageSize).")
+            .Produces<List<InternalMessageResponse>>();
 
         // POST /internal-chat/send
         group.MapPost("/send", SendMessageAsync)
             .WithName("SendInternalMessage")
-            .WithSummary("Envía un mensaje de chat interno a otro funcionario.");
+            .WithSummary("Envía un mensaje de chat interno a otro funcionario.")
+            .Produces<InternalMessageResponse>(StatusCodes.Status201Created);
 
         // POST /internal-chat/read?agentId=
         group.MapPost("/read", MarkAsReadAsync)
             .WithName("MarkInternalMessagesRead")
-            .WithSummary("Marca como leídos los mensajes de un funcionario (query: agentId).");
+            .WithSummary("Marca como leídos los mensajes de un funcionario (query: agentId).")
+            .Produces(StatusCodes.Status204NoContent);
 
         return app;
     }

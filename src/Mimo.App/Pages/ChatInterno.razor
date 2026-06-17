@@ -1,0 +1,186 @@
+@page "/chat-interno"
+@attribute [Authorize]
+@implements IDisposable
+@using Microsoft.Kiota.Abstractions
+@inject AgentsService Agents
+@inject InternalChatService Chat
+@inject ConsoleHubClient Hub
+
+<PageTitle>Chat interno · MIMO</PageTitle>
+
+<MimoPageHeader Title="Chat interno"
+                Description="Colaboración en tiempo real entre funcionarios.">
+    <Actions>
+        <MimoBadge Variant="@(_live ? MimoBadgeVariant.Success : MimoBadgeVariant.Neutral)">
+            @(_live ? "En vivo" : "Sin conexión")
+        </MimoBadge>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+
+<MimoSplitPane>
+    <Sidebar>
+        <MimoScroll>
+            @if (_loading)
+            {
+                <MimoEmptyState><MimoSpinner /></MimoEmptyState>
+            }
+            else if (_colleagues.Count == 0)
+            {
+                <MimoEmptyState Message="No hay otros funcionarios." />
+            }
+            else
+            {
+                @foreach (var a in _colleagues)
+                {
+                    <MimoListButton Selected="@(_selected?.Id == a.Id)" OnClick="() => SelectAsync(a)">
+                        <MimoText>@(a.FullName ?? a.Email)</MimoText>
+                    </MimoListButton>
+                }
+            }
+        </MimoScroll>
+    </Sidebar>
+
+    <ChildContent>
+        @if (_selected is null)
+        {
+            <MimoEmptyState Message="Selecciona un funcionario para conversar." />
+        }
+        else
+        {
+            <MimoBar>
+                <MimoText>@(_selected.FullName ?? _selected.Email)</MimoText>
+            </MimoBar>
+
+            <MimoScroll Muted Padded>
+                @if (_convLoading)
+                {
+                    <MimoEmptyState><MimoSpinner /></MimoEmptyState>
+                }
+                else if (_lines.Count > 0)
+                {
+                    @foreach (var line in _lines)
+                    {
+                        <MimoChatBubble Variant="@(line.Mine ? MimoChatBubbleVariant.Agent : MimoChatBubbleVariant.Customer)"
+                                        Content="@line.Content" Time="@line.Time" />
+                    }
+                }
+                else
+                {
+                    <MimoEmptyState Message="Sin mensajes. Escribe el primero." />
+                }
+            </MimoScroll>
+
+            <MimoBar Footer="true">
+                <MimoTextField WrapperClass="flex-1" TValue="string" @bind-Value="_reply"
+                               Placeholder="@(_live ? "Escribe un mensaje…" : "Conectando…")"
+                               Disabled="@(!_live)" />
+                <MimoButton Variant="MimoButtonVariant.Primary" Loading="_sending"
+                            Disabled="@(!_live || string.IsNullOrWhiteSpace(_reply))" OnClick="SendAsync">
+                    Enviar
+                </MimoButton>
+            </MimoBar>
+        }
+    </ChildContent>
+</MimoSplitPane>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    private List<AgentResponse> _colleagues = [];
+    private bool _loading = true;
+    private Guid? _myId;
+
+    private AgentResponse? _selected;
+    private readonly List<ChatLine> _lines = [];
+    private bool _convLoading;
+    private bool _sending;
+    private bool _live;
+    private string _reply = "";
+    private string? _pageError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Hub.InternalMessageReceived += OnInternalMessage;
+
+        if (AuthState is not null)
+        {
+            var idClaim = (await AuthState).User.FindFirst("agent_id")?.Value;
+            if (Guid.TryParse(idClaim, out var id)) _myId = id;
+        }
+
+        try
+        {
+            var all = await Agents.ListAsync(isActive: true);
+            _colleagues = all.Where(a => a.Id != _myId).ToList();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+
+        try { await Hub.StartAsync(); } catch { /* sin tiempo real; el badge lo refleja */ }
+        _live = Hub.IsConnected;
+    }
+
+    private async Task SelectAsync(AgentResponse a)
+    {
+        _selected = a;
+        _lines.Clear();
+        if (a.Id is null) return;
+
+        _convLoading = true;
+        try
+        {
+            var history = await Chat.HistoryAsync(a.Id.Value);
+            _lines.AddRange(history
+                .OrderBy(m => m.CreatedAt)
+                .Select(m => new ChatLine(m.FromAgentId == _myId, m.Content ?? "", Fmt(m.CreatedAt))));
+            await Chat.MarkReadAsync(a.Id.Value);
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _convLoading = false; }
+    }
+
+    private async Task SendAsync()
+    {
+        if (_selected?.Id is null || string.IsNullOrWhiteSpace(_reply)) return;
+        _sending = true;
+        var text = _reply.Trim();
+        try
+        {
+            var sent = await Chat.SendAsync(_selected.Id.Value, text);
+            _lines.Add(new ChatLine(true, text, Fmt(sent?.CreatedAt)));
+            _reply = "";
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _sending = false; }
+    }
+
+    // Mensaje entrante (siempre dirigido a mí, desde un colega): mostrar si es el hilo abierto.
+    private void OnInternalMessage(ConsoleHubClient.IncomingInternalMessage m) => _ = InvokeAsync(() =>
+    {
+        if (_selected?.Id == m.FromAgentId)
+        {
+            _lines.Add(new ChatLine(false, m.Content, Fmt(m.CreatedAt)));
+            StateHasChanged();
+        }
+    });
+
+    public void Dispose() => Hub.InternalMessageReceived -= OnInternalMessage;
+
+    private static string Fmt(DateTimeOffset? dt) => (dt ?? DateTimeOffset.UtcNow).ToLocalTime().ToString("dd/MM HH:mm");
+    private static string Fmt(DateTime dt) => dt.ToLocalTime().ToString("dd/MM HH:mm");
+
+    private sealed record ChatLine(bool Mine, string Content, string Time);
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+}

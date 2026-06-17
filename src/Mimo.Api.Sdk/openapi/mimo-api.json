@@ -1143,7 +1143,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InternalMessageResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1166,8 +1176,15 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalMessageResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -1191,8 +1208,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -1708,6 +1725,47 @@
       },
       "IKeyedServiceProvider": {
         "type": "object"
+      },
+      "InternalMessageResponse": {
+        "required": [
+          "id",
+          "fromAgentId",
+          "toAgentId",
+          "relatedTicketId",
+          "content",
+          "isRead",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fromAgentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toAgentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "relatedTicketId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "content": {
+            "type": "string"
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "LoginRequest": {
         "required": [
