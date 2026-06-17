@@ -1,0 +1,26 @@
+@namespace Mimo.Ui.Components
+
+@* Texto inline estándar. Variantes de énfasis/tamaño para evitar clases sueltas en las apps. *@
+<span class="@CssClass">@ChildContent</span>
+
+@code {
+    /// <summary>Contenido del texto.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Texto atenuado (secundario).</summary>
+    [Parameter] public bool Muted { get; set; }
+
+    /// <summary>Tamaño pequeño.</summary>
+    [Parameter] public bool Small { get; set; }
+
+    private string CssClass
+    {
+        get
+        {
+            var parts = new List<string>();
+            parts.Add(Small ? "text-sm" : "text-base");
+            parts.Add(Muted ? "text-gray-500 dark:text-gray-400" : "text-gray-900 dark:text-white");
+            return string.Join(' ', parts);
+        }
+    }
+}

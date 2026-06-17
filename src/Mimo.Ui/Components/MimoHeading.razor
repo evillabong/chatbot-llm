@@ -1,0 +1,30 @@
+@namespace Mimo.Ui.Components
+
+@* Título de página/sección con descripción opcional. Centraliza la tipografía de encabezados. *@
+@switch (Level)
+{
+    case 1:
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">@Text</h1>
+        break;
+    case 2:
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">@Text</h2>
+        break;
+    default:
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">@Text</h3>
+        break;
+}
+@if (!string.IsNullOrEmpty(Description))
+{
+    <p class="mt-2 text-gray-600 dark:text-gray-300">@Description</p>
+}
+
+@code {
+    /// <summary>Nivel del encabezado (1, 2 o 3).</summary>
+    [Parameter] public int Level { get; set; } = 1;
+
+    /// <summary>Texto del encabezado.</summary>
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>Descripción opcional bajo el encabezado.</summary>
+    [Parameter] public string? Description { get; set; }
+}

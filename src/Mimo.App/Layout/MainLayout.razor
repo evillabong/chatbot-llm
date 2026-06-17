@@ -6,7 +6,7 @@
     <Actions>
         <AuthorizeView>
             <Authorized>
-                <span class="text-sm text-gray-600 dark:text-gray-300">@context.User.Identity?.Name</span>
+                <MimoText Muted Small>@context.User.Identity?.Name</MimoText>
                 <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="LogoutAsync">Salir</MimoButton>
             </Authorized>
         </AuthorizeView>

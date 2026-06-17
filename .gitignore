@@ -436,3 +436,4 @@ FodyWeavers.xsd
 # MIMO frontend: binario de Tailwind (se descarga aparte) y CSS compilado
 **/tools/tailwindcss*
 **/wwwroot/css/app.min.css
+**/wwwroot/css/mimo.min.css

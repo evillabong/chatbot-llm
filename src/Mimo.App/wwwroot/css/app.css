@@ -1,8 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* ── Estilos propios de Blazor (validación, UI de error, progreso de carga) ── */
+/* Estilos del host Blazor (validación, UI de error, progreso de carga).
+   El sistema de diseño (Tailwind/Flowbite) lo provee Mimo.Ui en _content/Mimo.Ui/css/mimo.min.css.
+   Este archivo NO se procesa con Tailwind. */
 .valid.modified:not([type=checkbox]) { outline: 1px solid #26b050; }
 .invalid { outline: 1px solid red; }
 .validation-message { color: red; }

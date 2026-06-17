@@ -3,7 +3,7 @@
 
 @* Campo de texto estándar de MIMO: etiqueta + input de Flowbite.
    Soporta enlace bidireccional con @bind-Value. Las apps no usan TextInput/Label directamente. *@
-<div class="@WrapperClass">
+<div class="@(WrapperClass ?? "mb-4")">
     @if (!string.IsNullOrEmpty(Label))
     {
         <div class="mb-2">
@@ -49,6 +49,6 @@
     /// <summary>Deshabilita el campo.</summary>
     [Parameter] public bool Disabled { get; set; }
 
-    /// <summary>Clases adicionales del contenedor.</summary>
+    /// <summary>Clases del contenedor. Por defecto separa verticalmente los campos (mb-4).</summary>
     [Parameter] public string? WrapperClass { get; set; }
 }

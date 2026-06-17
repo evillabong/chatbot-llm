@@ -108,11 +108,18 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
 
 ## 7. Pipeline de Tailwind
 
-- Tailwind CLI (binario standalone o vía npm) con el plugin de Flowbite.
-- `content` debe escanear **`Mimo.Ui/**/*.razor`** y los `*.razor` de cada app + los assets de
-  Flowbite Blazor, para no purgar clases usadas en la RCL.
-- CSS compilado servido desde `Mimo.Ui` (wwwroot) y referenciado por las apps. JS de Flowbite
-  (componentes interactivos) incluido por `Mimo.Ui`.
+- **Todo el pipeline vive en `Mimo.Ui`** (config, binario, CSS de entrada y target de MSBuild):
+  cambiar de framework de UI = tocar solo este proyecto. Las apps no tienen `tailwind.config.js`
+  ni generan CSS.
+- `Mimo.Ui/tailwind.config.js` escanea **solo `./**/*.razor` de `Mimo.Ui`** (ahí viven todas las
+  clases; las apps no usan clases sueltas, regla de oro). El binario standalone está en
+  `Mimo.Ui/tools/tailwindcss.exe` (gitignorado; ver `docs/pendings`).
+- El target `BuildTailwindCss` compila `Mimo.Ui/Styles/mimo.css` → `Mimo.Ui/wwwroot/css/mimo.min.css`,
+  que se sirve a las apps como **activo estático del RCL**: `_content/Mimo.Ui/css/mimo.min.css`.
+- Cada app referencia en su `index.html`: `_content/Flowbite/flowbite.min.css`,
+  `_content/Mimo.Ui/css/mimo.min.css` y un `css/app.css` propio solo con estilos del host Blazor
+  (validación, UI de error, progreso de carga). El JS de Flowbite lo incluye la app vía
+  `_content/Flowbite/flowbite.js`.
 
 ## 8. Roadmap por fases
 

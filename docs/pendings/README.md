@@ -11,7 +11,7 @@ Prioridad: 🔴 alta · 🟡 media · 🟢 baja.
 | 1b | **Respuestas tipadas en endpoints restantes de `Mimo.Api`** | 🟡 | Ya tipados: Auth, Agents, Roles, Documents. Faltan: Tickets, Conversations, InternalChat, Survey. Anotar `.Produces<T>()` y regenerar el cliente al abordar la consola de agente (Fase C). |
 | 2 | **Vulnerabilidad NU1903** | 🔴 | `System.Security.Cryptography.Xml 9.0.5` (transitivo, vía Data Protection) con CVE de severidad alta. Fijar/actualizar a versión parcheada. |
 | 3 | **Script de regeneración del cliente Kiota** | 🟡 | Automatizar: levantar `Mimo.Api` → obtener OpenAPI → `kiota generate`. Hoy es manual. Crear `scripts/generate-apiclient.ps1`. |
-| 4 | **Binario de Tailwind en CI/clones** | 🟡 | `tools/tailwindcss.exe` está gitignorado (38 MB). `dotnet publish`/CI/un clon nuevo no tendrán CSS. Añadir fetch (script o target que lo descargue si falta). |
+| 4 | **Binario de Tailwind en CI/clones** | 🟡 | `src/Mimo.Ui/tools/tailwindcss.exe` está gitignorado (38 MB). `dotnet publish`/CI/un clon nuevo no tendrán CSS (`mimo.min.css`). Añadir fetch (script o target que lo descargue a `Mimo.Ui/tools/` si falta). |
 | 5 | **CORS para SignalR** | 🟡 | La consola de agente usará hubs; los websockets cross-origin requieren orígenes explícitos + `AllowCredentials` (el CORS actual `AllowAnyOrigin` no sirve con credenciales). |
 | 6 | **Promover `develop` → `main` + push** | 🟡 | `v0.1.0` y `v0.2.0` están etiquetados en `develop`; `main` quedó atrás. Decidir publicación del release y push al remoto. |
 | 7 | **Re-desplegar a IIS** | 🟡 | IIS corre código previo al cifrado de API keys y a varios fixes. Correr `scripts/deploy-iis.ps1` para actualizar `mimo.app`/`mimo.api`. |

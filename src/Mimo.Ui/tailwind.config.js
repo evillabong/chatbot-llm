@@ -1,12 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    // Escanea las apps Y la librería de UI Mimo.Ui (donde viven las clases reales).
+    // Solo escanea Mimo.Ui: aquí viven TODAS las clases de Tailwind del sistema de diseño.
+    // Las apps no usan clases sueltas (regla de oro), por eso no se escanean.
     content: [
-        "./App.razor",
-        "./wwwroot/**/*.html",
-        "./Layout/**/*.razor",
-        "./Pages/**/*.razor",
-        "../Mimo.Ui/**/*.razor"
+        "./**/*.razor"
     ],
     darkMode: 'class',
     theme: {

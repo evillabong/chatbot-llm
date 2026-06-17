@@ -16,4 +16,19 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.9" />
   </ItemGroup>
 
+  <!-- Pipeline de Tailwind: vive en Mimo.Ui porque aquí está el sistema de diseño.
+       Escanea solo los .razor de esta librería y emite el CSS a wwwroot/css/mimo.min.css,
+       que se sirve a las apps como activo estático del RCL (_content/Mimo.Ui/css/mimo.min.css).
+       El binario standalone vive en tools/ (no se commitea; ver scripts y docs/pendings). -->
+  <Target Name="BuildTailwindCss" BeforeTargets="ResolveStaticWebAssetsInputs;Compile">
+    <PropertyGroup>
+      <TailwindExe>$(MSBuildProjectDirectory)\tools\tailwindcss.exe</TailwindExe>
+    </PropertyGroup>
+    <Warning Condition="!Exists('$(TailwindExe)')" Text="Tailwind CLI no encontrado en tools/tailwindcss.exe; el CSS (mimo.min.css) no se generará." />
+    <Exec Condition="Exists('$(TailwindExe)')"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="&quot;$(TailwindExe)&quot; -c ./tailwind.config.js -i ./Styles/mimo.css -o ./wwwroot/css/mimo.min.css --minify"
+          StandardOutputImportance="low" />
+  </Target>
+
 </Project>

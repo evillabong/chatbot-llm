@@ -1,0 +1,29 @@
+@namespace Mimo.Ui.Components
+
+@* Pantalla de autenticación: contenedor centrado a pantalla completa con marca,
+   subtítulo y una tarjeta para el formulario. Las apps solo aportan el contenido del formulario. *@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-6">
+            <div class="text-3xl font-bold text-gray-900 dark:text-white">@Brand</div>
+            @if (!string.IsNullOrEmpty(Subtitle))
+            {
+                <p class="text-sm text-gray-500 dark:text-gray-400">@Subtitle</p>
+            }
+        </div>
+        <MimoCard>
+            @ChildContent
+        </MimoCard>
+    </div>
+</div>
+
+@code {
+    /// <summary>Texto de marca (por defecto MIMO).</summary>
+    [Parameter] public string Brand { get; set; } = "MIMO";
+
+    /// <summary>Subtítulo bajo la marca.</summary>
+    [Parameter] public string? Subtitle { get; set; }
+
+    /// <summary>Contenido (formulario).</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

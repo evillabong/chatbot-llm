@@ -6,54 +6,37 @@
 
 <PageTitle>Iniciar sesión · MIMO</PageTitle>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-    <div class="w-full max-w-md">
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">MIMO</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Panel de administración del tenant</p>
-        </div>
+<MimoAuthScreen Subtitle="Panel de administración del tenant">
+    <EditForm Model="_model" OnValidSubmit="HandleLogin">
+        <DataAnnotationsValidator />
 
-        <MimoCard>
-            <EditForm Model="_model" OnValidSubmit="HandleLogin">
-                <DataAnnotationsValidator />
+        @if (_error is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_error" />
+        }
 
-                @if (_error is not null)
-                {
-                    <div class="mb-4">
-                        <MimoAlert Variant="MimoAlertVariant.Error" Text="@_error" />
-                    </div>
-                }
+        <MimoTextField Label="Organización (tenant)"
+                       @bind-Value="_model.TenantSlug"
+                       Placeholder="mi-organizacion"
+                       HelperText="Identificador de tu organización."
+                       Required="true" />
 
-                <div class="mb-4">
-                    <MimoTextField Label="Organización (tenant)"
-                                   @bind-Value="_model.TenantSlug"
-                                   Placeholder="mi-organizacion"
-                                   HelperText="Identificador de tu organización."
-                                   Required="true" />
-                </div>
+        <MimoTextField Label="Correo"
+                       Type="email"
+                       @bind-Value="_model.Email"
+                       Placeholder="nombre@organizacion.com"
+                       Required="true" />
 
-                <div class="mb-4">
-                    <MimoTextField Label="Correo"
-                                   Type="email"
-                                   @bind-Value="_model.Email"
-                                   Placeholder="nombre@organizacion.com"
-                                   Required="true" />
-                </div>
+        <MimoTextField Label="Contraseña"
+                       Type="password"
+                       @bind-Value="_model.Password"
+                       Required="true" />
 
-                <div class="mb-6">
-                    <MimoTextField Label="Contraseña"
-                                   Type="password"
-                                   @bind-Value="_model.Password"
-                                   Required="true" />
-                </div>
-
-                <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" FullWidth="true" Loading="_busy">
-                    @(_busy ? "Ingresando…" : "Iniciar sesión")
-                </MimoButton>
-            </EditForm>
-        </MimoCard>
-    </div>
-</div>
+        <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" FullWidth="true" Loading="_busy">
+            @(_busy ? "Ingresando…" : "Iniciar sesión")
+        </MimoButton>
+    </EditForm>
+</MimoAuthScreen>
 
 @code {
     [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
