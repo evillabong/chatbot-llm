@@ -1,0 +1,97 @@
+@page "/login"
+@layout EmptyLayout
+@using System.ComponentModel.DataAnnotations
+@inject AuthService Auth
+@inject NavigationManager Navigation
+
+<PageTitle>Iniciar sesión · MIMO</PageTitle>
+
+<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">MIMO</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Panel de administración del tenant</p>
+        </div>
+
+        <MimoCard>
+            <EditForm Model="_model" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
+
+                @if (_error is not null)
+                {
+                    <div class="mb-4">
+                        <MimoAlert Variant="MimoAlertVariant.Error" Text="@_error" />
+                    </div>
+                }
+
+                <div class="mb-4">
+                    <MimoTextField Label="Organización (tenant)"
+                                   @bind-Value="_model.TenantSlug"
+                                   Placeholder="mi-organizacion"
+                                   HelperText="Identificador de tu organización."
+                                   Required="true" />
+                </div>
+
+                <div class="mb-4">
+                    <MimoTextField Label="Correo"
+                                   Type="email"
+                                   @bind-Value="_model.Email"
+                                   Placeholder="nombre@organizacion.com"
+                                   Required="true" />
+                </div>
+
+                <div class="mb-6">
+                    <MimoTextField Label="Contraseña"
+                                   Type="password"
+                                   @bind-Value="_model.Password"
+                                   Required="true" />
+                </div>
+
+                <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" FullWidth="true" Loading="_busy">
+                    @(_busy ? "Ingresando…" : "Iniciar sesión")
+                </MimoButton>
+            </EditForm>
+        </MimoCard>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+
+    private readonly LoginModel _model = new();
+    private bool _busy;
+    private string? _error;
+
+    private async Task HandleLogin()
+    {
+        _busy = true;
+        _error = null;
+
+        var result = await Auth.LoginAsync(_model.TenantSlug, _model.Email, _model.Password);
+
+        _busy = false;
+
+        if (result.Success)
+        {
+            var target = string.IsNullOrWhiteSpace(ReturnUrl) ? "" : ReturnUrl;
+            Navigation.NavigateTo(target);
+        }
+        else
+        {
+            _error = result.Error;
+        }
+    }
+
+    private sealed class LoginModel
+    {
+        [Required(ErrorMessage = "Indica tu organización.")]
+        public string TenantSlug { get; set; } = "";
+
+        [Required(ErrorMessage = "Indica tu correo.")]
+        [EmailAddress(ErrorMessage = "Correo no válido.")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "Indica tu contraseña.")]
+        public string Password { get; set; } = "";
+    }
+}

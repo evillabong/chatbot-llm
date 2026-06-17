@@ -2,7 +2,14 @@
 
 @* Botón estándar de MIMO. Envuelve el Button de Flowbite y centraliza el estilo por variante.
    Las apps usan <MimoButton>, nunca el Button de Flowbite ni clases Tailwind directas. *@
-<Button class="@VariantClass" @onclick="OnClick">@ChildContent</Button>
+<Button Color="FlowbiteColor"
+        Type="@Type"
+        Disabled="Disabled"
+        Loading="Loading"
+        class="@CssClass"
+        @onclick="OnClick">
+    @ChildContent
+</Button>
 
 @code {
     /// <summary>Contenido del botón (texto/íconos).</summary>
@@ -14,10 +21,24 @@
     /// <summary>Variante visual.</summary>
     [Parameter] public MimoButtonVariant Variant { get; set; } = MimoButtonVariant.Primary;
 
-    private string VariantClass => Variant switch
+    /// <summary>Tipo HTML del botón (button, submit, reset).</summary>
+    [Parameter] public string Type { get; set; } = "button";
+
+    /// <summary>Deshabilita el botón.</summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Muestra el spinner de carga y bloquea la interacción.</summary>
+    [Parameter] public bool Loading { get; set; }
+
+    /// <summary>Ocupa todo el ancho disponible.</summary>
+    [Parameter] public bool FullWidth { get; set; }
+
+    private Button.ButtonColor FlowbiteColor => Variant switch
     {
-        MimoButtonVariant.Secondary => "font-medium",
-        MimoButtonVariant.Danger    => "font-semibold",
-        _                           => "font-semibold"
+        MimoButtonVariant.Secondary => Button.ButtonColor.Light,
+        MimoButtonVariant.Danger    => Button.ButtonColor.Red,
+        _                           => Button.ButtonColor.Default
     };
+
+    private string CssClass => FullWidth ? "w-full justify-center" : string.Empty;
 }

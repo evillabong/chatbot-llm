@@ -1,0 +1,17 @@
+@namespace Mimo.Ui.Components
+
+@* Tarjeta estándar de MIMO. Envuelve el Card de Flowbite. *@
+<Card class="@CssClass" Horizontal="Horizontal">
+    @ChildContent
+</Card>
+
+@code {
+    /// <summary>Contenido de la tarjeta.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Disposición horizontal (imagen al lado).</summary>
+    [Parameter] public bool Horizontal { get; set; }
+
+    /// <summary>Clases adicionales.</summary>
+    [Parameter] public string? CssClass { get; set; }
+}

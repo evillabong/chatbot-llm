@@ -1,0 +1,38 @@
+@namespace Mimo.Ui.Components
+
+@* Estructura base autenticada de MIMO: barra superior con marca, acciones a la derecha
+   y área de contenido. Centraliza el chrome para que las apps no escriban HTML/Tailwind. *@
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <header class="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-bold text-gray-900 dark:text-white">@Brand</span>
+                @if (!string.IsNullOrEmpty(Subtitle))
+                {
+                    <span class="text-sm text-gray-400">/ @Subtitle</span>
+                }
+            </div>
+            <div class="flex items-center gap-3">
+                @Actions
+            </div>
+        </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-4 py-6">
+        @ChildContent
+    </main>
+</div>
+
+@code {
+    /// <summary>Texto de marca (por defecto MIMO).</summary>
+    [Parameter] public string Brand { get; set; } = "MIMO";
+
+    /// <summary>Subtítulo opcional (p. ej. nombre del tenant).</summary>
+    [Parameter] public string? Subtitle { get; set; }
+
+    /// <summary>Acciones a la derecha de la barra (botones, menú de usuario).</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
+
+    /// <summary>Contenido principal.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

@@ -119,6 +119,12 @@ Hallazgos al validar el stack contra el sitio oficial y la plantilla `Flowbite.B
 - **Fase A — Cimientos:** crear `Mimo.Ui` (tokens + pipeline Tailwind/Flowbite + ~8 componentes
   base), `Mimo.ApiClient` (Kiota) y `Mimo.App` con login (JWT + tenant) + 1–2 pantallas CRUD de
   admin de tenant (funcionarios, roles) usando solo `Mimo.Ui`.
+  - **Login: hecho.** `Mimo.App` autentica contra `/auth/login` (tenant por `X-Tenant-Slug`),
+    persiste el JWT en `sessionStorage` y lo inyecta vía `AuthHeaderHandler`; rutas protegidas con
+    `[Authorize]` y `AuthorizeRouteView` (detalle en [ADR 0012](../adr/0012-autenticacion-en-frontend-wasm-con-jwt-en-sessionstorage.md)).
+    Componentes nuevos en `Mimo.Ui`: `MimoTextField`, `MimoCard`, `MimoAlert`, `MimoShell`
+    (+ `MimoButton` ampliado con submit/loading/disabled). **Pendiente de Fase A:** CRUD de
+    funcionarios y roles.
 - **Fase B — Admin de tenant completo** (en `Mimo.App`): documentos (con estados), configuración.
 - **Fase C — Consola de agente (Callbell)** (en `Mimo.App`): inbox omnicanal en vivo (SignalR),
   conversación, cola, transferencias, chat interno.

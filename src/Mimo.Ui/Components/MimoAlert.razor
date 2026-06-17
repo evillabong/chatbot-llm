@@ -1,0 +1,34 @@
+@namespace Mimo.Ui.Components
+
+@* Alerta estándar de MIMO. Envuelve el Alert de Flowbite y mapea la variante semántica. *@
+<Alert Color="FlowbiteColor"
+       Text="@Text"
+       OnDismiss="OnDismiss"
+       WithBorderAccent="WithBorderAccent">
+    @ChildContent
+</Alert>
+
+@code {
+    /// <summary>Texto principal de la alerta (alternativa a ChildContent).</summary>
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>Contenido enriquecido de la alerta.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Variante semántica.</summary>
+    [Parameter] public MimoAlertVariant Variant { get; set; } = MimoAlertVariant.Info;
+
+    /// <summary>Muestra el borde de acento lateral.</summary>
+    [Parameter] public bool WithBorderAccent { get; set; }
+
+    /// <summary>Callback al descartar. Si se asigna, se muestra el botón de cierre.</summary>
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
+    private AlertColor FlowbiteColor => Variant switch
+    {
+        MimoAlertVariant.Success => AlertColor.Success,
+        MimoAlertVariant.Warning => AlertColor.Warning,
+        MimoAlertVariant.Error   => AlertColor.Failure,
+        _                        => AlertColor.Info
+    };
+}
