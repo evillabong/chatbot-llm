@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-19
+
+### Added
+
+- **Rate limiting / anti-abuso en la superficie pública del WebChat**: rate limiter integrado de .NET particionado por IP del cliente. Crear conversación, encuesta y *handshake* del hub a 10/min (`webchat-start`); envío de mensajes (que cuesta LLM) a 30/min (`webchat-chat`). Al exceder responde **429** con `Retry-After`. Las lecturas (`/webchat/config`, detalle) quedan sin límite.
+
 ## [0.4.0] - 2026-06-19
 
 ### Added
@@ -122,7 +128,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/evillabong/chatbot-llm/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/evillabong/chatbot-llm/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/evillabong/chatbot-llm/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/evillabong/chatbot-llm/compare/v0.2.0...v0.3.0
