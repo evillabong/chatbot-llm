@@ -104,6 +104,33 @@ public static class DependencyInjection
     }
 
     /// <summary>
+    /// Variante mínima para Mimo.Worker: solo lo que necesitan los workers de background
+    /// (entrega de webhooks, cierre por inactividad) — DbContexts y cifrado de secretos. No registra
+    /// orquestador, conectores de canal ni notificaciones (dependen del proceso web, ver ADR 0017).
+    /// </summary>
+    public static IServiceCollection AddWorkerInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("Default");
+
+        services.AddDbContext<GlobalDbContext>(options =>
+            options.UseNpgsql(connectionString));
+
+        // Los workers fijan el search_path manualmente por tenant (conexión abierta explícita), así
+        // que el factory no necesita el SearchPathConnectionInterceptor.
+        services.AddDbContextFactory<TenantDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()),
+            ServiceLifetime.Scoped);
+
+        // Descifrado del secreto HMAC de las suscripciones (requiere Data Protection configurado en el
+        // host con el mismo anillo de llaves que las APIs; ver Program.cs / ADR 0010).
+        services.AddSingleton<ISecretProtector, DataProtectionSecretProtector>();
+
+        return services;
+    }
+
+    /// <summary>
     /// Variante reducida para Mimo.Admin.Api (esquema public + aprovisionamiento).
     /// </summary>
     public static IServiceCollection AddAdminInfrastructure(

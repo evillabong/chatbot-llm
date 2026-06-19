@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>mimo-worker-3b555bb6-f379-460a-bd10</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Anillo de Data Protection compartido con las APIs para descifrar secretos (ADR 0010/0017). -->
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="9.0.5" />
+    <!-- Permite ejecutarse como Servicio de Windows en producción. -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Mimo.Infrastructure\Mimo.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Mimo.Core.Enums;
 using Mimo.Infrastructure.Data;
 
-namespace Mimo.Api.Workers;
+namespace Mimo.Worker;
 
 /// <summary>
 /// Worker de background que cierra conversaciones inactivas.

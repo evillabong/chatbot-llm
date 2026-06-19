@@ -1,11 +1,14 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
 using Mimo.Infrastructure.Data;
 
-namespace Mimo.Api.Workers;
+namespace Mimo.Worker;
 
 /// <summary>
 /// Entrega los webhooks salientes pendientes (ADR 0016). Recorre los tenants activos, fija el

@@ -131,13 +131,10 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 builder.Services.AddSignalR(options => options.AddFilter<Mimo.Api.Hubs.TenantHubFilter>());
 
 // ── Workers de background ─────────────────────────────────────────────────────
-builder.Services.AddHostedService<InactivityTimeoutWorker>();
+// Solo el de notificación de cola vive aquí: empuja por SignalR (IHubContext<TicketHub>), que está
+// atado a este proceso. Los workers de BD/HTTP (entrega de webhooks, cierre por inactividad) se
+// alojan en Mimo.Worker, un host separado que se despliega y escala aparte (ADR 0017).
 builder.Services.AddHostedService<QueueNotificationWorker>();
-builder.Services.AddHostedService<WebhookDeliveryWorker>();
-
-// HttpClient para la entrega de webhooks salientes (timeout acotado por intento).
-builder.Services.AddHttpClient(WebhookDeliveryWorker.HttpClientName,
-    c => c.Timeout = TimeSpan.FromSeconds(10));
 
 // ── OpenAPI ──────────────────────────────────────────────────────────────────
 // OpenAPI 3.0 (no 3.1): mejor compatibilidad con generadores de cliente como Kiota.
