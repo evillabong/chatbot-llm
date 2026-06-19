@@ -16,6 +16,10 @@ public static class WebChatEndpoints
     /// <summary>Política CORS pública (cualquier origen) para la superficie del widget.</summary>
     public const string CorsPolicy = "webchat";
 
+    /// <summary>Rate limiting (por IP) de la superficie pública anónima; configurado en Program.cs.</summary>
+    public const string RateLimitStart = "webchat-start"; // crear conversación / encuesta / handshake del hub
+    public const string RateLimitChat  = "webchat-chat";  // envío de mensajes (cuesta LLM)
+
     public static IEndpointRouteBuilder MapWebChatEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/webchat")

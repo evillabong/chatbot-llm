@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.DataProtection;
@@ -134,6 +135,41 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
+// ── Rate limiting de la superficie pública del WebChat (anti-abuso, pendings #32) ───────────────
+// La superficie del widget es anónima y abierta a cualquier origen; sin límites, un tercero podría
+// abrir conversaciones masivas o inundar el bot (cada mensaje cuesta LLM). Se limita POR IP del
+// cliente. Nota: tras un proxy inverso (IIS/ANCM) la IP real viene en X-Forwarded-For; usar
+// UseForwardedHeaders en producción para que RemoteIpAddress sea la real (ver docs/pendings).
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (ctx, ct) =>
+    {
+        if (ctx.Lease.TryGetMetadata(System.Threading.RateLimiting.MetadataName.RetryAfter, out var retryAfter))
+            ctx.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+        await ctx.HttpContext.Response.WriteAsJsonAsync(
+            new { error = "Demasiadas solicitudes. Intenta de nuevo en unos momentos." }, ct);
+    };
+
+    // Crear conversación / encuesta / handshake del hub: estricto (lo más caro de abusar).
+    options.AddPolicy(WebChatEndpoints.RateLimitStart, ClientIpFixedWindow(permitLimit: 10, windowMinutes: 1));
+    // Envío de mensajes (REST): más holgado pero acotado (cuesta LLM).
+    options.AddPolicy(WebChatEndpoints.RateLimitChat, ClientIpFixedWindow(permitLimit: 30, windowMinutes: 1));
+});
+
+// Limitador de ventana fija particionado por IP del cliente (host:puerto se ignora, solo IP).
+static Func<HttpContext, RateLimitPartition<string>> ClientIpFixedWindow(int permitLimit, int windowMinutes) =>
+    httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ =>
+            new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = permitLimit,
+                Window      = TimeSpan.FromMinutes(windowMinutes)
+            });
+    };
+
 // ── SignalR ──────────────────────────────────────────────────────────────────
 // El filtro fija el search_path del tenant en cada invocación de hub (los hubs no pasan
 // por TenantResolutionMiddleware salvo en el handshake; ver TenantHubFilter).
@@ -204,6 +240,8 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 // Sirve el widget embebible del WebChat (wwwroot/webchat/widget.js) y la página demo (Fase E).
 app.UseStaticFiles();
+// Rate limiting de la superficie pública del WebChat (anti-abuso); aplica solo donde se declara la política.
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<TenantResolutionMiddleware>();
@@ -230,7 +268,9 @@ app.MapWebChatEndpoints();
 // ── SignalR Hubs ──────────────────────────────────────────────────────────────
 // ChatHub es la superficie pública del WebChat embebible: CORS abierto (negotiate cross-origin) y
 // tenant por ?tenant_slug en el handshake (el navegador no puede fijar cabeceras en WebSocket).
-app.MapHub<ChatHub>("/hubs/chat").RequireCors(WebChatEndpoints.CorsPolicy); // ciudadanos
+app.MapHub<ChatHub>("/hubs/chat")
+   .RequireCors(WebChatEndpoints.CorsPolicy)
+   .RequireRateLimiting(WebChatEndpoints.RateLimitStart); // ciudadanos: limita el negotiate por IP
 app.MapHub<TicketHub>("/hubs/tickets"); // funcionarios
 
 app.Run();

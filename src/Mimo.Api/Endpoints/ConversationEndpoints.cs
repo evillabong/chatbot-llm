@@ -22,17 +22,19 @@ public static class ConversationEndpoints
             .WithTags("Conversations")
             .RequireCors(WebChatEndpoints.CorsPolicy);
 
-        // Iniciar conversación (no requiere auth — ciudadano anónimo)
+        // Iniciar conversación (no requiere auth — ciudadano anónimo). Rate limit estricto por IP.
         group.MapPost("/", StartConversationAsync)
             .WithName("StartConversation")
             .WithSummary("Inicia o retoma una conversación activa del ciudadano.")
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .RequireRateLimiting(WebChatEndpoints.RateLimitStart);
 
-        // Enviar mensaje y obtener respuesta del bot (no requiere auth)
+        // Enviar mensaje y obtener respuesta del bot (no requiere auth). Rate limit por IP (cuesta LLM).
         group.MapPost("/messages", SendMessageAsync)
             .WithName("SendMessage")
             .WithSummary("Envía un mensaje y obtiene la respuesta del bot (query: id).")
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .RequireRateLimiting(WebChatEndpoints.RateLimitChat);
 
         // Historial de mensajes
         group.MapGet("/detail", GetConversationAsync)
