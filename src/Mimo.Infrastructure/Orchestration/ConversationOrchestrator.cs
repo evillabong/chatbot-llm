@@ -86,13 +86,25 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
             return userMessage;
         }
 
-        // Búsqueda semántica de documentos relevantes (filtrado por visibilidad ANTES del LLM)
-        var relevantDocs = await _vectorSearch.SearchAsync(
-            query:           content,
-            tenantId:        conversation.TenantId,
-            isAuthenticated: conversation.IsAuthenticated,
-            topK:            5,
-            ct:              ct);
+        // Búsqueda semántica de documentos relevantes (filtrado por visibilidad ANTES del LLM).
+        // La búsqueda usa embeddings (LLM); si el proveedor falla (p. ej. sin credenciales → 401),
+        // se degrada a SIN contexto en vez de propagar y devolver 500 al ciudadano. El intento de
+        // chat posterior, si también falla, ya tiene su propio fallback con mensaje amable.
+        IReadOnlyList<Document> relevantDocs;
+        try
+        {
+            relevantDocs = await _vectorSearch.SearchAsync(
+                query:           content,
+                tenantId:        conversation.TenantId,
+                isAuthenticated: conversation.IsAuthenticated,
+                topK:            5,
+                ct:              ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Búsqueda semántica no disponible para conversación {Id}; se continúa sin contexto", conversationId);
+            relevantDocs = [];
+        }
 
         var history = await _conversations.GetMessagesAsync(conversationId, limit: 10, ct);
 
