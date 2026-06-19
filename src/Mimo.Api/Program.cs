@@ -112,18 +112,27 @@ builder.Services.AddAuthorization(options =>
 // se permite cualquier origen/encabezado/método. En otros entornos se restringe a los orígenes
 // declarados en "Cors:AllowedOrigins". Autenticación por Bearer (no cookies).
 var isDevelopment = builder.Environment.IsDevelopment();
-builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+builder.Services.AddCors(options =>
 {
-    if (isDevelopment)
+    options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-    }
-    else
-    {
-        var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod();
-    }
-}));
+        if (isDevelopment)
+        {
+            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        }
+        else
+        {
+            var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+            policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod();
+        }
+    });
+
+    // Superficie pública del WebChat embebible (Fase E): el widget se incrusta en sitios de
+    // terceros (dominios arbitrarios), así que esta superficie permite CUALQUIER origen. Es segura
+    // porque es anónima, sin cookies y el tenant se resuelve por X-Tenant-Slug (slug público).
+    options.AddPolicy(WebChatEndpoints.CorsPolicy, policy =>
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
 
 // ── SignalR ──────────────────────────────────────────────────────────────────
 // El filtro fija el search_path del tenant en cada invocación de hub (los hubs no pasan
@@ -193,6 +202,8 @@ if (app.Environment.IsDevelopment())
 
 // ── Middleware ───────────────────────────────────────────────────────────────
 app.UseCors();
+// Sirve el widget embebible del WebChat (wwwroot/webchat/widget.js) y la página demo (Fase E).
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<TenantResolutionMiddleware>();
@@ -214,6 +225,7 @@ app.MapTicketEndpoints();
 app.MapInternalChatEndpoints();
 app.MapSurveyEndpoints();
 app.MapWebhookEndpoints();
+app.MapWebChatEndpoints();
 
 // ── SignalR Hubs ──────────────────────────────────────────────────────────────
 app.MapHub<ChatHub>("/hubs/chat");       // ciudadanos

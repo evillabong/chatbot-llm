@@ -16,8 +16,10 @@ public static class SurveyEndpoints
 {
     public static IEndpointRouteBuilder MapSurveyEndpoints(this IEndpointRouteBuilder app)
     {
+        // CORS público: la encuesta la responde el ciudadano desde el widget embebible (Fase E).
         var group = app.MapGroup("/conversations/survey")
-            .WithTags("Survey");
+            .WithTags("Survey")
+            .RequireCors(WebChatEndpoints.CorsPolicy);
 
         group.MapPost("/", SubmitSurveyAsync)
             .WithName("SubmitSurvey")

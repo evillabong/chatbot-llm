@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MIMO WebChat — demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 48px; color: #1f2937; }
+    .card { max-width: 640px; margin: 0 auto; }
+    code { background: #f3f4f6; padding: 2px 6px; border-radius: 6px; }
+    pre { background: #111827; color: #e5e7eb; padding: 16px; border-radius: 10px; overflow:auto; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Página demo del WebChat embebible</h1>
+    <p>Esta página simula el sitio de un cliente que incrusta el widget. El botón de chat aparece
+       abajo a la derecha. Snippet usado:</p>
+    <pre>&lt;script src="/webchat/widget.js" data-tenant="andinashop"&gt;&lt;/script&gt;</pre>
+    <p>Para probar contra otro tenant, cambia <code>data-tenant</code>. Para apuntar a otra API,
+       agrega <code>data-api="https://mi-api"</code>.</p>
+  </div>
+
+  <!-- El widget se sirve desde la misma API; en un sitio real el src sería absoluto. -->
+  <script src="/webchat/widget.js" data-tenant="andinashop"></script>
+</body>
+</html>

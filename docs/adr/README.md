@@ -37,3 +37,4 @@ decisión se revierte o cambia, se crea un ADR nuevo que marca al anterior como
 | [0015](0015-autenticacion-por-api-key-y-api-de-integracion.md) | Autenticación por API key y superficie de integración | Aceptado |
 | [0016](0016-webhooks-salientes-con-firma-hmac-y-reintentos.md) | Webhooks salientes con firma HMAC y reintentos | Aceptado |
 | [0017](0017-host-de-workers-separado-mimo-worker.md) | Host de workers separado (Mimo.Worker) | Aceptado |
+| [0018](0018-webchat-embebible-widget-vanilla-js.md) | WebChat embebible: widget vanilla JS servido por la API | Aceptado |

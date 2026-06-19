@@ -16,8 +16,11 @@ public static class ConversationEndpoints
 {
     public static IEndpointRouteBuilder MapConversationEndpoints(this IEndpointRouteBuilder app)
     {
+        // CORS público: el widget embebible del WebChat (Fase E) llama estos endpoints desde el
+        // sitio del cliente (origen arbitrario). Son anónimos y sin cookies.
         var group = app.MapGroup("/conversations")
-            .WithTags("Conversations");
+            .WithTags("Conversations")
+            .RequireCors(WebChatEndpoints.CorsPolicy);
 
         // Iniciar conversación (no requiere auth — ciudadano anónimo)
         group.MapPost("/", StartConversationAsync)
