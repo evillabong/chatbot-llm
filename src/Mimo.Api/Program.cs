@@ -228,7 +228,9 @@ app.MapWebhookEndpoints();
 app.MapWebChatEndpoints();
 
 // ── SignalR Hubs ──────────────────────────────────────────────────────────────
-app.MapHub<ChatHub>("/hubs/chat");       // ciudadanos
+// ChatHub es la superficie pública del WebChat embebible: CORS abierto (negotiate cross-origin) y
+// tenant por ?tenant_slug en el handshake (el navegador no puede fijar cabeceras en WebSocket).
+app.MapHub<ChatHub>("/hubs/chat").RequireCors(WebChatEndpoints.CorsPolicy); // ciudadanos
 app.MapHub<TicketHub>("/hubs/tickets"); // funcionarios
 
 app.Run();

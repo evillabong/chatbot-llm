@@ -118,12 +118,21 @@ public partial class TenantResolutionMiddleware(
     /// Slug provisto por el cliente: header X-Tenant-Slug y, en su defecto, el subdominio.
     /// La decisión de si este slug se usa o se rechaza la toma <see cref="TenantResolver"/>
     /// según haya o no un token (binding al principal).
+    ///
+    /// Caso hubs SignalR anónimos (WebChat): el navegador NO puede fijar cabeceras en el handshake
+    /// WebSocket, así que para rutas /hubs se acepta el slug por query string (?tenant_slug=…),
+    /// análogo a cómo el JWT viaja por ?access_token en los hubs.
     /// </summary>
     private static string? ResolveClientSlug(HttpContext context)
     {
         if (context.Request.Headers.TryGetValue("X-Tenant-Slug", out var headerSlug) &&
             !string.IsNullOrWhiteSpace(headerSlug))
             return headerSlug.ToString();
+
+        if (context.Request.Path.StartsWithSegments("/hubs") &&
+            context.Request.Query.TryGetValue("tenant_slug", out var querySlug) &&
+            !string.IsNullOrWhiteSpace(querySlug))
+            return querySlug.ToString();
 
         var parts = context.Request.Host.Host.Split('.');
         if (parts.Length >= 3)
