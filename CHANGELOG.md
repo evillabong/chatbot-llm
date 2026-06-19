@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-19
+
+### Fixed
+
+- El orquestador de conversación devolvía **500** al ciudadano cuando el LLM no estaba disponible (la búsqueda semántica por embeddings no estaba protegida; p. ej. sin credenciales → 401). Ahora la búsqueda degrada a *sin contexto* y, si el chat también falla, responde **200** con un mensaje de respaldo. Mejora la experiencia del WebChat embebible (Fase E).
+
 ## [0.3.0] - 2026-06-19
 
 ### Added
@@ -105,7 +111,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/evillabong/chatbot-llm/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/evillabong/chatbot-llm/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/evillabong/chatbot-llm/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/evillabong/chatbot-llm/releases/tag/v0.1.0
