@@ -6,6 +6,17 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-19
+
+### Added
+
+- **WebChat embebible — funcionario en vivo y encuesta (Fase E corte 2)**: el widget conecta `ChatHub` (SignalR) y recibe en tiempo real los mensajes del funcionario/bot (`MessageReceived`), el aviso `AgentJoined` y los cambios de estado (`StatusChanged`); al cerrarse la conversación muestra una **encuesta de satisfacción** embebida (1–5 + comentario). Si SignalR no conecta, usa respaldo REST. [ADR 0019](docs/adr/0019-acceso-cross-origin-anonimo-al-chathub.md).
+
+### Changed
+
+- `ChatHub` (`/hubs/chat`) expone CORS abierto (política `webchat`) para el *negotiate* cross-origin del widget.
+- `TenantResolutionMiddleware` acepta el tenant por query (`?tenant_slug=…`) en rutas `/hubs`, porque el navegador no puede fijar cabeceras en el handshake WebSocket (análogo a `?access_token` del JWT en hubs).
+
 ## [0.3.1] - 2026-06-19
 
 ### Fixed
@@ -111,7 +122,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/evillabong/chatbot-llm/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/evillabong/chatbot-llm/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/evillabong/chatbot-llm/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/evillabong/chatbot-llm/compare/v0.1.0...v0.2.0
