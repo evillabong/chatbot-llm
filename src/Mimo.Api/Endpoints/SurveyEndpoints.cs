@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Mimo.Api.Middleware;
 using Mimo.Core.DTOs.Survey;
 using Mimo.Core.Enums;
+using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
+using Mimo.Core.Webhooks;
 using Mimo.Infrastructure.Data;
 using TenantModel = Mimo.Core.Models.Tenant;
 
@@ -35,6 +37,7 @@ public static class SurveyEndpoints
         [FromBody] SubmitSurveyRequest request,
         TenantDbContext db,
         GlobalDbContext globalDb,
+        IWebhookPublisher webhooks,
         HttpContext context,
         CancellationToken ct)
     {
@@ -92,6 +95,16 @@ public static class SurveyEndpoints
         ticket.Status = shouldReopen ? TicketStatus.Reopened : TicketStatus.Closed;
 
         await db.SaveChangesAsync(ct);
+
+        await webhooks.PublishAsync(WebhookEventTypes.SurveyRecorded, new
+        {
+            surveyId       = survey.Id,
+            ticketId       = survey.TicketId,
+            conversationId = conversationId,
+            rating         = survey.Rating,
+            observations   = survey.Observations,
+            recordedAt     = survey.RecordedAt
+        }, ct);
 
         var response = new SurveyResponse(
             survey.Id,

@@ -1,0 +1,268 @@
+@page "/webhooks"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.Kiota.Abstractions
+@inject WebhooksService WebhooksApi
+
+<PageTitle>Interoperabilidad · Webhooks</PageTitle>
+
+<MimoPageHeader Title="Webhooks"
+                Description="Notifica a tus sistemas cuando ocurren eventos en la plataforma. La entrega va firmada (HMAC).">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="OpenDeliveries">Ver entregas</MimoButton>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nuevo webhook</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_subs.Count == 0)" EmptyText="Aún no hay webhooks configurados.">
+    <Header>
+        <MimoTh>Nombre</MimoTh>
+        <MimoTh>URL</MimoTh>
+        <MimoTh>Eventos</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh>Creado</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var s in _subs)
+        {
+            <MimoTr>
+                <MimoTd>@s.Name</MimoTd>
+                <MimoTd><MimoText Muted Small>@s.Url</MimoText></MimoTd>
+                <MimoTd>
+                    @foreach (var e in s.Events ?? [])
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Neutral">@e</MimoBadge>
+                    }
+                </MimoTd>
+                <MimoTd>
+                    @if (s.IsActive == true) { <MimoBadge Variant="MimoBadgeVariant.Success">Activo</MimoBadge> }
+                    else { <MimoBadge Variant="MimoBadgeVariant.Neutral">Revocado</MimoBadge> }
+                </MimoTd>
+                <MimoTd><MimoText Muted Small>@s.CreatedAt?.ToLocalTime().ToString("dd/MM/yyyy")</MimoText></MimoTd>
+                <MimoTd AlignRight="true">
+                    @if (s.IsActive == true)
+                    {
+                        <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenRevoke(s)">Revocar</MimoButton>
+                    }
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+@* ── Modal crear ────────────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showCreate" Title="Nuevo webhook">
+    <EditForm Model="_form" OnValidSubmit="CreateAsync">
+        <DataAnnotationsValidator />
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+        <MimoTextField Label="Nombre" @bind-Value="_form.Name" Placeholder="ERP producción" Required="true" />
+        <MimoTextField Label="URL (HTTPS)" @bind-Value="_form.Url" Placeholder="https://misistema.com/webhooks/mimo" Required="true" />
+        <MimoFormGroup Label="Eventos">
+            @foreach (var e in AllEvents)
+            {
+                <MimoCheckbox Label="@e" Checked="_selected.Contains(e)"
+                              CheckedChanged="@(v => ToggleEvent(e, v))" />
+            }
+        </MimoFormGroup>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showCreate = false">Cancelar</MimoButton>
+            <MimoButton Type="submit" Variant="MimoButtonVariant.Primary" Loading="_saving">Crear</MimoButton>
+        </MimoActions>
+    </EditForm>
+</MimoModal>
+
+@* ── Modal: secreto generado (se muestra una sola vez) ──────────────────────── *@
+<MimoModal @bind-Show="_showCreated" Title="Webhook creado">
+    <ChildContent>
+        <MimoAlert Variant="MimoAlertVariant.Warning"
+                   Text="Copia este secreto de firma ahora. Por seguridad no se volverá a mostrar. Úsalo para verificar la cabecera X-Mimo-Signature (HMAC-SHA256)." />
+        <MimoFormGroup Label="@(_created?.Name)">
+            <MimoTextField TValue="string" Value="@_created?.Secret" ValueChanged="_ => {}" WrapperClass="" />
+        </MimoFormGroup>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Primary" OnClick="() => _showCreated = false">Entendido</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@* ── Modal revocar ──────────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showRevoke" Title="Revocar webhook" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Revocar el webhook @_revokeTarget?.Name? Se dejarán de enviar eventos a esa URL.</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showRevoke = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmRevokeAsync">Revocar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@* ── Modal bitácora de entregas ─────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showDeliveries" Title="Entregas recientes" Size="MimoModalSize.Large">
+    <ChildContent>
+        <MimoTable Loading="_loadingDeliveries" IsEmpty="@(_deliveries.Count == 0)" EmptyText="Sin entregas registradas.">
+            <Header>
+                <MimoTh>Evento</MimoTh>
+                <MimoTh>Estado</MimoTh>
+                <MimoTh>Intentos</MimoTh>
+                <MimoTh>Error</MimoTh>
+                <MimoTh>Fecha</MimoTh>
+            </Header>
+            <Body>
+                @foreach (var d in _deliveries)
+                {
+                    <MimoTr>
+                        <MimoTd><MimoText Small>@d.EventType</MimoText></MimoTd>
+                        <MimoTd>
+                            @{
+                                var variant = d.Status switch
+                                {
+                                    "Delivered" => MimoBadgeVariant.Success,
+                                    "Failed"    => MimoBadgeVariant.Danger,
+                                    _            => MimoBadgeVariant.Neutral
+                                };
+                            }
+                            <MimoBadge Variant="variant">@d.Status</MimoBadge>
+                        </MimoTd>
+                        <MimoTd>@d.AttemptCount</MimoTd>
+                        <MimoTd><MimoText Muted Small>@(string.IsNullOrEmpty(d.LastError) ? "—" : d.LastError)</MimoText></MimoTd>
+                        <MimoTd><MimoText Muted Small>@d.CreatedAt?.ToLocalTime().ToString("dd/MM HH:mm")</MimoText></MimoTd>
+                    </MimoTr>
+                }
+            </Body>
+        </MimoTable>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showDeliveries = false">Cerrar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private static readonly string[] AllEvents =
+        ["conversation.created", "ticket.assigned", "ticket.resolved", "survey.recorded"];
+
+    private List<WebhookSubscriptionResponse> _subs = [];
+    private bool _loading = true;
+    private string? _pageError;
+
+    private bool _showCreate;
+    private bool _saving;
+    private string? _formError;
+    private readonly HookForm _form = new();
+    private readonly HashSet<string> _selected = [];
+
+    private bool _showCreated;
+    private CreatedWebhookSubscriptionResponse? _created;
+
+    private bool _showRevoke;
+    private WebhookSubscriptionResponse? _revokeTarget;
+
+    private bool _showDeliveries;
+    private bool _loadingDeliveries;
+    private List<WebhookDeliveryResponse> _deliveries = [];
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try { _subs = await WebhooksApi.ListAsync(); }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+    }
+
+    private void OpenCreate()
+    {
+        _form.Name = "";
+        _form.Url = "";
+        _selected.Clear();
+        _formError = null;
+        _showCreate = true;
+    }
+
+    private void ToggleEvent(string e, bool selected)
+    {
+        if (selected) _selected.Add(e); else _selected.Remove(e);
+    }
+
+    private async Task CreateAsync()
+    {
+        if (_selected.Count == 0) { _formError = "Selecciona al menos un evento."; return; }
+        _saving = true;
+        _formError = null;
+        try
+        {
+            _created = await WebhooksApi.CreateAsync(_form.Name.Trim(), _form.Url.Trim(), _selected.ToList());
+            _showCreate = false;
+            _showCreated = true;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _formError = Describe(ex); }
+        finally { _saving = false; }
+    }
+
+    private void OpenRevoke(WebhookSubscriptionResponse s)
+    {
+        _revokeTarget = s;
+        _showRevoke = true;
+    }
+
+    private async Task ConfirmRevokeAsync()
+    {
+        if (_revokeTarget?.Id is null) return;
+        _saving = true;
+        try
+        {
+            await WebhooksApi.RevokeAsync(_revokeTarget.Id.Value);
+            _showRevoke = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); _showRevoke = false; }
+        finally { _saving = false; }
+    }
+
+    private async Task OpenDeliveries()
+    {
+        _showDeliveries = true;
+        _loadingDeliveries = true;
+        try { _deliveries = await WebhooksApi.ListDeliveriesAsync(); }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loadingDeliveries = false; }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException { ResponseStatusCode: 400 } => "Revisa los datos: la URL debe ser válida y los eventos soportados.",
+        ApiException { ResponseStatusCode: 404 } => "Webhook no encontrado.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class HookForm
+    {
+        [Required(ErrorMessage = "Indica un nombre.")]
+        [MaxLength(120)]
+        public string Name { get; set; } = "";
+
+        [Required(ErrorMessage = "Indica la URL.")]
+        [Url(ErrorMessage = "URL no válida.")]
+        public string Url { get; set; } = "";
+    }
+}

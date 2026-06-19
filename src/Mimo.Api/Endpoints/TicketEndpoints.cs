@@ -5,6 +5,7 @@ using Mimo.Core.DTOs.Ticket;
 using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
+using Mimo.Core.Webhooks;
 
 namespace Mimo.Api.Endpoints;
 
@@ -150,6 +151,7 @@ public static class TicketEndpoints
         ITicketService service,
         ITicketQueueService queue,
         IAgentRepository agentRepo,
+        IWebhookPublisher webhooks,
         IHubContext<TicketHub> hub,
         IHubContext<ChatHub> chatHub,
         CancellationToken ct = default)
@@ -175,6 +177,15 @@ public static class TicketEndpoints
         await hub.Clients.Group($"role:{ticket.AssignedRoleId}")
             .SendAsync("TicketAssigned", new { ticketId = id, agentId = agentId.Value }, ct);
 
+        await webhooks.PublishAsync(WebhookEventTypes.TicketAssigned, new
+        {
+            ticketId       = updated.Id,
+            conversationId = updated.ConversationId,
+            roleId         = updated.AssignedRoleId,
+            agentId        = agentId.Value,
+            assignedAt     = updated.AssignedAt
+        }, ct);
+
         return Results.Ok(ToResponse(updated, 0));
     }
 
@@ -182,6 +193,7 @@ public static class TicketEndpoints
         Guid id,
         UpdateTicketNotesRequest? request,
         ITicketService service,
+        IWebhookPublisher webhooks,
         IHubContext<TicketHub> hub,
         IHubContext<ChatHub> chatHub,
         CancellationToken ct = default)
@@ -193,6 +205,15 @@ public static class TicketEndpoints
 
         await hub.Clients.Group($"role:{ticket.AssignedRoleId}")
             .SendAsync("TicketResolved", id, ct);
+
+        await webhooks.PublishAsync(WebhookEventTypes.TicketResolved, new
+        {
+            ticketId       = ticket.Id,
+            conversationId = ticket.ConversationId,
+            roleId         = ticket.AssignedRoleId,
+            agentId        = ticket.AssignedAgentId,
+            resolvedAt     = ticket.ResolvedAt
+        }, ct);
 
         return Results.Ok(ToResponse(ticket, 0));
     }

@@ -133,6 +133,11 @@ builder.Services.AddSignalR(options => options.AddFilter<Mimo.Api.Hubs.TenantHub
 // ── Workers de background ─────────────────────────────────────────────────────
 builder.Services.AddHostedService<InactivityTimeoutWorker>();
 builder.Services.AddHostedService<QueueNotificationWorker>();
+builder.Services.AddHostedService<WebhookDeliveryWorker>();
+
+// HttpClient para la entrega de webhooks salientes (timeout acotado por intento).
+builder.Services.AddHttpClient(WebhookDeliveryWorker.HttpClientName,
+    c => c.Timeout = TimeSpan.FromSeconds(10));
 
 // ── OpenAPI ──────────────────────────────────────────────────────────────────
 // OpenAPI 3.0 (no 3.1): mejor compatibilidad con generadores de cliente como Kiota.
@@ -151,6 +156,11 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     var globalDb = scope.ServiceProvider.GetRequiredService<GlobalDbContext>();
     await globalDb.Database.MigrateAsync();
+
+    // Migrar los esquemas de los tenants YA existentes. El aprovisionamiento migra cada tenant al
+    // crearlo, pero una migración de TenantDbContext nueva (p. ej. AddWebhooks) no llega sola a los
+    // tenants creados antes. Idempotente: MigrateAsync no hace nada si el esquema está al día.
+    await TenantSchemaMigrator.MigrateExistingTenantsAsync(scope.ServiceProvider);
 
     // Sembrar el catálogo de planes por defecto (requerido por el aprovisionamiento de tenants).
     await PlanSeeder.SeedDefaultAsync(globalDb);
@@ -201,6 +211,7 @@ app.MapDocumentEndpoints();
 app.MapTenantConfigurationEndpoints();
 app.MapIntegrationEndpoints();
 app.MapIntegrationApiEndpoints();
+app.MapWebhookSubscriptionEndpoints();
 app.MapConversationEndpoints();
 app.MapTicketEndpoints();
 app.MapInternalChatEndpoints();

@@ -22,6 +22,8 @@ public class TenantDbContext(DbContextOptions<TenantDbContext> options) : DbCont
     public DbSet<TransferRecord> TransferRecords => Set<TransferRecord>();
     public DbSet<SatisfactionSurvey> SatisfactionSurveys => Set<SatisfactionSurvey>();
     public DbSet<InternalChatMessage> InternalChatMessages => Set<InternalChatMessage>();
+    public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
+    public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,6 +41,8 @@ public class TenantDbContext(DbContextOptions<TenantDbContext> options) : DbCont
         modelBuilder.ApplyConfiguration(new TransferRecordConfiguration());
         modelBuilder.ApplyConfiguration(new SatisfactionSurveyConfiguration());
         modelBuilder.ApplyConfiguration(new InternalChatMessageConfiguration());
+        modelBuilder.ApplyConfiguration(new WebhookSubscriptionConfiguration());
+        modelBuilder.ApplyConfiguration(new WebhookDeliveryConfiguration());
 
         // Habilita la extensión pgvector para el esquema activo
         modelBuilder.HasPostgresExtension("vector");

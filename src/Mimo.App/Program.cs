@@ -46,6 +46,7 @@ builder.Services.AddScoped<RolesService>();
 builder.Services.AddScoped<DocumentsService>();
 builder.Services.AddScoped<TenantConfigService>();
 builder.Services.AddScoped<ApiKeysService>();
+builder.Services.AddScoped<WebhooksService>();
 builder.Services.AddScoped<ConsoleService>();
 builder.Services.AddScoped<ConsoleHubClient>();
 builder.Services.AddScoped<InternalChatService>();

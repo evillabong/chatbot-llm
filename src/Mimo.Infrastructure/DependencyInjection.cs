@@ -82,6 +82,7 @@ public static class DependencyInjection
         services.AddScoped<IMcpToolProvider,           McpToolProvider>();
         services.AddScoped<IConversationOrchestrator,  ConversationOrchestrator>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
+        services.AddScoped<IWebhookPublisher,          WebhookPublisher>();
 
         // ── Conectores de IA + gateway de plataforma (ver ADR 0004 y 0005) ────────
         // La configuración de cada IA vive en la BD (tabla ai_connectors, JSON).

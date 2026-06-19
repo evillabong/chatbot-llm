@@ -3,6 +3,7 @@ using Mimo.Core.DTOs.Conversation;
 using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
+using Mimo.Core.Webhooks;
 
 namespace Mimo.Api.Endpoints;
 
@@ -46,6 +47,7 @@ public static class ConversationEndpoints
     private static async Task<IResult> StartConversationAsync(
         StartConversationRequest request,
         IConversationRepository repo,
+        IWebhookPublisher webhooks,
         HttpContext context,
         CancellationToken ct = default)
     {
@@ -69,6 +71,15 @@ public static class ConversationEndpoints
         };
 
         await repo.AddAsync(conversation, ct);
+        await webhooks.PublishAsync(WebhookEventTypes.ConversationCreated, new
+        {
+            id               = conversation.Id,
+            channel          = conversation.Channel.ToString(),
+            externalUserId   = conversation.ExternalUserId,
+            externalUserName = conversation.ExternalUserName,
+            createdAt        = conversation.CreatedAt
+        }, ct);
+
         return Results.Created($"/conversations/detail?id={conversation.Id}", ToResponse(conversation, []));
     }
 

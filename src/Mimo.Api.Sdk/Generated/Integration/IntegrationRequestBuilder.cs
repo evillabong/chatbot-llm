@@ -4,6 +4,7 @@ using Microsoft.Kiota.Abstractions.Extensions;
 using Microsoft.Kiota.Abstractions;
 using Mimo.Api.Sdk.Integration.ApiKeys;
 using Mimo.Api.Sdk.Integration.V1;
+using Mimo.Api.Sdk.Integration.Webhooks;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -25,6 +26,11 @@ namespace Mimo.Api.Sdk.Integration
         public global::Mimo.Api.Sdk.Integration.V1.V1RequestBuilder V1
         {
             get => new global::Mimo.Api.Sdk.Integration.V1.V1RequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The webhooks property</summary>
+        public global::Mimo.Api.Sdk.Integration.Webhooks.WebhooksRequestBuilder Webhooks
+        {
+            get => new global::Mimo.Api.Sdk.Integration.Webhooks.WebhooksRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>
         /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Integration.IntegrationRequestBuilder"/> and sets the default values.

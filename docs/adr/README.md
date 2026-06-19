@@ -35,3 +35,4 @@ decisión se revierte o cambia, se crea un ADR nuevo que marca al anterior como
 | [0013](0013-configuracion-self-service-del-tenant-en-mimo-api.md) | Configuración self-service del tenant en Mimo.Api | Aceptado |
 | [0014](0014-resolucion-de-tenant-en-hubs-signalr.md) | Resolución de tenant en hubs SignalR | Aceptado |
 | [0015](0015-autenticacion-por-api-key-y-api-de-integracion.md) | Autenticación por API key y superficie de integración | Aceptado |
+| [0016](0016-webhooks-salientes-con-firma-hmac-y-reintentos.md) | Webhooks salientes con firma HMAC y reintentos | Aceptado |

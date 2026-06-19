@@ -137,17 +137,19 @@ portal) se conecten. Gestionada por el `TenantAdmin` desde `Mimo.App`; aislada p
     tenant se resolverá a partir de la propia key).
   - Endpoints `/integration/api-keys` (política `TenantAdmin`) y página `/api-keys` en `Mimo.App`.
   - **Pendiente del corte:** scopes/permisos y rotación.
-- **Webhooks salientes (suscripción a eventos):**
-  - El tenant registra **URLs** y se suscribe a eventos (`conversation.created`, `ticket.assigned`,
-    `ticket.resolved`, `survey.recorded`, …).
-  - Entrega **firmada (HMAC con secreto por suscripción)**, con **reintentos** (backoff) y
-    **bitácora** de entregas.
+- **Webhooks salientes — ✅ implementado (corte 3, [ADR 0016](adr/0016-webhooks-salientes-con-firma-hmac-y-reintentos.md)):**
+  - El tenant registra **URLs** y se suscribe a eventos: `conversation.created`, `ticket.assigned`,
+    `ticket.resolved`, `survey.recorded`. Gestión en `/integration/webhooks` (TenantAdmin).
+  - Entrega **firmada (HMAC-SHA256 con secreto por suscripción)** en `X-Mimo-Signature` (+ cabeceras
+    `X-Mimo-Event/Delivery/Timestamp`); el secreto se cifra en reposo y se muestra una sola vez.
+  - **Reintentos con backoff** (1m→5m→15m→1h, hasta 5) por un worker de background, y **bitácora** de
+    entregas (estado, intentos, código de respuesta, error).
   - **Distinto** de los webhooks *entrantes* de canales (`/webhooks/incoming`, §3): aquí la
     plataforma es el emisor hacia los sistemas del cliente.
-- **Estado:** gestión de API keys (corte 1) y **API de integración con autenticación por API key**
-  (corte 2, [ADR 0015](adr/0015-autenticacion-por-api-key-y-api-de-integracion.md)) **operativas**. Los
-  **webhooks salientes** (corte 3) quedan en diseño/roadmap; requieren su propio ADR (modelo de eventos
-  y entrega firmada).
+  - **Pendiente:** backoff/eventos configurables por suscripción, reintento manual desde la bitácora.
+- **Estado:** los tres cortes están **operativos** — gestión de API keys (corte 1), API de integración
+  con autenticación por API key (corte 2, [ADR 0015](adr/0015-autenticacion-por-api-key-y-api-de-integracion.md))
+  y webhooks salientes (corte 3, [ADR 0016](adr/0016-webhooks-salientes-con-firma-hmac-y-reintentos.md)).
 
 ## 7. Seguridad e identidad (resumen)
 
@@ -175,7 +177,7 @@ portal) se conecten. Gestionada por el `TenantAdmin` desde `Mimo.App`; aislada p
 | Flujos de trabajo / Campañas / Tareas | ▹ roadmap |
 | Ventas (leads + pipeline) e integración con CRM | ▹ roadmap |
 | Interoperabilidad: gestión de **API keys** + **API de integración** (auth por API key) | ✅ |
-| Interoperabilidad: webhooks salientes | ▹ diseño |
+| Interoperabilidad: **webhooks salientes** (firma HMAC, reintentos, bitácora) | ✅ |
 | Mejora continua (aprende con el uso) | ▹ ver [vision-mejora-continua.md](vision-mejora-continua.md) |
 
 > Este panorama debe mantenerse al día conforme avanza el producto; es la referencia para

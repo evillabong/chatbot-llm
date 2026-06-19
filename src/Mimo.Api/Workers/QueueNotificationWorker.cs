@@ -53,14 +53,32 @@ public class QueueNotificationWorker(
             {
                 var schema = BuildSchemaName(tenant.Slug);
                 await using var db = await tenantDbFactory.CreateDbContextAsync(ct);
-                await db.Database.ExecuteSqlAsync($"SET search_path TO {schema}, public", ct);
 
-                // Obtener número de tickets en cola por rol
-                var queueStats = await db.Tickets
-                    .Where(t => t.Status == TicketStatus.InQueue)
-                    .GroupBy(t => t.AssignedRoleId)
-                    .Select(g => new { RoleId = g.Key, Count = g.Count() })
-                    .ToListAsync(ct);
+                // El contexto del factory no lleva el SearchPathConnectionInterceptor; hay que fijar el
+                // search_path manualmente y, con pooling, SET y consulta deben ir por la MISMA conexión
+                // (de lo contrario la consulta tomaría otra conexión apuntando a public → 42P01). Por
+                // eso se abre una conexión explícita. El identificador está saneado por BuildSchemaName.
+                List<(Guid? RoleId, int Count)> queueStats;
+                await db.Database.OpenConnectionAsync(ct);
+                try
+                {
+#pragma warning disable EF1002
+                    await db.Database.ExecuteSqlRawAsync($"SET search_path TO \"{schema}\", public", ct);
+#pragma warning restore EF1002
+
+                    // Obtener número de tickets en cola por rol
+                    queueStats = (await db.Tickets
+                        .Where(t => t.Status == TicketStatus.InQueue)
+                        .GroupBy(t => t.AssignedRoleId)
+                        .Select(g => new { RoleId = g.Key, Count = g.Count() })
+                        .ToListAsync(ct))
+                        .Select(x => ((Guid?)x.RoleId, x.Count))
+                        .ToList();
+                }
+                finally
+                {
+                    await db.Database.CloseConnectionAsync();
+                }
 
                 // Notificar a los agentes de cada rol
                 foreach (var stat in queueStats)

@@ -7,6 +7,7 @@ using Mimo.Core.DTOs.Integration;
 using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
+using Mimo.Core.Webhooks;
 using Mimo.Infrastructure.Data;
 
 namespace Mimo.Api.Endpoints;
@@ -68,6 +69,7 @@ public static class IntegrationApiEndpoints
     private static async Task<IResult> StartConversationAsync(
         StartConversationRequest request,
         IConversationRepository repo,
+        IWebhookPublisher webhooks,
         HttpContext context,
         CancellationToken ct = default)
     {
@@ -91,6 +93,15 @@ public static class IntegrationApiEndpoints
         };
 
         await repo.AddAsync(conversation, ct);
+        await webhooks.PublishAsync(WebhookEventTypes.ConversationCreated, new
+        {
+            id               = conversation.Id,
+            channel          = conversation.Channel.ToString(),
+            externalUserId   = conversation.ExternalUserId,
+            externalUserName = conversation.ExternalUserName,
+            createdAt        = conversation.CreatedAt
+        }, ct);
+
         return Results.Created($"/integration/v1/conversations/detail?id={conversation.Id}", ToResponse(conversation, []));
     }
 

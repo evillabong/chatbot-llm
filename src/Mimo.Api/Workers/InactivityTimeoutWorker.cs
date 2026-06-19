@@ -63,16 +63,33 @@ public class InactivityTimeoutWorker(
             {
                 var schema = BuildSchemaName(tenant.Slug);
                 await using var db = await tenantDbFactory.CreateDbContextAsync(ct);
-                await db.Database.ExecuteSqlAsync($"SET search_path TO {schema}, public", ct);
 
-                // Cerrar conversaciones BotActive sin actividad reciente
-                var closed = await db.Conversations
-                    .Where(c => c.Status == TicketStatus.BotActive
-                             && c.LastMessageAt < cutoff)
-                    .ExecuteUpdateAsync(
-                        s => s.SetProperty(c => c.Status,    TicketStatus.Closed)
-                               .SetProperty(c => c.ResolvedAt, DateTime.UtcNow),
-                        ct);
+                // El contexto del factory no lleva el SearchPathConnectionInterceptor; hay que fijar el
+                // search_path manualmente y, con pooling, SET y consulta deben ir por la MISMA conexión
+                // (de lo contrario tomaría otra del pool apuntando a public). Por eso se abre una
+                // conexión explícita. ExecuteSqlAsync parametrizaba el identificador ("@p0") → 42601;
+                // el nombre está saneado por BuildSchemaName, se interpola en SQL crudo.
+                int closed;
+                await db.Database.OpenConnectionAsync(ct);
+                try
+                {
+#pragma warning disable EF1002
+                    await db.Database.ExecuteSqlRawAsync($"SET search_path TO \"{schema}\", public", ct);
+#pragma warning restore EF1002
+
+                    // Cerrar conversaciones BotActive sin actividad reciente
+                    closed = await db.Conversations
+                        .Where(c => c.Status == TicketStatus.BotActive
+                                 && c.LastMessageAt < cutoff)
+                        .ExecuteUpdateAsync(
+                            s => s.SetProperty(c => c.Status,    TicketStatus.Closed)
+                                   .SetProperty(c => c.ResolvedAt, DateTime.UtcNow),
+                            ct);
+                }
+                finally
+                {
+                    await db.Database.CloseConnectionAsync();
+                }
 
                 if (closed > 0)
                     logger.LogInformation(
