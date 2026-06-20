@@ -9,6 +9,7 @@ using Microsoft.Kiota.Serialization.Text;
 using Mimo.Admin.Api.Sdk.Ai;
 using Mimo.Admin.Api.Sdk.Auth;
 using Mimo.Admin.Api.Sdk.Plans;
+using Mimo.Admin.Api.Sdk.Superadmins;
 using Mimo.Admin.Api.Sdk.Tenants;
 using System.Collections.Generic;
 using System.IO;
@@ -36,6 +37,11 @@ namespace Mimo.Admin.Api.Sdk
         public global::Mimo.Admin.Api.Sdk.Plans.PlansRequestBuilder Plans
         {
             get => new global::Mimo.Admin.Api.Sdk.Plans.PlansRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The superadmins property</summary>
+        public global::Mimo.Admin.Api.Sdk.Superadmins.SuperadminsRequestBuilder Superadmins
+        {
+            get => new global::Mimo.Admin.Api.Sdk.Superadmins.SuperadminsRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>The tenants property</summary>
         public global::Mimo.Admin.Api.Sdk.Tenants.TenantsRequestBuilder Tenants

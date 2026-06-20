@@ -78,6 +78,93 @@
         }
       }
     },
+    "/superadmins": {
+      "get": {
+        "tags": [
+          "SuperAdmins"
+        ],
+        "summary": "Lista los super administradores (sin credenciales).",
+        "operationId": "ListSuperAdmins",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SuperAdminResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "SuperAdmins"
+        ],
+        "summary": "Crea un super administrador adicional.",
+        "operationId": "CreateSuperAdmin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSuperAdminRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuperAdminResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/superadmins/deactivate": {
+      "post": {
+        "tags": [
+          "SuperAdmins"
+        ],
+        "summary": "Desactiva un super administrador (query: id).",
+        "operationId": "DeactivateSuperAdmin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/tenants": {
       "get": {
         "tags": [
@@ -935,6 +1022,25 @@
           }
         }
       },
+      "CreateSuperAdminRequest": {
+        "required": [
+          "email",
+          "password",
+          "fullName"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        }
+      },
       "CreateTenantRequest": {
         "required": [
           "name",
@@ -1018,6 +1124,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "refreshToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "refreshExpiresAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
@@ -1121,6 +1236,35 @@
           },
           "email": {
             "type": "string"
+          }
+        }
+      },
+      "SuperAdminResponse": {
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "isActive",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -1244,6 +1388,9 @@
   "tags": [
     {
       "name": "Auth"
+    },
+    {
+      "name": "SuperAdmins"
     },
     {
       "name": "Tenants"

@@ -9,19 +9,13 @@ namespace Mimo.Admin.Api.Sdk.Models
 {
     [global::System.CodeDom.Compiler.GeneratedCode("Kiota", "1.0.0")]
     #pragma warning disable CS1591
-    public partial class LoginResponse : IAdditionalDataHolder, IParsable
+    public partial class SuperAdminResponse : IAdditionalDataHolder, IParsable
     #pragma warning restore CS1591
     {
-        /// <summary>The accessToken property</summary>
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
-#nullable enable
-        public string? AccessToken { get; set; }
-#nullable restore
-#else
-        public string AccessToken { get; set; }
-#endif
         /// <summary>Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.</summary>
         public IDictionary<string, object> AdditionalData { get; set; }
+        /// <summary>The createdAt property</summary>
+        public DateTimeOffset? CreatedAt { get; set; }
         /// <summary>The email property</summary>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
@@ -30,8 +24,6 @@ namespace Mimo.Admin.Api.Sdk.Models
 #else
         public string Email { get; set; }
 #endif
-        /// <summary>The expiresAtUtc property</summary>
-        public DateTimeOffset? ExpiresAtUtc { get; set; }
         /// <summary>The fullName property</summary>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
@@ -42,40 +34,24 @@ namespace Mimo.Admin.Api.Sdk.Models
 #endif
         /// <summary>The id property</summary>
         public Guid? Id { get; set; }
-        /// <summary>The refreshExpiresAtUtc property</summary>
-        public DateTimeOffset? RefreshExpiresAtUtc { get; set; }
-        /// <summary>The refreshToken property</summary>
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
-#nullable enable
-        public string? RefreshToken { get; set; }
-#nullable restore
-#else
-        public string RefreshToken { get; set; }
-#endif
-        /// <summary>The roles property</summary>
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
-#nullable enable
-        public List<string>? Roles { get; set; }
-#nullable restore
-#else
-        public List<string> Roles { get; set; }
-#endif
+        /// <summary>The isActive property</summary>
+        public bool? IsActive { get; set; }
         /// <summary>
-        /// Instantiates a new <see cref="global::Mimo.Admin.Api.Sdk.Models.LoginResponse"/> and sets the default values.
+        /// Instantiates a new <see cref="global::Mimo.Admin.Api.Sdk.Models.SuperAdminResponse"/> and sets the default values.
         /// </summary>
-        public LoginResponse()
+        public SuperAdminResponse()
         {
             AdditionalData = new Dictionary<string, object>();
         }
         /// <summary>
         /// Creates a new instance of the appropriate class based on discriminator value
         /// </summary>
-        /// <returns>A <see cref="global::Mimo.Admin.Api.Sdk.Models.LoginResponse"/></returns>
+        /// <returns>A <see cref="global::Mimo.Admin.Api.Sdk.Models.SuperAdminResponse"/></returns>
         /// <param name="parseNode">The parse node to use to read the discriminator value and create the object</param>
-        public static global::Mimo.Admin.Api.Sdk.Models.LoginResponse CreateFromDiscriminatorValue(IParseNode parseNode)
+        public static global::Mimo.Admin.Api.Sdk.Models.SuperAdminResponse CreateFromDiscriminatorValue(IParseNode parseNode)
         {
             if(ReferenceEquals(parseNode, null)) throw new ArgumentNullException(nameof(parseNode));
-            return new global::Mimo.Admin.Api.Sdk.Models.LoginResponse();
+            return new global::Mimo.Admin.Api.Sdk.Models.SuperAdminResponse();
         }
         /// <summary>
         /// The deserialization information for the current model
@@ -85,14 +61,11 @@ namespace Mimo.Admin.Api.Sdk.Models
         {
             return new Dictionary<string, Action<IParseNode>>
             {
-                { "accessToken", n => { AccessToken = n.GetStringValue(); } },
+                { "createdAt", n => { CreatedAt = n.GetDateTimeOffsetValue(); } },
                 { "email", n => { Email = n.GetStringValue(); } },
-                { "expiresAtUtc", n => { ExpiresAtUtc = n.GetDateTimeOffsetValue(); } },
                 { "fullName", n => { FullName = n.GetStringValue(); } },
                 { "id", n => { Id = n.GetGuidValue(); } },
-                { "refreshExpiresAtUtc", n => { RefreshExpiresAtUtc = n.GetDateTimeOffsetValue(); } },
-                { "refreshToken", n => { RefreshToken = n.GetStringValue(); } },
-                { "roles", n => { Roles = n.GetCollectionOfPrimitiveValues<string>()?.AsList(); } },
+                { "isActive", n => { IsActive = n.GetBoolValue(); } },
             };
         }
         /// <summary>
@@ -102,14 +75,11 @@ namespace Mimo.Admin.Api.Sdk.Models
         public virtual void Serialize(ISerializationWriter writer)
         {
             if(ReferenceEquals(writer, null)) throw new ArgumentNullException(nameof(writer));
-            writer.WriteStringValue("accessToken", AccessToken);
+            writer.WriteDateTimeOffsetValue("createdAt", CreatedAt);
             writer.WriteStringValue("email", Email);
-            writer.WriteDateTimeOffsetValue("expiresAtUtc", ExpiresAtUtc);
             writer.WriteStringValue("fullName", FullName);
             writer.WriteGuidValue("id", Id);
-            writer.WriteDateTimeOffsetValue("refreshExpiresAtUtc", RefreshExpiresAtUtc);
-            writer.WriteStringValue("refreshToken", RefreshToken);
-            writer.WriteCollectionOfPrimitiveValues<string>("roles", Roles);
+            writer.WriteBoolValue("isActive", IsActive);
             writer.WriteAdditionalData(AdditionalData);
         }
     }

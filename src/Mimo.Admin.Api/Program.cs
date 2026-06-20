@@ -122,6 +122,7 @@ app.MapHealthChecks("/health");
 
 // ── Endpoints ────────────────────────────────────────────────────────────────
 app.MapAuthEndpoints();
+app.MapSuperAdminEndpoints();
 app.MapTenantEndpoints();
 app.MapPlanEndpoints();
 app.MapAiConnectorEndpoints();
