@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-06-20
+
+### Changed
+
+- La política de IA por plan (`PUT /ai/plan-policies`) **valida `AllowedProviders`** contra los conectores de IA configurados: rechaza con 400 (listando los desconocidos) los proveedores sin conector, evitando habilitar proveedores que el gateway no podría resolver (#11).
+
 ## [0.8.1] - 2026-06-20
 
 ### Added
@@ -226,7 +232,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.8.2...HEAD
+[0.8.2]: https://github.com/evillabong/chatbot-llm/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/evillabong/chatbot-llm/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/evillabong/chatbot-llm/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/evillabong/chatbot-llm/compare/v0.7.1...v0.7.2
