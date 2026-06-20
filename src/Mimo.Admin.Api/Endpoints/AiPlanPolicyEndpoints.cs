@@ -50,6 +50,7 @@ public static class AiPlanPolicyEndpoints
         UpsertAiPlanPolicyRequest request,
         IAiPlanPolicyRepository repo,
         IPlanRepository planRepo,
+        IAiConnectorRepository connectorRepo,
         CancellationToken ct = default)
     {
         var code = PlanModel.NormalizeCode(planCode);
@@ -63,6 +64,18 @@ public static class AiPlanPolicyEndpoints
             .Where(p => p.Length > 0)
             .Distinct()
             .ToList();
+
+        // Validar que cada proveedor permitido tenga un conector de IA configurado (#11): así una
+        // política no habilita un proveedor que el gateway no podría resolver.
+        if (providers.Count > 0)
+        {
+            var known = (await connectorRepo.ListAsync(ct))
+                .Select(c => c.Provider.ToLowerInvariant())
+                .ToHashSet();
+            var unknown = providers.Where(p => !known.Contains(p)).ToList();
+            if (unknown.Count > 0)
+                return Results.BadRequest(new { error = $"Proveedores sin conector configurado: {string.Join(", ", unknown)}." });
+        }
 
         var existing = await repo.GetByPlanCodeAsync(code, ct);
         if (existing is null)
