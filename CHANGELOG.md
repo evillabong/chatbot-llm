@@ -6,6 +6,16 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-06-20
+
+### Added
+
+- **Chatbot por opciones — llamada a API externa (corte 3, #27)**: nuevo nodo **`ApiCall`** que hace una petición HTTP (GET/POST, URL y cuerpo con `{variable}`), opcionalmente captura la respuesta en una variable y **bifurca** según éxito/fallo. El motor sigue siendo puro: se detiene en el nodo y el orquestador ejecuta la llamada (bucle acotado) y reanuda. Ver [ADR 0021](docs/adr/0021-chatbot-por-opciones-flujos-guiados.md).
+
+### Security
+
+- **Controles anti-SSRF** para los nodos `ApiCall`: **allow-list de hosts deny-by-default** (`Chatbot:ApiCall:AllowedHosts`), **bloqueo de IPs internas/metadata** (link-local/169.254 siempre; loopback/privadas salvo `AllowLocalhost`), **sin redirecciones automáticas**, timeout y tamaño de respuesta acotados.
+
 ## [0.7.1] - 2026-06-20
 
 ### Added
@@ -204,7 +214,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/evillabong/chatbot-llm/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/evillabong/chatbot-llm/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/evillabong/chatbot-llm/compare/v0.6.7...v0.7.0
 [0.6.7]: https://github.com/evillabong/chatbot-llm/compare/v0.6.6...v0.6.7
