@@ -1,6 +1,8 @@
+using System.Net;
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -135,6 +137,17 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
+// ── IP real tras proxy inverso (pendings #34) ──────────────────────────────────────────────────
+// El rate limiting y los logs dependen de la IP del cliente. Tras un proxy (IIS out-of-process,
+// nginx, balanceador) la IP real llega en X-Forwarded-For. Por defecto solo se confía en loopback
+// (proxy co-localizado); para balanceadores externos, declarar sus IPs en "ForwardedHeaders:KnownProxies".
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    foreach (var ip in builder.Configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [])
+        if (IPAddress.TryParse(ip, out var addr)) options.KnownProxies.Add(addr);
+});
+
 // ── Rate limiting de la superficie pública del WebChat (anti-abuso, pendings #32) ───────────────
 // La superficie del widget es anónima y abierta a cualquier origen; sin límites, un tercero podría
 // abrir conversaciones masivas o inundar el bot (cada mensaje cuesta LLM). Se limita POR IP del
@@ -237,6 +250,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 
 // ── Middleware ───────────────────────────────────────────────────────────────
+// Primero: normaliza la IP/protocolo del cliente desde X-Forwarded-* (antes de CORS y rate limiting).
+app.UseForwardedHeaders();
 app.UseCors();
 // Sirve el widget embebible del WebChat (wwwroot/webchat/widget.js) y la página demo (Fase E).
 app.UseStaticFiles();

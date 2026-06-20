@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
 using Mimo.Core.DTOs.Conversation;
 using Mimo.Core.Enums;
@@ -27,6 +28,36 @@ public class ChatHub : Hub
         _orchestrator  = orchestrator;
     }
 
+    // ── Anti-flood por conexión (pendings #34) ──────────────────────────────────
+    // El rate limiting HTTP no cubre los mensajes enviados sobre un WebSocket ya abierto, así que
+    // se acota aquí: máximo MaxMessagesPerWindow por ventana y conexión. SignalR procesa las
+    // invocaciones de una misma conexión en serie (MaximumParallelInvocationsPerClient = 1), así
+    // que el contador no necesita sincronización adicional.
+    //
+    // La ventana es de 1 minuto (no segundos): cada mensaje dispara al orquestador (~1 s), por lo
+    // que una ventana corta se reiniciaría antes de alcanzar el tope. 30/min por conexión acota el
+    // costo de LLM y queda alineado con el límite REST de mensajes (webchat-chat, 30/min).
+    private const int MaxMessagesPerWindow = 30;
+    private static readonly TimeSpan RateWindowDuration = TimeSpan.FromMinutes(1);
+    private static readonly ConcurrentDictionary<string, RateWindow> RateWindows = new();
+
+    private sealed class RateWindow { public DateTime Start; public int Count; }
+
+    private bool IsRateLimited()
+    {
+        var now = DateTime.UtcNow;
+        var w = RateWindows.GetOrAdd(Context.ConnectionId, _ => new RateWindow { Start = now });
+        if (now - w.Start > RateWindowDuration) { w.Start = now; w.Count = 0; }
+        w.Count++;
+        return w.Count > MaxMessagesPerWindow;
+    }
+
+    public override Task OnDisconnectedAsync(Exception? exception)
+    {
+        RateWindows.TryRemove(Context.ConnectionId, out _);
+        return base.OnDisconnectedAsync(exception);
+    }
+
     /// <summary>
     /// El ciudadano se une al grupo de su conversación para recibir mensajes en tiempo real.
     /// </summary>
@@ -49,6 +80,12 @@ public class ChatHub : Hub
     /// </summary>
     public async Task SendMessage(string conversationId, string content)
     {
+        if (IsRateLimited())
+        {
+            await Clients.Caller.SendAsync("Error", "Estás enviando mensajes muy rápido. Espera unos segundos.");
+            return;
+        }
+
         if (!Guid.TryParse(conversationId, out var convId))
         {
             await Clients.Caller.SendAsync("Error", "ID de conversación inválido.");
