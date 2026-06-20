@@ -10,7 +10,10 @@ public enum WebhookDeliveryStatus
     Delivered = 1,
 
     /// <summary>Agotados los reintentos sin éxito (terminal).</summary>
-    Failed = 2
+    Failed = 2,
+
+    /// <summary>Reclamada por un worker y en proceso de entrega (claim atómico, ADR 0020).</summary>
+    InProgress = 3
 }
 
 /// <summary>
@@ -47,6 +50,16 @@ public class WebhookDelivery
 
     /// <summary>Último error (mensaje corto) para diagnóstico.</summary>
     public string? LastError { get; set; }
+
+    /// <summary>
+    /// Marca de reclamo (claim atómico): identifica al worker/lote que tomó esta entrega para
+    /// procesarla, de modo que con varias instancias del worker cada entrega la procese exactamente
+    /// uno (ver ADR 0020). Null cuando está libre.
+    /// </summary>
+    public string? ClaimedBy { get; set; }
+
+    /// <summary>Momento del reclamo; permite recuperar entregas de un worker caído (claim vencido).</summary>
+    public DateTime? ClaimedAt { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

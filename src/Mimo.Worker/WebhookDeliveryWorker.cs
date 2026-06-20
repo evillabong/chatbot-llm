@@ -89,21 +89,37 @@ public sealed class WebhookDeliveryWorker(
         // así que hay que fijar el search_path manualmente. Con pooling, SET y consulta deben ir por
         // la MISMA conexión: por eso se abre una conexión explícita durante cada bloque de BD (si se
         // dejara cerrar, la siguiente operación tomaría otra conexión del pool, apuntando a public).
+        //
+        // Claim atómico (ADR 0020): se marcan las entregas listas con un token de este lote usando
+        // FOR UPDATE SKIP LOCKED, de modo que con VARIAS instancias del worker cada entrega la tome
+        // exactamente una. También se recuperan entregas "InProgress" de un worker caído (claim vencido).
+        var claimToken = Guid.NewGuid().ToString("N");
         List<WebhookDelivery> pending;
         await db.Database.OpenConnectionAsync(ct);
         try
         {
             await SetSearchPathAsync(db, schema, ct);
 
-            var now = DateTime.UtcNow;
-            // Entregas listas: pendientes sin programación o con el backoff ya cumplido.
-            pending = await db.WebhookDeliveries
-                .Where(d => d.Status == WebhookDeliveryStatus.Pending &&
-                            (d.NextAttemptAt == null || d.NextAttemptAt <= now))
-                .OrderBy(d => d.CreatedAt)
-                .Take(BatchPerTenant)
-                .Include(d => d.Subscription)
-                .ToListAsync(ct);
+            var claimed = await db.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE webhook_deliveries
+                SET status = 3, claimed_at = now(), claimed_by = {claimToken}
+                WHERE id IN (
+                    SELECT id FROM webhook_deliveries
+                    WHERE (status = 0 AND (next_attempt_at IS NULL OR next_attempt_at <= now()))
+                       OR (status = 3 AND claimed_at < now() - interval '5 minutes')
+                    ORDER BY created_at
+                    LIMIT {BatchPerTenant}
+                    FOR UPDATE SKIP LOCKED
+                )", ct);
+
+            if (claimed == 0) { pending = []; }
+            else
+            {
+                pending = await db.WebhookDeliveries
+                    .Where(d => d.ClaimedBy == claimToken && d.Status == WebhookDeliveryStatus.InProgress)
+                    .Include(d => d.Subscription)
+                    .ToListAsync(ct);
+            }
         }
         finally
         {
@@ -147,6 +163,10 @@ public sealed class WebhookDeliveryWorker(
     {
         delivery.AttemptCount++;
         delivery.LastAttemptAt = DateTime.UtcNow;
+        // Liberar el reclamo: todas las salidas de este método dejan un estado != InProgress, que se
+        // persiste en el SaveChanges posterior (Delivered/Failed o Pending para reintento).
+        delivery.ClaimedBy = null;
+        delivery.ClaimedAt = null;
 
         var sub = delivery.Subscription;
         if (sub is null || !sub.IsActive)

@@ -39,3 +39,4 @@ decisión se revierte o cambia, se crea un ADR nuevo que marca al anterior como
 | [0017](0017-host-de-workers-separado-mimo-worker.md) | Host de workers separado (Mimo.Worker) | Aceptado |
 | [0018](0018-webchat-embebible-widget-vanilla-js.md) | WebChat embebible: widget vanilla JS servido por la API | Aceptado |
 | [0019](0019-acceso-cross-origin-anonimo-al-chathub.md) | Acceso cross-origin anónimo al ChatHub (WebChat en vivo) | Aceptado |
+| [0020](0020-claim-atomico-de-entregas-de-webhook.md) | Claim atómico de entregas de webhook (worker escalable) | Aceptado |

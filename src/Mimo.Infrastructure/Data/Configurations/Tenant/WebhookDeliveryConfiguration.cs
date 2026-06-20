@@ -28,6 +28,8 @@ public class WebhookDeliveryConfiguration : IEntityTypeConfiguration<WebhookDeli
         b.Property(d => d.LastAttemptAt).HasColumnName("last_attempt_at");
         b.Property(d => d.ResponseStatusCode).HasColumnName("response_status_code");
         b.Property(d => d.LastError).HasColumnName("last_error").HasMaxLength(1000);
+        b.Property(d => d.ClaimedBy).HasColumnName("claimed_by").HasMaxLength(64);
+        b.Property(d => d.ClaimedAt).HasColumnName("claimed_at");
         b.Property(d => d.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
 
         b.HasOne(d => d.Subscription)
