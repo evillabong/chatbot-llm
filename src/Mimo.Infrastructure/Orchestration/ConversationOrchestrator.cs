@@ -34,7 +34,10 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
     private readonly IMcpToolProvider       _mcp;
     private readonly IChatbotFlowRepository  _flows;
     private readonly IChatbotFlowEngine      _flowEngine;
+    private readonly IChatbotApiCaller       _apiCaller;
     private readonly ILogger<ConversationOrchestrator> _logger;
+
+    private const int MaxFlowApiCallsPerTurn = 5;
 
     private static readonly JsonSerializerOptions FlowJsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -50,6 +53,7 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
         IMcpToolProvider        mcp,
         IChatbotFlowRepository  flows,
         IChatbotFlowEngine      flowEngine,
+        IChatbotApiCaller       apiCaller,
         ILogger<ConversationOrchestrator> logger)
     {
         _conversations = conversations;
@@ -59,6 +63,7 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
         _mcp           = mcp;
         _flows         = flows;
         _flowEngine    = flowEngine;
+        _apiCaller     = apiCaller;
         _logger        = logger;
     }
 
@@ -218,6 +223,33 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
 
         var step = _flowEngine.Process(definition, conversation.FlowNodeId, variables, content);
 
+        // Bucle de llamadas a API externa (#27 corte 3): el motor se detiene en cada nodo ApiCall; aquí
+        // se ejecuta la llamada HTTP (con controles anti-SSRF) y se reanuda según éxito/fallo. Acotado
+        // para evitar cadenas infinitas de ApiCall.
+        var sb = new StringBuilder();
+        var apiCalls = 0;
+        while (step.PendingApiCall is not null)
+        {
+            AppendFlowText(sb, step.Text);
+            if (++apiCalls > MaxFlowApiCallsPerTurn)
+            {
+                _logger.LogWarning("Flujo {Id}: se superó el máximo de llamadas API por turno", flow.Id);
+                conversation.FlowNodeId = null;
+                conversation.FlowState  = null;
+                return await PersistFlowMessageAsync(conversation, Finalize(sb, "No pudimos completar la operación."), null, false, ct);
+            }
+
+            var apiNode = step.PendingApiCall;
+            var result  = await _apiCaller.CallAsync(apiNode, step.Variables, ct);
+
+            var vars = new Dictionary<string, string>(step.Variables, StringComparer.Ordinal);
+            if (result.CapturedValue is not null && !string.IsNullOrEmpty(apiNode.CaptureVariable))
+                vars[apiNode.CaptureVariable] = result.CapturedValue;
+
+            var branchNext = result.Success ? apiNode.SuccessNext : apiNode.FailureNext;
+            step = _flowEngine.ResolveFrom(definition, branchNext, vars);
+        }
+
         // Guardar el nodo y las variables en que queda la conversación (lo persiste el SaveChanges del mensaje).
         conversation.FlowNodeId = step.NextNodeId;
         conversation.FlowState  = step.Variables.Count > 0
@@ -231,7 +263,20 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
             conversation.FlowNodeId = null; // el flujo termina al derivar
         }
 
-        return await PersistFlowMessageAsync(conversation, step.Text, conversation.FlowNodeId, step.Escalate, ct);
+        return await PersistFlowMessageAsync(conversation, Finalize(sb, step.Text), conversation.FlowNodeId, step.Escalate, ct);
+    }
+
+    private static void AppendFlowText(StringBuilder sb, string text)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        if (sb.Length > 0) sb.Append("\n\n");
+        sb.Append(text);
+    }
+
+    private static string Finalize(StringBuilder sb, string finalText)
+    {
+        AppendFlowText(sb, finalText);
+        return sb.Length > 0 ? sb.ToString() : "Gracias por contactarnos.";
     }
 
     private static Dictionary<string, string> DeserializeFlowState(string? json)

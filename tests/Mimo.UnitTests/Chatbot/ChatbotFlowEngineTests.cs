@@ -115,4 +115,39 @@ public class ChatbotFlowEngineTests
         Assert.Equal("ana@andinashop.com", r.Variables["email"]);
         Assert.Contains("te escribimos a ana@andinashop.com", r.Text);
     }
+
+    // ── Corte 3: el motor se detiene en ApiCall y lo reporta al orquestador ──────
+
+    [Fact]
+    public void ApiCall_StopsAndReportsPendingCall()
+    {
+        var flow = new FlowDefinition("call",
+        [
+            new FlowNode("call", FlowNodeType.ApiCall, "", Url: "https://api.x/y",
+                SuccessNext: "ok", FailureNext: "bad"),
+            new FlowNode("ok", FlowNodeType.Message, "Listo."),
+            new FlowNode("bad", FlowNodeType.Message, "Error.")
+        ]);
+
+        var r = Process(flow, node: null, input: "hola");
+
+        Assert.NotNull(r.PendingApiCall);
+        Assert.Equal("call", r.PendingApiCall!.Id);
+    }
+
+    [Fact]
+    public void ResolveFrom_ContinuesFromBranch_AfterApiCall()
+    {
+        var flow = new FlowDefinition("call",
+        [
+            new FlowNode("call", FlowNodeType.ApiCall, "", SuccessNext: "ok", FailureNext: "bad"),
+            new FlowNode("ok", FlowNodeType.Message, "Listo."),
+            new FlowNode("bad", FlowNodeType.Message, "Error.")
+        ]);
+
+        var r = _engine.ResolveFrom(flow, "ok", NoVars);
+
+        Assert.Null(r.PendingApiCall);
+        Assert.Contains("Listo.", r.Text);
+    }
 }

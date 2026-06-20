@@ -86,6 +86,12 @@ public static class DependencyInjection
         services.AddScoped<IWebhookPublisher,          WebhookPublisher>();
         services.AddScoped<IChatbotFlowRepository,     ChatbotFlowRepository>();
         services.AddSingleton<IChatbotFlowEngine,      ChatbotFlowEngine>();
+        services.AddSingleton<IChatbotApiCaller,       ChatbotApiCaller>();
+
+        // HttpClient para las llamadas a API externas de los flujos (#27 corte 3): timeout corto y
+        // SIN redirecciones automáticas (una redirección podría saltarse las comprobaciones anti-SSRF).
+        services.AddHttpClient(ChatbotApiCaller.HttpClientName, c => c.Timeout = TimeSpan.FromSeconds(5))
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 
         // ── Conectores de IA + gateway de plataforma (ver ADR 0004 y 0005) ────────
         // La configuración de cada IA vive en la BD (tabla ai_connectors, JSON).

@@ -1,4 +1,5 @@
 using Mimo.Core.DTOs.Chatbot;
+using Mimo.Core.Models;
 
 namespace Mimo.Core.Interfaces;
 
@@ -7,11 +8,17 @@ namespace Mimo.Core.Interfaces;
 /// <param name="NextNodeId">Nodo en el que queda la conversación (null = flujo terminado).</param>
 /// <param name="Escalate">True si el flujo pide derivar a un funcionario.</param>
 /// <param name="Variables">Estado de variables capturadas tras el paso (a persistir).</param>
+/// <param name="PendingApiCall">
+/// Nodo ApiCall que el orquestador debe ejecutar (la llamada HTTP es I/O y vive fuera del motor puro,
+/// corte 3). Cuando no es null, el resto de campos son parciales: el orquestador ejecuta la llamada y
+/// reanuda con <see cref="IChatbotFlowEngine.ResolveFrom"/>.
+/// </param>
 public record FlowStepResult(
     string Text,
     string? NextNodeId,
     bool Escalate,
-    IReadOnlyDictionary<string, string> Variables);
+    IReadOnlyDictionary<string, string> Variables,
+    FlowNode? PendingApiCall = null);
 
 /// <summary>
 /// Motor determinista del chatbot por opciones (#27). Lógica pura, sin estado ni BD: dado el flujo,
@@ -31,4 +38,13 @@ public interface IChatbotFlowEngine
         string? currentNodeId,
         IReadOnlyDictionary<string, string> variables,
         string input);
+
+    /// <summary>
+    /// Reanuda la navegación del flujo desde <paramref name="nodeId"/> sin interpretar entrada del
+    /// usuario. Lo usa el orquestador para continuar tras ejecutar un nodo ApiCall (corte 3).
+    /// </summary>
+    FlowStepResult ResolveFrom(
+        FlowDefinition flow,
+        string? nodeId,
+        IReadOnlyDictionary<string, string> variables);
 }

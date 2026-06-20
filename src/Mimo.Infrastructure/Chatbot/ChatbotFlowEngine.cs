@@ -6,22 +6,20 @@ using Mimo.Core.Interfaces;
 namespace Mimo.Infrastructure.Chatbot;
 
 /// <summary>
-/// Motor determinista del chatbot por opciones (#27). Lógica pura sin BD: recorre el árbol de nodos
-/// (mensaje → continúa solo; menú → espera elección; input → captura/valida un dato; escalar → deriva
-/// a funcionario). Sustituye <c>{variable}</c> en los textos con las variables capturadas.
+/// Motor determinista del chatbot por opciones (#27). Lógica pura sin BD ni I/O: recorre el árbol de
+/// nodos (mensaje → continúa solo; menú → espera elección; input → captura/valida un dato; apiCall →
+/// se detiene para que el orquestador haga la llamada; escalar → deriva a funcionario). Sustituye
+/// <c>{variable}</c> en los textos con las variables capturadas.
 /// </summary>
 public sealed class ChatbotFlowEngine : IChatbotFlowEngine
 {
     // Límite a la evaluación de las regex de validación (provienen del flujo del tenant): evita ReDoS.
     private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
-    private static readonly Regex PlaceholderRegex = new(@"\{(?<key>[a-zA-Z0-9_]+)\}", RegexOptions.Compiled);
 
     public FlowStepResult Process(
         FlowDefinition flow, string? currentNodeId, IReadOnlyDictionary<string, string> variables, string input)
     {
-        var nodes = new Dictionary<string, FlowNode>(StringComparer.Ordinal);
-        foreach (var n in flow.Nodes) nodes[n.Id] = n;
-
+        var nodes = BuildIndex(flow);
         var vars = new Dictionary<string, string>(variables, StringComparer.Ordinal);
 
         // Inicio del flujo: arrancar en el nodo de entrada (se ignora la entrada del usuario).
@@ -47,8 +45,8 @@ public sealed class ChatbotFlowEngine : IChatbotFlowEngine
                 {
                     var err = string.IsNullOrWhiteSpace(current.ValidationError)
                         ? "El dato no es válido, inténtalo de nuevo."
-                        : Substitute(current.ValidationError, vars);
-                    return Stay(current, vars, $"{err}\n{Substitute(current.Text, vars)}");
+                        : FlowText.Substitute(current.ValidationError, vars);
+                    return Stay(current, vars, $"{err}\n{FlowText.Substitute(current.Text, vars)}");
                 }
                 if (!string.IsNullOrEmpty(current.Variable))
                     vars[current.Variable] = answer;
@@ -60,9 +58,20 @@ public sealed class ChatbotFlowEngine : IChatbotFlowEngine
         }
     }
 
+    public FlowStepResult ResolveFrom(
+        FlowDefinition flow, string? nodeId, IReadOnlyDictionary<string, string> variables)
+        => Resolve(BuildIndex(flow), nodeId, new Dictionary<string, string>(variables, StringComparer.Ordinal));
+
+    private static Dictionary<string, FlowNode> BuildIndex(FlowDefinition flow)
+    {
+        var nodes = new Dictionary<string, FlowNode>(StringComparer.Ordinal);
+        foreach (var n in flow.Nodes) nodes[n.Id] = n;
+        return nodes;
+    }
+
     /// <summary>
     /// Avanza desde un nodo siguiendo los nodos de mensaje (auto-continúan) hasta detenerse en un
-    /// menú/input (espera entrada) o en escalado/fin. Acumula textos (con variables sustituidas).
+    /// menú/input (espera entrada), un apiCall (lo ejecuta el orquestador) o escalado/fin.
     /// </summary>
     private static FlowStepResult Resolve(
         IReadOnlyDictionary<string, FlowNode> nodes, string? nodeId, Dictionary<string, string> vars)
@@ -78,7 +87,7 @@ public sealed class ChatbotFlowEngine : IChatbotFlowEngine
             switch (node.Type)
             {
                 case FlowNodeType.Message:
-                    Append(sb, Substitute(node.Text, vars));
+                    Append(sb, FlowText.Substitute(node.Text, vars));
                     nodeId = node.Next;
                     continue;
 
@@ -87,11 +96,17 @@ public sealed class ChatbotFlowEngine : IChatbotFlowEngine
                     return new FlowStepResult(sb.ToString(), node.Id, false, vars);
 
                 case FlowNodeType.Input:
-                    Append(sb, Substitute(node.Text, vars));
+                    Append(sb, FlowText.Substitute(node.Text, vars));
                     return new FlowStepResult(sb.ToString(), node.Id, false, vars);
 
+                case FlowNodeType.ApiCall:
+                    // El motor no hace I/O: se detiene y delega la llamada al orquestador, que la
+                    // ejecuta y reanuda con ResolveFrom(SuccessNext/FailureNext).
+                    if (node.Text.Length > 0) Append(sb, FlowText.Substitute(node.Text, vars));
+                    return new FlowStepResult(sb.ToString(), node.Id, false, vars, PendingApiCall: node);
+
                 case FlowNodeType.Escalate:
-                    Append(sb, Substitute(node.Text, vars));
+                    Append(sb, FlowText.Substitute(node.Text, vars));
                     return new FlowStepResult(sb.ToString(), null, true, vars);
             }
             break;
@@ -101,7 +116,6 @@ public sealed class ChatbotFlowEngine : IChatbotFlowEngine
         return new FlowStepResult(text, null, false, vars);
     }
 
-    /// <summary>Permanece en el nodo actual (menú/input) re-mostrando un texto (p. ej. tras error).</summary>
     private static FlowStepResult Stay(FlowNode node, Dictionary<string, string> vars, string text) =>
         new(text, node.Id, false, vars);
 
@@ -116,17 +130,10 @@ public sealed class ChatbotFlowEngine : IChatbotFlowEngine
 
     private static string RenderMenu(FlowNode menu, IReadOnlyDictionary<string, string> vars)
     {
-        var sb = new StringBuilder(Substitute(menu.Text, vars));
+        var sb = new StringBuilder(FlowText.Substitute(menu.Text, vars));
         foreach (var o in menu.Options ?? [])
-            sb.Append('\n').Append(o.Key).Append(") ").Append(Substitute(o.Label, vars));
+            sb.Append('\n').Append(o.Key).Append(") ").Append(FlowText.Substitute(o.Label, vars));
         return sb.ToString();
-    }
-
-    private static string Substitute(string? text, IReadOnlyDictionary<string, string> vars)
-    {
-        if (string.IsNullOrEmpty(text) || !text.Contains('{')) return text ?? string.Empty;
-        return PlaceholderRegex.Replace(text, m =>
-            vars.TryGetValue(m.Groups["key"].Value, out var v) ? v : m.Value);
     }
 
     private static void Append(StringBuilder sb, string text)

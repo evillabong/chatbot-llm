@@ -60,3 +60,22 @@ actual responde siempre vía el orquestador con RAG+LLM ([ADR 0005](0005-gateway
   sustitución `{nombre}`/`{email}` en mensajes posteriores; `flow_state` persiste en BD.
 - Pendiente (corte 3): nodos de **llamada a API externa** con bifurcación (introducen I/O y riesgo de
   SSRF; requieren control de seguridad propio) y el constructor visual.
+
+## Actualización — corte 3 (llamada a API externa)
+
+- Nuevo tipo de nodo **`ApiCall`**: hace una petición HTTP (GET/POST, URL y cuerpo con `{variable}`),
+  opcionalmente **captura** el cuerpo de la respuesta en una variable y **bifurca** a `SuccessNext`
+  (2xx) o `FailureNext`.
+- **El motor sigue siendo puro:** al llegar a un `ApiCall` se **detiene** y lo reporta
+  (`PendingApiCall`); el **orquestador** ejecuta la llamada (I/O) y reanuda con `ResolveFrom` según el
+  resultado. Bucle acotado (máx. 5 llamadas por turno) para evitar cadenas infinitas.
+- **Controles anti-SSRF** (`ChatbotApiCaller`, `Chatbot:ApiCall:*`):
+  - **Allow-list de hosts obligatoria** (deny por defecto; vacía = ninguna llamada permitida).
+  - **Bloqueo de IPs internas**: link-local/metadata (169.254/fe80, incl. 169.254.169.254) **siempre**;
+    loopback/privadas/ULA salvo `AllowLocalhost=true` (dev/integración interna).
+  - **Sin redirecciones automáticas**, **timeout** corto y **tamaño de respuesta** acotado.
+- **Verificado E2E:** opción que llama a un host permitido → captura la respuesta y bifurca a éxito;
+  opción a un host fuera de la allow-list → **bloqueada** y bifurca a fallo. + pruebas unitarias de la
+  allow-list y del bloqueo de IPs.
+- Residual: **DNS rebinding** (la validación resuelve el host y bloquea IPs internas, pero no fija la
+  conexión a la IP validada) y el **constructor visual** quedan para más adelante.
