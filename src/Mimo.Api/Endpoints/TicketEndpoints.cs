@@ -82,7 +82,9 @@ public static class TicketEndpoints
         // PATCH /tickets/notes?id=
         group.MapPatch("/notes", UpdateNotesAsync)
             .WithName("UpdateTicketNotes")
-            .WithSummary("Actualiza las notas internas del ticket (query: id).");
+            .WithSummary("Actualiza las notas internas del ticket (query: id).")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound);
 
         return app;
     }

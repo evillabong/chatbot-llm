@@ -27,14 +27,19 @@ public static class ConversationEndpoints
             .WithName("StartConversation")
             .WithSummary("Inicia o retoma una conversación activa del ciudadano.")
             .AllowAnonymous()
-            .RequireRateLimiting(WebChatEndpoints.RateLimitStart);
+            .RequireRateLimiting(WebChatEndpoints.RateLimitStart)
+            .Produces<ConversationResponse>(StatusCodes.Status200OK)
+            .Produces<ConversationResponse>(StatusCodes.Status201Created);
 
         // Enviar mensaje y obtener respuesta del bot (no requiere auth). Rate limit por IP (cuesta LLM).
         group.MapPost("/messages", SendMessageAsync)
             .WithName("SendMessage")
             .WithSummary("Envía un mensaje y obtiene la respuesta del bot (query: id).")
             .AllowAnonymous()
-            .RequireRateLimiting(WebChatEndpoints.RateLimitChat);
+            .RequireRateLimiting(WebChatEndpoints.RateLimitChat)
+            .Produces<MessageResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound);
 
         // Historial de mensajes
         group.MapGet("/detail", GetConversationAsync)

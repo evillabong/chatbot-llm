@@ -58,7 +58,7 @@ public static class DocumentEndpoints
             .WithName("ReindexDocument")
             .WithSummary("Regenera el embedding de un documento existente (query: id).")
             .RequireAuthorization(MimoAuthorization.Policies.TenantAdmin)
-            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound);
 
         return app;
@@ -205,7 +205,7 @@ public static class DocumentEndpoints
 
         await repo.UpdateAsync(doc, ct);
         await repo.SaveChangesAsync(ct);
-        return Results.Ok(new { message = "Embedding regenerado.", documentId = doc.Id });
+        return Results.NoContent();
     }
 
     // ── Mapper ────────────────────────────────────────────────────────────────

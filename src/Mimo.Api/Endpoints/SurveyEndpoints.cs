@@ -24,7 +24,11 @@ public static class SurveyEndpoints
         group.MapPost("/", SubmitSurveyAsync)
             .WithName("SubmitSurvey")
             .WithSummary("Registra la encuesta de satisfacción del ciudadano (query: conversationId).")
-            .RequireRateLimiting(WebChatEndpoints.RateLimitStart);
+            .RequireRateLimiting(WebChatEndpoints.RateLimitStart)
+            .Produces<SurveyResponse>(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict);
 
         group.MapGet("/", GetSurveyAsync)
             .WithName("GetSurvey")

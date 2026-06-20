@@ -26,10 +26,6 @@ public sealed class DocumentsService(MimoApiClient api)
     public Task DeactivateAsync(Guid id, CancellationToken ct = default) =>
         api.Documents.DeleteAsync(rc => rc.QueryParameters.Id = id, ct);
 
-    public async Task ReindexAsync(Guid id, CancellationToken ct = default)
-    {
-        // El endpoint responde un objeto sin tipo declarado; Kiota lo expone como Stream.
-        var stream = await api.Documents.Reindex.PostAsync(rc => rc.QueryParameters.Id = id, ct);
-        if (stream is not null) await stream.DisposeAsync();
-    }
+    public Task ReindexAsync(Guid id, CancellationToken ct = default) =>
+        api.Documents.Reindex.PostAsync(rc => rc.QueryParameters.Id = id, ct);
 }

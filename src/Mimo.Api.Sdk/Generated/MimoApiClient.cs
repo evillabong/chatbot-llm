@@ -15,6 +15,7 @@ using Mimo.Api.Sdk.InternalChat;
 using Mimo.Api.Sdk.Roles;
 using Mimo.Api.Sdk.Tenant;
 using Mimo.Api.Sdk.Tickets;
+using Mimo.Api.Sdk.Webchat;
 using Mimo.Api.Sdk.Webhooks;
 using System.Collections.Generic;
 using System.IO;
@@ -72,6 +73,11 @@ namespace Mimo.Api.Sdk
         public global::Mimo.Api.Sdk.Tickets.TicketsRequestBuilder Tickets
         {
             get => new global::Mimo.Api.Sdk.Tickets.TicketsRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The webchat property</summary>
+        public global::Mimo.Api.Sdk.Webchat.WebchatRequestBuilder Webchat
+        {
+            get => new global::Mimo.Api.Sdk.Webchat.WebchatRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>The webhooks property</summary>
         public global::Mimo.Api.Sdk.Webhooks.WebhooksRequestBuilder Webhooks
