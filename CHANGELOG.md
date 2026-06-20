@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-20
+
+### Added
+
+- **`Mimo.Worker` escalable horizontalmente**: claim atómico de entregas de webhook con `FOR UPDATE SKIP LOCKED` y marca de propietario (`claimed_by`/`claimed_at`, estado `InProgress`), de modo que con varias instancias del worker cada entrega se procesa **exactamente una vez**. Recupera claims vencidos (>5 min) de un worker caído. Sin dependencias nuevas (solo PostgreSQL). [ADR 0020](docs/adr/0020-claim-atomico-de-entregas-de-webhook.md).
+
 ## [0.5.2] - 2026-06-19
 
 ### Added
@@ -144,7 +150,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/evillabong/chatbot-llm/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/evillabong/chatbot-llm/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/evillabong/chatbot-llm/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/evillabong/chatbot-llm/compare/v0.4.0...v0.5.0
