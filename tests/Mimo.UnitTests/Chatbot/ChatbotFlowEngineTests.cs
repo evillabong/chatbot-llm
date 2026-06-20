@@ -1,4 +1,5 @@
 using Mimo.Core.DTOs.Chatbot;
+using Mimo.Core.Interfaces;
 using Mimo.Infrastructure.Chatbot;
 
 namespace Mimo.UnitTests.Chatbot;
@@ -23,11 +24,16 @@ public class ChatbotFlowEngineTests
         ]);
 
     private readonly ChatbotFlowEngine _engine = new();
+    private static readonly Dictionary<string, string> NoVars = new();
+
+    private FlowStepResult Process(FlowDefinition flow, string? node, string input,
+        IReadOnlyDictionary<string, string>? vars = null) =>
+        _engine.Process(flow, node, vars ?? NoVars, input);
 
     [Fact]
     public void Start_RendersEntryMenu_WithOptions()
     {
-        var r = _engine.Process(SampleFlow(), currentNodeId: null, input: "hola");
+        var r = Process(SampleFlow(), node: null, input: "hola");
 
         Assert.Equal("start", r.NextNodeId);
         Assert.False(r.Escalate);
@@ -39,7 +45,7 @@ public class ChatbotFlowEngineTests
     [Fact]
     public void ValidOption_FollowsMessageNode_AndChainsBackToMenu()
     {
-        var r = _engine.Process(SampleFlow(), currentNodeId: "start", input: "1");
+        var r = Process(SampleFlow(), node:"start", input: "1");
 
         Assert.Equal("start", r.NextNodeId);          // pedido -> Next=start (vuelve al menú)
         Assert.False(r.Escalate);
@@ -50,7 +56,7 @@ public class ChatbotFlowEngineTests
     [Fact]
     public void InvalidOption_RepromptsSameMenu()
     {
-        var r = _engine.Process(SampleFlow(), currentNodeId: "start", input: "99");
+        var r = Process(SampleFlow(), node:"start", input: "99");
 
         Assert.Equal("start", r.NextNodeId);
         Assert.False(r.Escalate);
@@ -61,7 +67,7 @@ public class ChatbotFlowEngineTests
     [Fact]
     public void EscalateOption_SignalsEscalation_AndEndsFlow()
     {
-        var r = _engine.Process(SampleFlow(), currentNodeId: "start", input: "2");
+        var r = Process(SampleFlow(), node:"start", input: "2");
 
         Assert.True(r.Escalate);
         Assert.Null(r.NextNodeId);
@@ -71,9 +77,42 @@ public class ChatbotFlowEngineTests
     [Fact]
     public void StaleNode_RestartsAtEntry()
     {
-        var r = _engine.Process(SampleFlow(), currentNodeId: "nodo-inexistente", input: "1");
+        var r = Process(SampleFlow(), node:"nodo-inexistente", input: "1");
 
         Assert.Equal("start", r.NextNodeId);
         Assert.Contains("¿En qué te ayudamos?", r.Text);
+    }
+
+    // ── Corte 2: nodos Input (captura/validación) + variables ───────────────────
+
+    private static FlowDefinition InputFlow() => new(
+        EntryNodeId: "ask",
+        Nodes:
+        [
+            new FlowNode("ask", FlowNodeType.Input, "¿Cuál es tu correo?",
+                Next: "done", Variable: "email",
+                Validation: @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+                ValidationError: "Correo no válido."),
+            new FlowNode("done", FlowNodeType.Message, "Gracias, te escribimos a {email}.")
+        ]);
+
+    [Fact]
+    public void Input_InvalidValue_RepromptsAndDoesNotCapture()
+    {
+        var r = Process(InputFlow(), node: "ask", input: "no-es-correo");
+
+        Assert.Equal("ask", r.NextNodeId);
+        Assert.Contains("Correo no válido.", r.Text);
+        Assert.False(r.Variables.ContainsKey("email"));
+    }
+
+    [Fact]
+    public void Input_ValidValue_CapturesVariable_AndSubstitutesInNextMessage()
+    {
+        var r = Process(InputFlow(), node: "ask", input: "ana@andinashop.com");
+
+        Assert.Null(r.NextNodeId);
+        Assert.Equal("ana@andinashop.com", r.Variables["email"]);
+        Assert.Contains("te escribimos a ana@andinashop.com", r.Text);
     }
 }

@@ -213,10 +213,16 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
         if (definition is null || definition.Nodes.Count == 0)
             return await PersistFlowMessageAsync(conversation, "El asistente no está disponible en este momento.", null, false, ct);
 
-        var step = _flowEngine.Process(definition, conversation.FlowNodeId, content);
+        // Estado de variables capturadas (nodos Input, #27 corte 2).
+        var variables = DeserializeFlowState(conversation.FlowState);
 
-        // Guardar el nodo en el que queda la conversación (lo persiste el SaveChanges del mensaje).
+        var step = _flowEngine.Process(definition, conversation.FlowNodeId, variables, content);
+
+        // Guardar el nodo y las variables en que queda la conversación (lo persiste el SaveChanges del mensaje).
         conversation.FlowNodeId = step.NextNodeId;
+        conversation.FlowState  = step.Variables.Count > 0
+            ? JsonSerializer.Serialize(step.Variables, FlowJsonOptions)
+            : null;
 
         if (step.Escalate)
         {
@@ -226,6 +232,17 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
         }
 
         return await PersistFlowMessageAsync(conversation, step.Text, conversation.FlowNodeId, step.Escalate, ct);
+    }
+
+    private static Dictionary<string, string> DeserializeFlowState(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return new(StringComparer.Ordinal);
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, string>>(json, FlowJsonOptions)
+                   ?? new(StringComparer.Ordinal);
+        }
+        catch { return new(StringComparer.Ordinal); }
     }
 
     private async Task<Message> PersistFlowMessageAsync(

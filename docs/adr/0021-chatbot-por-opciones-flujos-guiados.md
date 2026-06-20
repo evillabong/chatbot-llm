@@ -48,3 +48,15 @@ actual responde siempre vía el orquestador con RAG+LLM ([ADR 0005](0005-gateway
   intención, hará falta una configuración explícita.
 - La definición se valida superficialmente al crear (existe el nodo de entrada); no se valida aún que
   todas las transiciones referencien nodos existentes.
+
+## Actualización — corte 2 (captura de datos)
+
+- Nuevo tipo de nodo **`Input`**: pide un dato, lo **valida** (regex opcional, con timeout anti-ReDoS)
+  y lo guarda en una **variable**; ante dato inválido re-muestra el prompt con el mensaje de error.
+- **Variables de flujo** persistidas por conversación en `Conversation.FlowState` (JSON). Los textos
+  de cualquier nodo admiten **sustitución `{variable}`** con lo capturado.
+- El motor sigue siendo puro (sin I/O): `Process` ahora recibe y devuelve el estado de variables.
+- **Verificado E2E:** captura de nombre/correo en turnos sucesivos, re-prompt ante correo inválido y
+  sustitución `{nombre}`/`{email}` en mensajes posteriores; `flow_state` persiste en BD.
+- Pendiente (corte 3): nodos de **llamada a API externa** con bifurcación (introducen I/O y riesgo de
+  SSRF; requieren control de seguridad propio) y el constructor visual.

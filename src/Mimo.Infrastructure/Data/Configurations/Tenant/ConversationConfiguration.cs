@@ -67,6 +67,10 @@ public class ConversationConfiguration : IEntityTypeConfiguration<Conversation>
             .HasColumnName("flow_node_id")
             .HasMaxLength(80);
 
+        b.Property(c => c.FlowState)
+            .HasColumnName("flow_state")
+            .HasColumnType("jsonb");
+
         b.HasMany(c => c.Messages)
             .WithOne(m => m.Conversation)
             .HasForeignKey(m => m.ConversationId)

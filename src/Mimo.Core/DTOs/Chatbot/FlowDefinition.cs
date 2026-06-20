@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Mimo.Core.DTOs.Chatbot;
 
-/// <summary>Tipo de nodo de un flujo guiado (corte 1: mensaje, menú, escalar).</summary>
+/// <summary>Tipo de nodo de un flujo guiado.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum FlowNodeType
 {
@@ -11,19 +11,27 @@ public enum FlowNodeType
     /// <summary>Muestra un texto con opciones; el usuario elige una para avanzar.</summary>
     Menu,
     /// <summary>Muestra un texto y deriva la conversación a un funcionario.</summary>
-    Escalate
+    Escalate,
+    /// <summary>Pide un dato al usuario, lo valida y lo guarda en una variable (corte 2).</summary>
+    Input
 }
 
 /// <summary>Opción de un nodo de menú: la clave que teclea el usuario y el nodo destino.</summary>
 public record FlowOption(string Key, string Label, string Next);
 
 /// <summary>Nodo de un flujo guiado.</summary>
+/// <param name="Variable">Nodo Input: nombre de la variable donde se guarda el dato capturado.</param>
+/// <param name="Validation">Nodo Input: regex opcional que debe cumplir el dato.</param>
+/// <param name="ValidationError">Nodo Input: mensaje cuando el dato no cumple la validación.</param>
 public record FlowNode(
     string Id,
     FlowNodeType Type,
     string Text,
     string? Next = null,
-    List<FlowOption>? Options = null
+    List<FlowOption>? Options = null,
+    string? Variable = null,
+    string? Validation = null,
+    string? ValidationError = null
 );
 
 /// <summary>

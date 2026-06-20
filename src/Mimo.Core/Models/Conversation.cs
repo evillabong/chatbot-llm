@@ -38,6 +38,12 @@ public class Conversation
     /// </summary>
     public string? FlowNodeId { get; set; }
 
+    /// <summary>
+    /// Estado de variables capturadas por el flujo guiado (JSON de un diccionario), p. ej. datos que
+    /// el usuario fue ingresando en nodos Input (#27 corte 2). Null/vacío = sin variables.
+    /// </summary>
+    public string? FlowState { get; set; }
+
     public ICollection<Message> Messages { get; set; } = [];
     public Ticket? Ticket { get; set; }
 }
