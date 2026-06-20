@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-20
+
+### Added
+
+- **Chatbot por catálogo de opciones — flujos guiados deterministas (corte 1, #27)** ([ADR 0021](docs/adr/0021-chatbot-por-opciones-flujos-guiados.md)): modo de atención alternativo al IA, sin LLM. Modelo `ChatbotFlow` por tenant (uno activo, definición JSON), motor determinista con nodos **mensaje/menú/escalar**, estado por conversación (`FlowNodeId`) e integración en el orquestador (si hay flujo activo, el bot se conduce por el flujo; si no, sigue con RAG+LLM). Endpoints `/chatbot/flows` (crear/activar/listar, TenantAdmin). El escalado reutiliza la derivación a funcionario existente.
+
 ## [0.6.7] - 2026-06-20
 
 ### Changed
@@ -192,7 +198,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.7...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/evillabong/chatbot-llm/compare/v0.6.7...v0.7.0
 [0.6.7]: https://github.com/evillabong/chatbot-llm/compare/v0.6.6...v0.6.7
 [0.6.6]: https://github.com/evillabong/chatbot-llm/compare/v0.6.5...v0.6.6
 [0.6.5]: https://github.com/evillabong/chatbot-llm/compare/v0.6.4...v0.6.5
