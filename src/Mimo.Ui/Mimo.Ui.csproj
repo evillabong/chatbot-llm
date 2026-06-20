@@ -19,12 +19,34 @@
   <!-- Pipeline de Tailwind: vive en Mimo.Ui porque aquí está el sistema de diseño.
        Escanea solo los .razor de esta librería y emite el CSS a wwwroot/css/mimo.min.css,
        que se sirve a las apps como activo estático del RCL (_content/Mimo.Ui/css/mimo.min.css).
-       El binario standalone vive en tools/ (no se commitea; ver scripts y docs/pendings). -->
+       El binario standalone NO se commitea (≈40 MB); se descarga al compilar si falta (EnsureTailwindCli). -->
+  <PropertyGroup>
+    <TailwindVersion>3.4.17</TailwindVersion>
+    <TailwindDir>$(MSBuildProjectDirectory)/tools</TailwindDir>
+    <_TwArch>$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant())</_TwArch>
+    <TailwindExe Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(TailwindDir)/tailwindcss.exe</TailwindExe>
+    <TailwindExe Condition="!$([MSBuild]::IsOSPlatform('Windows'))">$(TailwindDir)/tailwindcss</TailwindExe>
+    <TailwindAsset Condition="$([MSBuild]::IsOSPlatform('Windows'))">tailwindcss-windows-x64.exe</TailwindAsset>
+    <TailwindAsset Condition="$([MSBuild]::IsOSPlatform('Linux')) and '$(_TwArch)' == 'arm64'">tailwindcss-linux-arm64</TailwindAsset>
+    <TailwindAsset Condition="$([MSBuild]::IsOSPlatform('Linux')) and '$(_TwArch)' != 'arm64'">tailwindcss-linux-x64</TailwindAsset>
+    <TailwindAsset Condition="$([MSBuild]::IsOSPlatform('OSX')) and '$(_TwArch)' == 'arm64'">tailwindcss-macos-arm64</TailwindAsset>
+    <TailwindAsset Condition="$([MSBuild]::IsOSPlatform('OSX')) and '$(_TwArch)' != 'arm64'">tailwindcss-macos-x64</TailwindAsset>
+  </PropertyGroup>
+
+  <!-- Descarga el CLI standalone de Tailwind (versión fijada) si no está: CI y clones nuevos no lo
+       tienen porque está gitignored. Así el CSS siempre se puede generar sin pasos manuales. -->
+  <Target Name="EnsureTailwindCli" BeforeTargets="BuildTailwindCss" Condition="!Exists('$(TailwindExe)')">
+    <MakeDir Directories="$(TailwindDir)" />
+    <Message Importance="high" Text="Tailwind CLI no encontrado; descargando v$(TailwindVersion) ($(TailwindAsset))..." />
+    <DownloadFile SourceUrl="https://github.com/tailwindlabs/tailwindcss/releases/download/v$(TailwindVersion)/$(TailwindAsset)"
+                  DestinationFolder="$(TailwindDir)"
+                  DestinationFileName="$([System.IO.Path]::GetFileName('$(TailwindExe)'))"
+                  Retries="2" />
+    <Exec Condition="!$([MSBuild]::IsOSPlatform('Windows'))" Command="chmod +x &quot;$(TailwindExe)&quot;" />
+  </Target>
+
   <Target Name="BuildTailwindCss" BeforeTargets="ResolveStaticWebAssetsInputs;Compile">
-    <PropertyGroup>
-      <TailwindExe>$(MSBuildProjectDirectory)\tools\tailwindcss.exe</TailwindExe>
-    </PropertyGroup>
-    <Warning Condition="!Exists('$(TailwindExe)')" Text="Tailwind CLI no encontrado en tools/tailwindcss.exe; el CSS (mimo.min.css) no se generará." />
+    <Warning Condition="!Exists('$(TailwindExe)')" Text="Tailwind CLI no disponible; el CSS (mimo.min.css) no se generará." />
     <Exec Condition="Exists('$(TailwindExe)')"
           WorkingDirectory="$(MSBuildProjectDirectory)"
           Command="&quot;$(TailwindExe)&quot; -c ./tailwind.config.js -i ./Styles/mimo.css -o ./wwwroot/css/mimo.min.css --minify"
