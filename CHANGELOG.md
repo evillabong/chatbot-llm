@@ -6,6 +6,16 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-06-19
+
+### Added
+
+- **Throttling por conexión en `ChatHub`**: límite de 30 mensajes/min por conexión WebSocket (alineado con el límite REST), con evento `Error` al exceder y limpieza al desconectar. Cubre el hueco del rate limiting HTTP, que no aplica a mensajes enviados sobre un WebSocket ya abierto.
+
+### Changed
+
+- **IP real tras proxy** (`UseForwardedHeaders`): procesa `X-Forwarded-For`/`X-Forwarded-Proto` para que el rate limiting y los logs usen la IP real del cliente. Por defecto solo confía en loopback; los proxies/balanceadores externos se declaran en `ForwardedHeaders:KnownProxies`.
+
 ## [0.5.1] - 2026-06-19
 
 ### Changed
@@ -134,7 +144,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/evillabong/chatbot-llm/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/evillabong/chatbot-llm/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/evillabong/chatbot-llm/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/evillabong/chatbot-llm/compare/v0.3.1...v0.4.0
