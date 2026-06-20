@@ -1,5 +1,6 @@
 @page "/configuracion"
 @attribute [Authorize]
+@using System.Globalization
 @using Microsoft.Kiota.Abstractions
 @inject TenantConfigService Config
 
@@ -65,8 +66,20 @@ else if (_config is not null)
                 <MimoFormGroup>
                     <MimoCheckbox Label="Aplicar horario de atención" @bind-Checked="_form.BusinessHoursEnabled" />
                 </MimoFormGroup>
+                <div class="grid grid-cols-2 gap-4">
+                    <MimoTextField Label="Hora de inicio" Type="time" @bind-Value="_form.StartTime" />
+                    <MimoTextField Label="Hora de fin" Type="time" @bind-Value="_form.EndTime" />
+                </div>
+                <MimoFormGroup Label="Días de atención">
+                    <div class="flex flex-wrap gap-3">
+                        @foreach (var (n, label) in WeekDays)
+                        {
+                            <MimoCheckbox Label="@label" Checked="_form.WorkingDays.Contains(n)"
+                                          CheckedChanged="@(v => ToggleDay(n, v))" />
+                        }
+                    </div>
+                </MimoFormGroup>
                 <MimoTextArea Label="Mensaje fuera de horario" @bind-Value="_form.OutOfHoursMessage" Rows="2" />
-                <MimoText Small Muted>Las horas y días de atención se ajustan próximamente; sus valores actuales se conservan.</MimoText>
             </div>
         </MimoCard>
 
@@ -98,6 +111,33 @@ else if (_config is not null)
         new("0", "Manual"),
         new("1", "Automática balanceada")
     ];
+
+    // Días de atención (1=Lunes … 7=Domingo), según BusinessHoursConfig.WorkingDays.
+    private static readonly (int Number, string Label)[] WeekDays =
+    [
+        (1, "Lun"), (2, "Mar"), (3, "Mié"), (4, "Jue"), (5, "Vie"), (6, "Sáb"), (7, "Dom")
+    ];
+
+    private void ToggleDay(int day, bool on)
+    {
+        if (on) _form.WorkingDays.Add(day); else _form.WorkingDays.Remove(day);
+    }
+
+    // Kiota representa la hora como Microsoft.Kiota.Abstractions.Time; el <input type="time"> usa "HH:mm".
+    private static string TimeToHhmm(Time? t)
+    {
+        if (t is null) return "";
+        var s = t.ToString() ?? "";              // p. ej. "08:00:00"
+        return s.Length >= 5 ? s[..5] : s;       // "HH:mm"
+    }
+
+    private static Time? HhmmToTime(string? hhmm)
+    {
+        if (string.IsNullOrWhiteSpace(hhmm)) return null;
+        return TimeOnly.TryParse(hhmm, CultureInfo.InvariantCulture, out var to)
+            ? new Time(to.Hour, to.Minute, 0)
+            : null;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -138,6 +178,10 @@ else if (_config is not null)
         var bh = c.BusinessHours;
         _form.BusinessHoursEnabled = bh?.BusinessHoursEnabled ?? false;
         _form.OutOfHoursMessage    = bh?.OutOfHoursMessage ?? "";
+        _form.StartTime            = TimeToHhmm(bh?.StartTime) is { Length: > 0 } s ? s : "08:00";
+        _form.EndTime              = TimeToHhmm(bh?.EndTime)   is { Length: > 0 } e ? e : "18:00";
+        _form.WorkingDays = [.. (bh?.WorkingDays ?? []).Where(d => d.HasValue).Select(d => d!.Value)];
+        if (_form.WorkingDays.Count == 0) _form.WorkingDays = [1, 2, 3, 4, 5];
 
         var cc = c.ChannelCustomization;
         _form.WelcomeMessage = cc?.WelcomeMessage ?? "";
@@ -174,6 +218,9 @@ else if (_config is not null)
         _config.BusinessHours ??= new BusinessHoursConfig();
         _config.BusinessHours.BusinessHoursEnabled = _form.BusinessHoursEnabled;
         _config.BusinessHours.OutOfHoursMessage    = _form.OutOfHoursMessage;
+        _config.BusinessHours.StartTime            = HhmmToTime(_form.StartTime);
+        _config.BusinessHours.EndTime              = HhmmToTime(_form.EndTime);
+        _config.BusinessHours.WorkingDays          = [.. _form.WorkingDays.OrderBy(d => d).Select(d => (int?)d)];
 
         _config.ChannelCustomization ??= new ChannelCustomizationConfig();
         _config.ChannelCustomization.WelcomeMessage = _form.WelcomeMessage;
@@ -223,6 +270,9 @@ else if (_config is not null)
 
         public bool BusinessHoursEnabled { get; set; }
         public string OutOfHoursMessage { get; set; } = "";
+        public string StartTime { get; set; } = "08:00";
+        public string EndTime { get; set; } = "18:00";
+        public HashSet<int> WorkingDays { get; set; } = [1, 2, 3, 4, 5];
 
         public string WelcomeMessage { get; set; } = "";
         public string PrimaryColor { get; set; } = "";
