@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-06-20
+
+### Security
+
+- **Token de canal cifrado en reposo** en `TenantConfiguration`: `TelegramBotToken` se cifra con `ISecretProtector` (Data Protection, ADR 0010) al guardar y es **write-only** — `GET /tenant/configuration` lo enmascara y un guardado en blanco conserva el valor existente (no lo borra). Antes viajaba y se almacenaba en claro en el JSON de configuración.
+
 ## [0.6.4] - 2026-06-20
 
 ### Added
@@ -174,7 +180,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.4...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.5...HEAD
+[0.6.5]: https://github.com/evillabong/chatbot-llm/compare/v0.6.4...v0.6.5
 [0.6.4]: https://github.com/evillabong/chatbot-llm/compare/v0.6.3...v0.6.4
 [0.6.3]: https://github.com/evillabong/chatbot-llm/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/evillabong/chatbot-llm/compare/v0.6.1...v0.6.2
