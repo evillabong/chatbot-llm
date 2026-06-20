@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-06-20
+
+### Added
+
+- **Chatbot por opciones — captura de datos (corte 2, #27)**: nuevo nodo **`Input`** que pide un dato, lo **valida** (regex opcional con timeout anti-ReDoS) y lo guarda en una **variable**; re-prompt ante dato inválido. **Variables de flujo** persistidas por conversación (`FlowState`, JSON) y **sustitución `{variable}`** en los textos de los nodos. El motor sigue siendo puro. Ver [ADR 0021](docs/adr/0021-chatbot-por-opciones-flujos-guiados.md).
+
 ## [0.7.0] - 2026-06-20
 
 ### Added
@@ -198,7 +204,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/evillabong/chatbot-llm/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/evillabong/chatbot-llm/compare/v0.6.7...v0.7.0
 [0.6.7]: https://github.com/evillabong/chatbot-llm/compare/v0.6.6...v0.6.7
 [0.6.6]: https://github.com/evillabong/chatbot-llm/compare/v0.6.5...v0.6.6
