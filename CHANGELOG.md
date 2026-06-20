@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-20
+
+### Added
+
+- **Refresh tokens y revocación de sesión para funcionarios (#9)** ([ADR 0022](docs/adr/0022-refresh-tokens-de-funcionarios.md)): el login emite un refresh token (se guarda solo su hash en el esquema del tenant); `POST /auth/refresh` renueva el access token **rotando** el refresh (el anterior queda inválido) y `POST /auth/logout` lo revoca. Vida configurable (`Jwt:RefreshTokenExpiryDays`, 7 días por defecto). Alcance: `Mimo.Api` (funcionarios); SuperAdmin y el cableado en el front quedan como seguimiento.
+
 ## [0.7.2] - 2026-06-20
 
 ### Added
@@ -214,7 +220,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/evillabong/chatbot-llm/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/evillabong/chatbot-llm/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/evillabong/chatbot-llm/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/evillabong/chatbot-llm/compare/v0.6.7...v0.7.0
