@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.6.6] - 2026-06-20
+
+### Changed
+
+- **Provisión automática del CLI de Tailwind** en `Mimo.Ui` (target MSBuild `EnsureTailwindCli`): si el binario standalone (gitignored, ≈40 MB) no está, se descarga la versión fijada (v3.4.17) seleccionando el artefacto por SO/arquitectura antes de compilar el CSS. Evita que CI y los clones nuevos queden sin `mimo.min.css` (sin estilos) por falta del binario.
+
 ## [0.6.5] - 2026-06-20
 
 ### Security
@@ -180,7 +186,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.5...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.6...HEAD
+[0.6.6]: https://github.com/evillabong/chatbot-llm/compare/v0.6.5...v0.6.6
 [0.6.5]: https://github.com/evillabong/chatbot-llm/compare/v0.6.4...v0.6.5
 [0.6.4]: https://github.com/evillabong/chatbot-llm/compare/v0.6.3...v0.6.4
 [0.6.3]: https://github.com/evillabong/chatbot-llm/compare/v0.6.2...v0.6.3
