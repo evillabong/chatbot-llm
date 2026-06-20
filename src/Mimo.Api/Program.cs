@@ -125,8 +125,12 @@ builder.Services.AddCors(options =>
         }
         else
         {
+            // Producción: orígenes explícitos (la consola/app suele servirse desde un sitio distinto
+            // al de la API). AllowCredentials habilita los hubs SignalR autenticados cross-origin
+            // (TicketHub): los WebSockets/negotiate cross-origin con credenciales NO admiten
+            // AllowAnyOrigin (pendings #5). Configurar "Cors:AllowedOrigins" con el origen de mimo.app.
             var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-            policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod();
+            policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
         }
     });
 
