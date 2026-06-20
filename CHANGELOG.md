@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-06-20
+
+### Security
+
+- **Corregida la vulnerabilidad NU1903** (`System.Security.Cryptography.Xml 9.0.5`, severidad alta, transitiva vía `Microsoft.AspNetCore.DataProtection.Extensions` en `Mimo.Worker` y `Mimo.UnitTests`). Se actualizaron las referencias de Data Protection a **10.0.9** (la GA 10.0.0 tenía además un CVE crítico propio). `dotnet list package --vulnerable --include-transitive` queda sin paquetes vulnerables.
+
 ## [0.6.2] - 2026-06-20
 
 ### Fixed
@@ -162,7 +168,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.3...HEAD
+[0.6.3]: https://github.com/evillabong/chatbot-llm/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/evillabong/chatbot-llm/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/evillabong/chatbot-llm/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/evillabong/chatbot-llm/compare/v0.5.2...v0.6.0
