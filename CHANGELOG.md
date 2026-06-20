@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.6.7] - 2026-06-20
+
+### Changed
+
+- **CORS de producción con orígenes explícitos + `AllowCredentials`** en `Mimo.Api`, para habilitar los hubs SignalR autenticados cross-origin (la consola en `mimo.app` conecta a los hubs en `mimo.api`). Se configura con `Cors:AllowedOrigins` (placeholder documentado en `appsettings.json`). Development sigue permisivo (`AllowAnyOrigin`).
+
 ## [0.6.6] - 2026-06-20
 
 ### Changed
@@ -186,7 +192,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.6...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.7...HEAD
+[0.6.7]: https://github.com/evillabong/chatbot-llm/compare/v0.6.6...v0.6.7
 [0.6.6]: https://github.com/evillabong/chatbot-llm/compare/v0.6.5...v0.6.6
 [0.6.5]: https://github.com/evillabong/chatbot-llm/compare/v0.6.4...v0.6.5
 [0.6.4]: https://github.com/evillabong/chatbot-llm/compare/v0.6.3...v0.6.4
