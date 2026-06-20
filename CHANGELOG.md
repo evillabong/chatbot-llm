@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-06-20
+
+### Added
+
+- **Gestión autenticada de super administradores (#10)** en `Mimo.Admin.Api`: endpoints `/superadmins` (política SuperAdmin) para **listar**, **crear** (correo único, contraseña hasheada) y **desactivar** otros super administradores, con guardas contra auto-desactivación y contra dejar la plataforma sin ningún SuperAdmin activo. El bootstrap del primero sigue en `/auth/setup`.
+
 ## [0.8.0] - 2026-06-20
 
 ### Added
@@ -220,7 +226,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/evillabong/chatbot-llm/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/evillabong/chatbot-llm/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/evillabong/chatbot-llm/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/evillabong/chatbot-llm/compare/v0.7.0...v0.7.1
