@@ -32,7 +32,7 @@ public static class AiConnectorEndpoints
 
         group.MapPost("/activate", ActivateAsync)
             .WithName("ActivateAiConnector").WithSummary("Marca un conector como el activo de la plataforma (query: id).")
-            .Produces(StatusCodes.Status200OK).Produces(StatusCodes.Status404NotFound);
+            .Produces(StatusCodes.Status204NoContent).Produces(StatusCodes.Status404NotFound);
 
         return app;
     }
@@ -80,7 +80,7 @@ public static class AiConnectorEndpoints
     {
         var ok = await repo.SetActiveAsync(id, ct);
         return ok
-            ? Results.Ok(new { message = "Conector activado.", id })
+            ? Results.NoContent()
             : Results.NotFound(new { error = "Conector no encontrado." });
     }
 

@@ -25,7 +25,9 @@ public static class AuthEndpoints
         group.MapPost("/setup", SetupAsync)
             .WithName("SetupSuperAdmin")
             .WithSummary("Crea el primer super administrador de la plataforma. Solo funciona si aún no existe ninguno.")
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .Produces<SetupSuperAdminResponse>(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status409Conflict);
 
         return app;
     }
@@ -73,6 +75,6 @@ public static class AuthEndpoints
 
         await repo.AddAsync(superAdmin, ct);
 
-        return Results.Created("/auth/setup", new { superAdmin.Id, superAdmin.Email });
+        return Results.Created("/auth/setup", new SetupSuperAdminResponse(superAdmin.Id, superAdmin.Email));
     }
 }

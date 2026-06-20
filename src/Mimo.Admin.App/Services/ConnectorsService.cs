@@ -18,9 +18,6 @@ public sealed class ConnectorsService(MimoAdminApiClient api)
     public Task<AiConnectorResponse?> UpdateAsync(Guid id, UpdateAiConnectorRequest request, CancellationToken ct = default) =>
         api.Ai.Connectors.PutAsync(request, rc => rc.QueryParameters.Id = id, ct);
 
-    public async Task ActivateAsync(Guid id, CancellationToken ct = default)
-    {
-        var stream = await api.Ai.Connectors.Activate.PostAsync(rc => rc.QueryParameters.Id = id, ct);
-        if (stream is not null) await stream.DisposeAsync();
-    }
+    public Task ActivateAsync(Guid id, CancellationToken ct = default) =>
+        api.Ai.Connectors.Activate.PostAsync(rc => rc.QueryParameters.Id = id, ct);
 }
