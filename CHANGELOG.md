@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-06-20
+
+### Fixed
+
+- **La transferencia de tickets perdía el historial**: `/tickets/transfer` no persistía el `TransferRecord` y, aunque se persistiera, un FK con cascada lo borraba al reemplazarse el ticket de origen (conversación↔ticket 1:1). Ahora el `TransferRecord` se ancla a la **conversación** (FK con cascada a `conversations`; `TicketId` queda informativo) y persiste aunque el ticket de origen se elimine. Migración `TransferRecordByConversation`.
+
 ## [0.6.1] - 2026-06-20
 
 ### Changed
@@ -156,7 +162,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/evillabong/chatbot-llm/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/evillabong/chatbot-llm/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/evillabong/chatbot-llm/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/evillabong/chatbot-llm/compare/v0.5.1...v0.5.2
