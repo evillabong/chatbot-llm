@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
+using Mimo.Core.DTOs.Chatbot;
 using Mimo.Core.Enums;
 using Mimo.Core.Exceptions;
 using Mimo.Core.Interfaces;
@@ -31,7 +32,11 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
     private readonly IAiGatewayService       _ai;
     private readonly ITicketService         _tickets;
     private readonly IMcpToolProvider       _mcp;
+    private readonly IChatbotFlowRepository  _flows;
+    private readonly IChatbotFlowEngine      _flowEngine;
     private readonly ILogger<ConversationOrchestrator> _logger;
+
+    private static readonly JsonSerializerOptions FlowJsonOptions = new(JsonSerializerDefaults.Web);
 
     // Token que el LLM incluye cuando solicita escalada a humano
     private static readonly Regex EscalatePattern =
@@ -43,6 +48,8 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
         IAiGatewayService       ai,
         ITicketService          tickets,
         IMcpToolProvider        mcp,
+        IChatbotFlowRepository  flows,
+        IChatbotFlowEngine      flowEngine,
         ILogger<ConversationOrchestrator> logger)
     {
         _conversations = conversations;
@@ -50,6 +57,8 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
         _ai            = ai;
         _tickets       = tickets;
         _mcp           = mcp;
+        _flows         = flows;
+        _flowEngine    = flowEngine;
         _logger        = logger;
     }
 
@@ -85,6 +94,12 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
                 "Conversación {Id} en estado {Status}, bot inactivo", conversationId, conversation.Status);
             return userMessage;
         }
+
+        // Modo "chatbot por opciones" (#27): si el tenant tiene un flujo activo, la conversación se
+        // conduce de forma determinista por el flujo (sin IA). Si no hay flujo, sigue el camino LLM.
+        var activeFlow = await _flows.GetActiveAsync(ct);
+        if (activeFlow is not null)
+            return await HandleFlowAsync(conversation, activeFlow, content, ct);
 
         // Búsqueda semántica de documentos relevantes (filtrado por visibilidad ANTES del LLM).
         // La búsqueda usa embeddings (LLM); si el proveedor falla (p. ej. sin credenciales → 401),
@@ -181,6 +196,54 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
         await _conversations.AddMessageAsync(assistantMessage, ct);
 
         return assistantMessage;
+    }
+
+    /// <summary>
+    /// Conduce la conversación por el flujo guiado activo (chatbot por opciones, #27). Determinista,
+    /// sin IA: el motor calcula el siguiente paso; aquí se persiste el nodo actual y el mensaje, y se
+    /// escala a funcionario si el flujo lo pide. Best-effort: un flujo inválido degrada con un aviso.
+    /// </summary>
+    private async Task<Message> HandleFlowAsync(
+        Conversation conversation, ChatbotFlow flow, string content, CancellationToken ct)
+    {
+        FlowDefinition? definition = null;
+        try { definition = JsonSerializer.Deserialize<FlowDefinition>(flow.Definition, FlowJsonOptions); }
+        catch (Exception ex) { _logger.LogError(ex, "Definición de flujo inválida (flujo {Id})", flow.Id); }
+
+        if (definition is null || definition.Nodes.Count == 0)
+            return await PersistFlowMessageAsync(conversation, "El asistente no está disponible en este momento.", null, false, ct);
+
+        var step = _flowEngine.Process(definition, conversation.FlowNodeId, content);
+
+        // Guardar el nodo en el que queda la conversación (lo persiste el SaveChanges del mensaje).
+        conversation.FlowNodeId = step.NextNodeId;
+
+        if (step.Escalate)
+        {
+            try { await _mcp.RequestHumanAgentAsync(conversation.Id, "Derivación desde flujo guiado", ct); }
+            catch (Exception ex) { _logger.LogError(ex, "Error al escalar desde flujo en conversación {Id}", conversation.Id); }
+            conversation.FlowNodeId = null; // el flujo termina al derivar
+        }
+
+        return await PersistFlowMessageAsync(conversation, step.Text, conversation.FlowNodeId, step.Escalate, ct);
+    }
+
+    private async Task<Message> PersistFlowMessageAsync(
+        Conversation conversation, string content, string? nodeId, bool escalated, CancellationToken ct)
+    {
+        var metadata = JsonSerializer.Serialize(new { mode = "flow", nodeId, escalated });
+        var message = new Message
+        {
+            Id             = Guid.NewGuid(),
+            ConversationId = conversation.Id,
+            Role           = MessageRole.Assistant,
+            Content        = content,
+            Metadata       = metadata,
+            CreatedAt      = DateTime.UtcNow
+        };
+        // AddMessageAsync hace SaveChanges: persiste también el FlowNodeId modificado (entidad trackeada).
+        await _conversations.AddMessageAsync(message, ct);
+        return message;
     }
 
     /// <inheritdoc />

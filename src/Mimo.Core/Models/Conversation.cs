@@ -32,6 +32,12 @@ public class Conversation
     public DateTime LastMessageAt { get; set; } = DateTime.UtcNow;
     public DateTime? ResolvedAt { get; set; }
 
+    /// <summary>
+    /// Nodo actual del flujo guiado (chatbot por opciones, #27) cuando la conversación opera en modo
+    /// flujo. Null = el flujo aún no ha iniciado o no aplica. Lo gestiona el motor de flujos.
+    /// </summary>
+    public string? FlowNodeId { get; set; }
+
     public ICollection<Message> Messages { get; set; } = [];
     public Ticket? Ticket { get; set; }
 }

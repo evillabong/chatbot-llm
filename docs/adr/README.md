@@ -40,3 +40,4 @@ decisión se revierte o cambia, se crea un ADR nuevo que marca al anterior como
 | [0018](0018-webchat-embebible-widget-vanilla-js.md) | WebChat embebible: widget vanilla JS servido por la API | Aceptado |
 | [0019](0019-acceso-cross-origin-anonimo-al-chathub.md) | Acceso cross-origin anónimo al ChatHub (WebChat en vivo) | Aceptado |
 | [0020](0020-claim-atomico-de-entregas-de-webhook.md) | Claim atómico de entregas de webhook (worker escalable) | Aceptado |
+| [0021](0021-chatbot-por-opciones-flujos-guiados.md) | Chatbot por opciones: flujos guiados deterministas (corte 1) | Aceptado |

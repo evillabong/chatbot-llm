@@ -7,6 +7,7 @@ using Mimo.Infrastructure.AI;
 using Mimo.Infrastructure.Assignment;
 using Mimo.Infrastructure.Channels;
 using Mimo.Infrastructure.Chat;
+using Mimo.Infrastructure.Chatbot;
 using Mimo.Infrastructure.Data;
 using Mimo.Infrastructure.Data.Repositories;
 using Mimo.Infrastructure.Mcp;
@@ -83,6 +84,8 @@ public static class DependencyInjection
         services.AddScoped<IConversationOrchestrator,  ConversationOrchestrator>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
         services.AddScoped<IWebhookPublisher,          WebhookPublisher>();
+        services.AddScoped<IChatbotFlowRepository,     ChatbotFlowRepository>();
+        services.AddSingleton<IChatbotFlowEngine,      ChatbotFlowEngine>();
 
         // ── Conectores de IA + gateway de plataforma (ver ADR 0004 y 0005) ────────
         // La configuración de cada IA vive en la BD (tabla ai_connectors, JSON).

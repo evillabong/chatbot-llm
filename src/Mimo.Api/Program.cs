@@ -277,6 +277,7 @@ app.MapTenantConfigurationEndpoints();
 app.MapIntegrationEndpoints();
 app.MapIntegrationApiEndpoints();
 app.MapWebhookSubscriptionEndpoints();
+app.MapChatbotFlowEndpoints();
 app.MapConversationEndpoints();
 app.MapTicketEndpoints();
 app.MapInternalChatEndpoints();

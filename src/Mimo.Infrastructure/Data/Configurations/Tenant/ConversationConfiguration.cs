@@ -63,6 +63,10 @@ public class ConversationConfiguration : IEntityTypeConfiguration<Conversation>
 
         b.Property(c => c.ResolvedAt).HasColumnName("resolved_at");
 
+        b.Property(c => c.FlowNodeId)
+            .HasColumnName("flow_node_id")
+            .HasMaxLength(80);
+
         b.HasMany(c => c.Messages)
             .WithOne(m => m.Conversation)
             .HasForeignKey(m => m.ConversationId)
