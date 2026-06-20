@@ -47,10 +47,8 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         b.Property(t => t.FirstResponseAt).HasColumnName("first_response_at");
         b.Property(t => t.ResolvedAt).HasColumnName("resolved_at");
 
-        b.HasMany(t => t.TransferRecords)
-            .WithOne(tr => tr.Ticket)
-            .HasForeignKey(tr => tr.TicketId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // El historial de transferencias se ancla a la conversación (TransferRecordConfiguration),
+        // no al ticket: el ticket de origen se reemplaza al transferir y se perdía el historial (#21b).
 
         b.HasOne(t => t.Survey)
             .WithOne(s => s.Ticket)

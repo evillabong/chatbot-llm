@@ -16,6 +16,8 @@ public class TransferRecordConfiguration : IEntityTypeConfiguration<TransferReco
         b.HasKey(tr => tr.Id);
         b.Property(tr => tr.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
 
+        b.Property(tr => tr.ConversationId).HasColumnName("conversation_id").IsRequired();
+        // TicketId queda como columna informativa (sin FK): el ticket de origen se elimina al transferir.
         b.Property(tr => tr.TicketId).HasColumnName("ticket_id").IsRequired();
         b.Property(tr => tr.FromRoleId).HasColumnName("from_role_id");
         b.Property(tr => tr.FromAgentId).HasColumnName("from_agent_id");
@@ -30,6 +32,12 @@ public class TransferRecordConfiguration : IEntityTypeConfiguration<TransferReco
             .HasColumnName("created_at")
             .HasDefaultValueSql("now()");
 
-        b.HasIndex(tr => tr.TicketId).HasDatabaseName("ix_transfer_records_ticket");
+        // FK al CONVERSATION (lifetime correcto del historial); sin navegación inversa.
+        b.HasOne<Conversation>()
+            .WithMany()
+            .HasForeignKey(tr => tr.ConversationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        b.HasIndex(tr => tr.ConversationId).HasDatabaseName("ix_transfer_records_conversation");
     }
 }

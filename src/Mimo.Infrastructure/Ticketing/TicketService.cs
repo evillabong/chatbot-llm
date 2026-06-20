@@ -68,7 +68,6 @@ public class TicketService(TenantDbContext db) : ITicketService
 
     public Task<Ticket?> GetByIdAsync(Guid ticketId, CancellationToken ct = default)
         => db.Tickets
-            .Include(t => t.TransferRecords)
             .Include(t => t.Conversation)
             .FirstOrDefaultAsync(t => t.Id == ticketId, ct);
 

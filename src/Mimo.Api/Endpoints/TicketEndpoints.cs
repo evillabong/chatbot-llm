@@ -6,6 +6,7 @@ using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
 using Mimo.Core.Webhooks;
+using Mimo.Infrastructure.Data;
 
 namespace Mimo.Api.Endpoints;
 
@@ -253,6 +254,7 @@ public static class TicketEndpoints
         ITicketQueueService queue,
         IAgentAssignmentService assignment,
         INotificationService notifications,
+        TenantDbContext db,
         IHubContext<TicketHub> hub,
         CancellationToken ct = default)
     {
@@ -263,11 +265,13 @@ public static class TicketEndpoints
         if (ticket is null)
             return Results.NotFound(new { error = "Ticket no encontrado." });
 
-        // Registrar transferencia
+        // Registrar la transferencia (bitácora/historial), anclada a la CONVERSACIÓN para que
+        // sobreviva al reemplazo del ticket de origen (pendings #21b). TicketId queda informativo.
         var transfer = new TransferRecord
         {
-            Id            = Guid.NewGuid(),
-            TicketId      = id,
+            Id             = Guid.NewGuid(),
+            ConversationId = ticket.ConversationId,
+            TicketId       = id,
             FromRoleId    = ticket.AssignedRoleId,
             FromAgentId   = ticket.AssignedAgentId,
             ToRoleId      = request.ToRoleId,
@@ -278,6 +282,8 @@ public static class TicketEndpoints
             IsPartial     = request.IsPartial,
             CreatedAt     = DateTime.UtcNow
         };
+        db.TransferRecords.Add(transfer);
+        await db.SaveChangesAsync(ct);
 
         // Crear nuevo ticket en el rol destino (reasignación)
         var newTicket = await service.CreateAsync(ticket.ConversationId, request.ToRoleId,

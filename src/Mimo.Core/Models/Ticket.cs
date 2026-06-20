@@ -33,6 +33,6 @@ public class Ticket
     public DateTime? FirstResponseAt { get; set; }
     public DateTime? ResolvedAt { get; set; }
 
-    public ICollection<TransferRecord> TransferRecords { get; set; } = [];
+    // El historial de transferencias se ancla a la conversación (ver TransferRecord), no al ticket.
     public SatisfactionSurvey? Survey { get; set; }
 }
