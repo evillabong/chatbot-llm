@@ -18,10 +18,23 @@ public static class AuthEndpoints
 
         group.MapPost("/login", LoginAsync)
             .WithName("AgentLogin")
-            .WithSummary("Autentica a un funcionario y emite un token JWT.")
+            .WithSummary("Autentica a un funcionario y emite un access token + refresh token.")
             .AllowAnonymous()
             .Produces<LoginResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized);
+
+        group.MapPost("/refresh", RefreshAsync)
+            .WithName("AgentRefresh")
+            .WithSummary("Renueva el access token usando un refresh token (lo rota).")
+            .AllowAnonymous()
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized);
+
+        group.MapPost("/logout", LogoutAsync)
+            .WithName("AgentLogout")
+            .WithSummary("Revoca un refresh token (cierre de sesión).")
+            .AllowAnonymous()
+            .Produces(StatusCodes.Status204NoContent);
 
         return app;
     }
@@ -31,6 +44,7 @@ public static class AuthEndpoints
         IAgentRepository repo,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
+        IRefreshTokenService refreshTokens,
         HttpContext context,
         CancellationToken ct = default)
     {
@@ -41,18 +55,54 @@ public static class AuthEndpoints
 
         // El middleware ya garantizó la resolución del tenant para esta ruta (no bypass).
         var tenantSlug = context.GetTenantSlug();
+        var refresh = await refreshTokens.IssueAsync(agent.Id, ct);
 
+        return Results.Ok(BuildResponse(agent, tenantSlug, jwtTokenService, refresh.Token, refresh.ExpiresAt));
+    }
+
+    private static async Task<IResult> RefreshAsync(
+        RefreshTokenRequest request,
+        IAgentRepository repo,
+        IJwtTokenService jwtTokenService,
+        IRefreshTokenService refreshTokens,
+        HttpContext context,
+        CancellationToken ct = default)
+    {
+        var rotation = await refreshTokens.ValidateAndRotateAsync(request.RefreshToken, ct);
+        if (rotation is null)
+            return Results.Unauthorized();
+
+        var agent = await repo.GetByIdAsync(rotation.AgentId, ct);
+        if (agent is null || !agent.IsActive)
+            return Results.Unauthorized();
+
+        var tenantSlug = context.GetTenantSlug();
+        return Results.Ok(BuildResponse(agent, tenantSlug, jwtTokenService, rotation.Token, rotation.ExpiresAt));
+    }
+
+    private static async Task<IResult> LogoutAsync(
+        RefreshTokenRequest request,
+        IRefreshTokenService refreshTokens,
+        CancellationToken ct = default)
+    {
+        await refreshTokens.RevokeAsync(request.RefreshToken, ct);
+        return Results.NoContent();
+    }
+
+    private static LoginResponse BuildResponse(
+        Core.Models.Agent agent, string tenantSlug, IJwtTokenService jwt, string refreshToken, DateTime refreshExpiresAt)
+    {
         var roleNames = agent.AgentRoles
             .Select(ar => ar.Role?.Name)
             .Where(name => !string.IsNullOrEmpty(name))
             .Select(name => name!)
             .ToList();
-
         var roleIds = agent.AgentRoles.Select(ar => ar.RoleId).ToList();
 
-        var token = jwtTokenService.GenerateAgentToken(agent, tenantSlug, roleNames, roleIds);
+        var token = jwt.GenerateAgentToken(agent, tenantSlug, roleNames, roleIds);
 
-        return Results.Ok(new LoginResponse(
-            token.Token, token.ExpiresAtUtc, agent.Id, agent.Email, agent.FullName, roleNames));
+        return new LoginResponse(
+            token.Token, token.ExpiresAtUtc, agent.Id, agent.Email, agent.FullName, roleNames,
+            refreshToken, refreshExpiresAt);
     }
 }

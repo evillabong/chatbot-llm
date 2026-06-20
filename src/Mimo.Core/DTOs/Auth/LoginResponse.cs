@@ -9,5 +9,10 @@ public record LoginResponse(
     Guid Id,
     string Email,
     string FullName,
-    IReadOnlyList<string> Roles
+    IReadOnlyList<string> Roles,
+    string? RefreshToken = null,
+    DateTime? RefreshExpiresAtUtc = null
 );
+
+/// <summary>Solicitud para renovar el access token (o cerrar sesión) usando un refresh token (#9).</summary>
+public record RefreshTokenRequest(string RefreshToken);
