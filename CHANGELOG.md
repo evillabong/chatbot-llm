@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-06-19
+
+### Changed
+
+- `Mimo.Admin.Api` con respuestas **totalmente tipadas** (`.Produces<T>()`): `POST /auth/setup` devuelve `SetupSuperAdminResponse` y `POST /ai/connectors/activate` responde **204 No Content** (antes objeto anónimo). El SDK del Admin regenerado queda sin tipos `UntypedNode`/`Stream`.
+
 ## [0.5.0] - 2026-06-19
 
 ### Added
@@ -128,7 +134,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/evillabong/chatbot-llm/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/evillabong/chatbot-llm/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/evillabong/chatbot-llm/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/evillabong/chatbot-llm/compare/v0.3.0...v0.3.1
