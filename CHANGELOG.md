@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-20
+
+### Added
+
+- **Mejora continua — corte 1: instrumentación de vacíos de conocimiento (#22, Fase 1)** ([ADR 0023](docs/adr/0023-instrumentacion-de-vacios-de-conocimiento.md)): el orquestador ahora captura, por cada consulta atendida por IA, la **mejor similitud de recuperación** y un flag `knowledge_gap` (umbral por defecto 0.75) en una nueva tabla `knowledge_query_signals` del esquema del tenant. `IVectorSearchService.SearchScoredAsync` expone la similitud (`1 - distancia coseno`) sin cambiar el contrato del chat; el registro es **best-effort** (nunca interrumpe la atención) y **no** genera señales falsas cuando el LLM/embeddings no están disponibles (la búsqueda se degrada). Nuevo endpoint `GET /knowledge/gaps` (política TenantAdmin) que lista los vacíos recientes — base de la futura bandeja de curación de conocimiento. Aislado por organización (nunca cross-tenant). **Verificado E2E** (migración, filtro gap-only, authz, `limit`; sin falso positivo en degradación) + unit tests del evaluador de umbral.
+
 ## [0.8.4] - 2026-06-20
 
 ### Added
@@ -244,7 +250,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.8.4...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/evillabong/chatbot-llm/compare/v0.8.4...v0.9.0
 [0.8.4]: https://github.com/evillabong/chatbot-llm/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/evillabong/chatbot-llm/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/evillabong/chatbot-llm/compare/v0.8.1...v0.8.2
