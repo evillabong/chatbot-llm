@@ -6,6 +6,16 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-06-20
+
+### Added
+
+- **Automatización — corte 2: motor de reglas "evento → condición → acción" (#24)** ([ADR 0026](docs/adr/0026-motor-de-reglas-de-automatizacion.md)): nueva entidad `AutomationRule` (esquema del tenant) y endpoints `/automation-rules` (TenantAdmin) para declarar reglas que, ante un evento de dominio (`conversation.created`, `ticket.assigned/resolved`, `survey.recorded`), evalúan condiciones (AND sobre campos del evento) y ejecutan una acción (hoy: **crear tarea**, con título que admite marcadores `{campo}` y responsable opcional). Se introduce `IDomainEventPublisher` como **punto único de publicación** que reparte cada evento a los webhooks salientes y al nuevo `AutomationDispatcher` (best-effort, no rompe la operación origen); lógica de evaluación y plantillas pura y testeable (`RuleEvaluator`, `TemplateRenderer`). Nueva página `/automatizaciones` en `Mimo.App`. **Verificado E2E** (evento real crea la tarea con título renderizado y conversación enlazada; condición que no coincide no dispara; trigger inválido 400; authz 401; borrar regla detiene el disparo) + unit tests.
+
+### Changed
+
+- Los 5 puntos que publicaban eventos de dominio (`/conversations`, `/integration/v1/conversations`, encuesta, asignación y resolución de ticket) pasan a usar `IDomainEventPublisher` en lugar de llamar directamente a `IWebhookPublisher`; el comportamiento de webhooks no cambia (el fan-out los sigue invocando).
+
 ## [0.12.0] - 2026-06-20
 
 ### Added
@@ -268,7 +278,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/evillabong/chatbot-llm/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/evillabong/chatbot-llm/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/evillabong/chatbot-llm/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/evillabong/chatbot-llm/compare/v0.9.0...v0.10.0
