@@ -44,3 +44,4 @@ decisión se revierte o cambia, se crea un ADR nuevo que marca al anterior como
 | [0022](0022-refresh-tokens-de-funcionarios.md) | Refresh tokens y revocación de sesión (funcionarios) | Aceptado |
 | [0023](0023-instrumentacion-de-vacios-de-conocimiento.md) | Instrumentación de señales de recuperación y vacíos de conocimiento (#22, Fase 1) | Aceptado |
 | [0024](0024-catalogo-de-servidores-mcp-externos.md) | Catálogo de servidores MCP externos por organización (#23, corte 1) | Aceptado |
+| [0025](0025-tareas-operativas.md) | Tareas operativas como base de la automatización (#24, corte 1) | Aceptado |

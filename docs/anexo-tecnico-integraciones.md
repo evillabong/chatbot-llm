@@ -112,8 +112,11 @@ organización y aislado.
 - **Campañas:** envíos **salientes** por canal, segmentados y programados; respetan las ventanas y
   reglas de cada proveedor (p. ej. plantillas/ventana de 24 h en WhatsApp). Las respuestas reingresan
   a la bandeja.
-- **Tareas:** entidad propia con responsable, vencimiento y estado, vinculable a conversación,
-  ticket u oportunidad; alimentada por flujos y por la consola.
+- **Tareas (◐ entidad hecha):** entidad propia con responsable, vencimiento y estado, vinculable a
+  conversación, ticket u oportunidad; alimentada por flujos y por la consola. ✅ **Corte 1
+  ([ADR 0025](adr/0025-tareas-operativas.md)):** entidad `WorkTask` + endpoints `/tasks` (Agent) con
+  ciclo de vida (cierre automático al completar/cancelar) y UI `/tareas`. **Pendiente:** que el motor de
+  reglas las cree como acción y avisos de vencimiento.
 
 ## 6. Ventas / integración con CRM — ▹
 

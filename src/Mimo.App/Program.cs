@@ -47,6 +47,7 @@ builder.Services.AddScoped<DocumentsService>();
 builder.Services.AddScoped<DocumentCategoriesService>();
 builder.Services.AddScoped<KnowledgeService>();
 builder.Services.AddScoped<McpServersService>();
+builder.Services.AddScoped<TasksService>();
 builder.Services.AddScoped<TenantConfigService>();
 builder.Services.AddScoped<ApiKeysService>();
 builder.Services.AddScoped<WebhooksService>();

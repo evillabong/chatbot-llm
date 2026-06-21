@@ -17,6 +17,7 @@ using Mimo.Api.Sdk.InternalChat;
 using Mimo.Api.Sdk.Knowledge;
 using Mimo.Api.Sdk.McpServers;
 using Mimo.Api.Sdk.Roles;
+using Mimo.Api.Sdk.Tasks;
 using Mimo.Api.Sdk.Tenant;
 using Mimo.Api.Sdk.Tickets;
 using Mimo.Api.Sdk.Webchat;
@@ -87,6 +88,11 @@ namespace Mimo.Api.Sdk
         public global::Mimo.Api.Sdk.Roles.RolesRequestBuilder Roles
         {
             get => new global::Mimo.Api.Sdk.Roles.RolesRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The tasks property</summary>
+        public global::Mimo.Api.Sdk.Tasks.TasksRequestBuilder Tasks
+        {
+            get => new global::Mimo.Api.Sdk.Tasks.TasksRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>The tenant property</summary>
         public global::Mimo.Api.Sdk.Tenant.TenantRequestBuilder Tenant

@@ -1,0 +1,292 @@
+@page "/tareas"
+@attribute [Authorize]
+@using Microsoft.Kiota.Abstractions
+@using Mimo.Api.Sdk.Models
+@inject TasksService Tasks
+@inject AgentsService AgentsApi
+
+<PageTitle>Tareas · MIMO</PageTitle>
+
+<MimoPageHeader Title="Tareas"
+                Description="Pendientes operativos con responsable, vencimiento y estado.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nueva tarea</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+@if (_pageOk is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Success" Text="@_pageOk" OnDismiss="() => _pageOk = null" />
+}
+
+<div class="mb-4 max-w-xs">
+    <MimoSelect Label="Filtrar por estado" Value="_statusFilter" ValueChanged="OnStatusChangedAsync" Options="_statusFilterOptions" />
+</div>
+
+<MimoTable Loading="_loading" IsEmpty="@(_tasks.Count == 0)" EmptyText="No hay tareas para este filtro.">
+    <Header>
+        <MimoTh>Título</MimoTh>
+        <MimoTh>Responsable</MimoTh>
+        <MimoTh>Vence</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var t in _tasks)
+        {
+            <MimoTr>
+                <MimoTd>@t.Title</MimoTd>
+                <MimoTd>@AgentName(t.AssignedAgentId)</MimoTd>
+                <MimoTd>@(t.DueAt?.ToString("yyyy-MM-dd") ?? "—")</MimoTd>
+                <MimoTd>
+                    @switch (t.Status)
+                    {
+                        case 1:
+                            <MimoBadge Variant="MimoBadgeVariant.Info">En curso</MimoBadge>
+                            break;
+                        case 2:
+                            <MimoBadge Variant="MimoBadgeVariant.Success">Completada</MimoBadge>
+                            break;
+                        case 3:
+                            <MimoBadge Variant="MimoBadgeVariant.Neutral">Cancelada</MimoBadge>
+                            break;
+                        default:
+                            <MimoBadge Variant="MimoBadgeVariant.Warning">Pendiente</MimoBadge>
+                            break;
+                    }
+                </MimoTd>
+                <MimoTd AlignRight="true">
+                    <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(t)">Editar</MimoButton>
+                        <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDelete(t)">Eliminar</MimoButton>
+                    </MimoActions>
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+@* ── Modal crear/editar ─────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showForm" Title="@(_editingId is null ? "Nueva tarea" : "Editar tarea")" Size="MimoModalSize.Large">
+    <ChildContent>
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+        <MimoTextField Label="Título" @bind-Value="_form.Title" Placeholder="p. ej. Llamar al cliente" />
+        <MimoTextArea Label="Descripción" @bind-Value="_form.Description" Rows="4" />
+        <MimoSelect Label="Responsable" @bind-Value="_form.AssignedAgentId" Options="_agentOptions" Placeholder="(sin asignar)" />
+        <MimoTextField Label="Vencimiento" Type="date" @bind-Value="_form.DueDate" />
+        @if (_editingId is not null)
+        {
+            <MimoSelect Label="Estado" @bind-Value="_form.Status" Options="_statusEditOptions" />
+        }
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Primary" Loading="_saving" OnClick="SaveAsync">Guardar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@* ── Modal eliminar ─────────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showDelete" Title="Eliminar tarea" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Seguro que deseas eliminar «@(_deleteTarget?.Title)»?</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showDelete = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmDeleteAsync">Eliminar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<WorkTaskResponse> _tasks = [];
+    private bool _loading = true;
+    private string? _pageError;
+    private string? _pageOk;
+
+    private string _statusFilter = "";
+    private static readonly IReadOnlyList<MimoSelectOption> _statusFilterOptions =
+    [
+        new("", "Todas"),
+        new("0", "Pendientes"),
+        new("1", "En curso"),
+        new("2", "Completadas"),
+        new("3", "Canceladas")
+    ];
+    private static readonly IReadOnlyList<MimoSelectOption> _statusEditOptions =
+    [
+        new("0", "Pendiente"),
+        new("1", "En curso"),
+        new("2", "Completada"),
+        new("3", "Cancelada")
+    ];
+    private IReadOnlyList<MimoSelectOption> _agentOptions = [];
+    private readonly Dictionary<Guid, string> _agentNames = [];
+
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private Guid? _editingId;
+    private readonly TaskForm _form = new();
+
+    private bool _showDelete;
+    private WorkTaskResponse? _deleteTarget;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var agents = await AgentsApi.ListAsync(isActive: true);
+            _agentOptions = agents
+                .Where(a => a.Id is not null)
+                .Select(a => new MimoSelectOption(a.Id!.Value.ToString(), a.FullName ?? ""))
+                .ToList();
+            foreach (var a in agents.Where(a => a.Id is not null))
+                _agentNames[a.Id!.Value] = a.FullName ?? "";
+        }
+        catch { /* el responsable es opcional */ }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try
+        {
+            int? status = int.TryParse(_statusFilter, out var s) ? s : null;
+            _tasks = await Tasks.ListAsync(status);
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+    }
+
+    private async Task OnStatusChangedAsync(string value)
+    {
+        _statusFilter = value;
+        await LoadAsync();
+    }
+
+    private string AgentName(Guid? id)
+        => id is not null && _agentNames.TryGetValue(id.Value, out var name) && name.Length > 0 ? name : "—";
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form.Reset();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private void OpenEdit(WorkTaskResponse t)
+    {
+        _editingId = t.Id;
+        _form.Title = t.Title ?? "";
+        _form.Description = t.Description ?? "";
+        _form.AssignedAgentId = t.AssignedAgentId?.ToString() ?? "";
+        _form.DueDate = t.DueAt?.ToString("yyyy-MM-dd") ?? "";
+        _form.Status = (t.Status ?? 0).ToString();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Title))
+        {
+            _formError = "Indica el título.";
+            return;
+        }
+        _saving = true;
+        _formError = null;
+        Guid? agentId = Guid.TryParse(_form.AssignedAgentId, out var aid) ? aid : null;
+        DateTimeOffset? due = DateTimeOffset.TryParse(_form.DueDate, out var d) ? d : null;
+        try
+        {
+            if (_editingId is null)
+            {
+                await Tasks.CreateAsync(new CreateWorkTaskRequest
+                {
+                    Title = _form.Title.Trim(),
+                    Description = string.IsNullOrWhiteSpace(_form.Description) ? null : _form.Description,
+                    AssignedAgentId = agentId,
+                    DueAt = due
+                });
+            }
+            else
+            {
+                await Tasks.UpdateAsync(_editingId.Value, new UpdateWorkTaskRequest
+                {
+                    Title = _form.Title.Trim(),
+                    Description = string.IsNullOrWhiteSpace(_form.Description) ? null : _form.Description,
+                    Status = int.TryParse(_form.Status, out var st) ? st : 0,
+                    AssignedAgentId = agentId,
+                    DueAt = due
+                });
+            }
+            _showForm = false;
+            _pageOk = "Tarea guardada.";
+            await LoadAsync();
+        }
+        catch (Exception ex) { _formError = Describe(ex); }
+        finally { _saving = false; }
+    }
+
+    private void OpenDelete(WorkTaskResponse t)
+    {
+        _deleteTarget = t;
+        _showDelete = true;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteTarget?.Id is null) return;
+        _saving = true;
+        try
+        {
+            await Tasks.DeleteAsync(_deleteTarget.Id.Value);
+            _showDelete = false;
+            _pageOk = "Tarea eliminada.";
+            await LoadAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); _showDelete = false; }
+        finally { _saving = false; }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 404 } => "La tarea no existe.",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class TaskForm
+    {
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string AssignedAgentId { get; set; } = "";
+        public string DueDate { get; set; } = "";
+        public string Status { get; set; } = "0";
+
+        public void Reset()
+        {
+            Title = "";
+            Description = "";
+            AssignedAgentId = "";
+            DueDate = "";
+            Status = "0";
+        }
+    }
+}
