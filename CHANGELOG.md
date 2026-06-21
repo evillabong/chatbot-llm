@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-06-20
+
+### Added
+
+- **Automatización — corte 4: operadores de condición (#24)** ([ADR 0026](docs/adr/0026-motor-de-reglas-de-automatizacion.md)): las condiciones de las reglas ahora soportan operadores **igual / distinto / contiene / no contiene** (`RuleCondition.Operator`), además de la igualdad. El operador por defecto es «igual», por lo que las reglas previas siguen funcionando sin cambios. Para campos ausentes, «distinto»/«no contiene» se cumplen y «igual»/«contiene» no. La UI `/automatizaciones` incorpora un selector de operador. **Verificado E2E** (condición `externalUserId contiene "vip"`: solo la conversación VIP dispara la tarea) + unit tests de los cuatro operadores.
+
 ## [0.14.0] - 2026-06-20
 
 ### Added
@@ -284,7 +290,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/evillabong/chatbot-llm/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/evillabong/chatbot-llm/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/evillabong/chatbot-llm/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/evillabong/chatbot-llm/compare/v0.11.0...v0.12.0
