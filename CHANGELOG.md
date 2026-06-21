@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-06-20
+
+### Added
+
+- **Automatización — corte 3: acción «escalar a funcionario» (#24)** ([ADR 0026](docs/adr/0026-motor-de-reglas-de-automatizacion.md)): las reglas de automatización ahora soportan, además de «crear tarea», la acción **`Escalate`** que ante su evento (típicamente `conversation.created`) escala la conversación —crea el ticket, lo encola y lo asigna si aplica— con un motivo que admite marcadores `{campo}`. El `AutomationRule` gana `ActionEscalateReason` y `ActionTaskTitle` pasa a ser opcional (aplica solo a CreateTask); el endpoint valida la coherencia acción/parámetros (CreateTask exige título → 400). La UI `/automatizaciones` incorpora un selector de acción con los campos correspondientes. **Verificado E2E** (regla Escalate + evento → ticket creado, conversación a `InQueue`, motivo renderizado `…por WebChat`; CreateTask sin título → 400).
+
 ## [0.13.0] - 2026-06-20
 
 ### Added
@@ -278,7 +284,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/evillabong/chatbot-llm/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/evillabong/chatbot-llm/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/evillabong/chatbot-llm/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/evillabong/chatbot-llm/compare/v0.10.0...v0.11.0
