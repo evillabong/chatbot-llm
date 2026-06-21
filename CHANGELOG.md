@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.18.5] - 2026-06-21
+
+### Fixed
+
+- **Front se veía sin estilos (botones/tarjetas sin fondo) por conflicto de dos versiones de Tailwind.** Flowbite 0.2.6-beta sirve su CSS con **Tailwind v4** (estilos de componentes dentro de `@layer`), mientras que el sistema de diseño emitía `@tailwind base` con **Tailwind v3** (preflight **sin** `@layer`). El reset sin capa de v3 ganaba sobre los componentes de Flowbite y los dejaba sin estilo. Se quitó `@tailwind base` de `src/Mimo.Ui/Styles/mimo.css` (el preflight ahora lo aporta solo Flowbite); `mimo.min.css` queda como utilidades del sistema de diseño. Pendiente de verificación visual en navegador (#20/#28).
+
 ## [0.18.4] - 2026-06-21
 
 ### Fixed
@@ -332,7 +338,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.4...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.5...HEAD
+[0.18.5]: https://github.com/evillabong/chatbot-llm/compare/v0.18.4...v0.18.5
 [0.18.4]: https://github.com/evillabong/chatbot-llm/compare/v0.18.3...v0.18.4
 [0.18.3]: https://github.com/evillabong/chatbot-llm/compare/v0.18.2...v0.18.3
 [0.18.2]: https://github.com/evillabong/chatbot-llm/compare/v0.18.1...v0.18.2

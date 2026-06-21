@@ -1,3 +1,7 @@
-@tailwind base;
+/* Entrada de Tailwind del sistema de diseño MIMO.
+   NO incluir "@tailwind base": el preflight/base lo aporta Flowbite (Tailwind v4) vía
+   _content/Flowbite/flowbite.min.css. Emitir aquí un segundo preflight (v3, sin @layer) pisaba
+   los estilos de los componentes de Flowbite (botones/tarjetas quedaban sin fondo). Aquí solo
+   generamos componentes + utilidades del sistema de diseño. */
 @tailwind components;
 @tailwind utilities;
