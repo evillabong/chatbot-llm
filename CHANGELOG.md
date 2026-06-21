@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-06-21
+
+### Added
+
+- **Ventas — corte 2: tareas de seguimiento vinculadas (#26)** ([ADR 0027](docs/adr/0027-ventas-oportunidades-y-pipeline.md)): `WorkTask` (#24) gana `OpportunityId` opcional, de modo que una tarea puede ser seguimiento de una oportunidad; `GET /tasks` acepta el filtro `opportunityId` y la creación lo admite. La página `/ventas` incorpora un panel **«Tareas»** por oportunidad para listar el seguimiento, agregar tareas (título + vencimiento) y completarlas al vuelo. **Verificado E2E** (tarea creada con `opportunityId` → el filtro devuelve solo las de esa oportunidad, excluyendo las sueltas). Migración aditiva `TaskOpportunityLink`.
+
 ## [0.16.0] - 2026-06-21
 
 ### Added
@@ -296,7 +302,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/evillabong/chatbot-llm/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/evillabong/chatbot-llm/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/evillabong/chatbot-llm/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/evillabong/chatbot-llm/compare/v0.13.0...v0.14.0
