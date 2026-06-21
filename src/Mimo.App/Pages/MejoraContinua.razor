@@ -1,0 +1,246 @@
+@page "/mejora-continua"
+@attribute [Authorize]
+@using Microsoft.Kiota.Abstractions
+@inject KnowledgeService Knowledge
+
+<PageTitle>Mejora continua · MIMO</PageTitle>
+
+<MimoPageHeader Title="Mejora continua"
+                Description="Vacíos de conocimiento detectados por el asistente y bandeja de sugerencias para curar.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="() => OpenCreate(null, null)">Nueva sugerencia</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+@if (_pageOk is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Success" Text="@_pageOk" OnDismiss="() => _pageOk = null" />
+}
+
+@* ── Vacíos de conocimiento ─────────────────────────────────────────────────── *@
+<MimoCard CssClass="mb-6">
+    <MimoHeading Level="2" Text="Vacíos de conocimiento" />
+    <MimoText Muted Small>Consultas con baja recuperación semántica. Documenta lo que falta.</MimoText>
+    <div class="mt-4">
+        <MimoTable Loading="_loadingGaps" IsEmpty="@(_gaps.Count == 0)" EmptyText="Sin vacíos registrados. El asistente está cubriendo bien las consultas.">
+            <Header>
+                <MimoTh>Consulta</MimoTh>
+                <MimoTh>Similitud</MimoTh>
+                <MimoTh>Coincidencias</MimoTh>
+                <MimoTh>Fecha</MimoTh>
+                <MimoTh AlignRight="true">Acciones</MimoTh>
+            </Header>
+            <Body>
+                @foreach (var g in _gaps)
+                {
+                    <MimoTr>
+                        <MimoTd>@g.Query</MimoTd>
+                        <MimoTd>@FormatSimilarity(g.TopSimilarity, g.MatchCount)</MimoTd>
+                        <MimoTd>@g.MatchCount</MimoTd>
+                        <MimoTd>@g.CreatedAt?.ToString("yyyy-MM-dd HH:mm")</MimoTd>
+                        <MimoTd AlignRight="true">
+                            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenCreate(g.Query, g.Id)">Crear borrador</MimoButton>
+                        </MimoTd>
+                    </MimoTr>
+                }
+            </Body>
+        </MimoTable>
+    </div>
+</MimoCard>
+
+@* ── Sugerencias ────────────────────────────────────────────────────────────── *@
+<MimoCard CssClass="mb-6">
+    <MimoHeading Level="2" Text="Sugerencias de conocimiento" />
+    <MimoText Muted Small>Borradores que, al aprobar, se publican como documento del RAG.</MimoText>
+    <div class="mt-4">
+        <MimoSelect Label="Estado" Value="_statusFilter" ValueChanged="OnStatusChangedAsync" Options="_statusOptions" />
+
+        <MimoTable Loading="_loadingSuggestions" IsEmpty="@(_suggestions.Count == 0)" EmptyText="No hay sugerencias para este estado.">
+            <Header>
+                <MimoTh>Título</MimoTh>
+                <MimoTh>Estado</MimoTh>
+                <MimoTh>Creada</MimoTh>
+                <MimoTh AlignRight="true">Acciones</MimoTh>
+            </Header>
+            <Body>
+                @foreach (var s in _suggestions)
+                {
+                    <MimoTr>
+                        <MimoTd>@s.DraftTitle</MimoTd>
+                        <MimoTd>
+                            @switch (s.Status)
+                            {
+                                case 1:
+                                    <MimoBadge Variant="MimoBadgeVariant.Success">Aprobada</MimoBadge>
+                                    break;
+                                case 2:
+                                    <MimoBadge Variant="MimoBadgeVariant.Neutral">Descartada</MimoBadge>
+                                    break;
+                                default:
+                                    <MimoBadge Variant="MimoBadgeVariant.Warning">Pendiente</MimoBadge>
+                                    break;
+                            }
+                        </MimoTd>
+                        <MimoTd>@s.CreatedAt?.ToString("yyyy-MM-dd HH:mm")</MimoTd>
+                        <MimoTd AlignRight="true">
+                            @if (s.Status == 0)
+                            {
+                                <MimoActions AlignRight="true">
+                                    <MimoButton Variant="MimoButtonVariant.Primary" OnClick="() => ApproveAsync(s)">Aprobar y publicar</MimoButton>
+                                    <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => DiscardAsync(s)">Descartar</MimoButton>
+                                </MimoActions>
+                            }
+                        </MimoTd>
+                    </MimoTr>
+                }
+            </Body>
+        </MimoTable>
+    </div>
+</MimoCard>
+
+@* ── Modal nueva sugerencia ─────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showForm" Title="Nueva sugerencia de conocimiento" Size="MimoModalSize.Large">
+    <ChildContent>
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+        <MimoTextField Label="Título" @bind-Value="_draftTitle" Placeholder="p. ej. Horarios de atención en feriados" />
+        <MimoTextArea Label="Contenido" @bind-Value="_draftContent" Rows="8" Placeholder="Redacta la respuesta que el asistente debería conocer." />
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Primary" Loading="_saving" OnClick="SaveAsync">Guardar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<KnowledgeGapResponse> _gaps = [];
+    private List<KnowledgeSuggestionResponse> _suggestions = [];
+    private bool _loadingGaps = true;
+    private bool _loadingSuggestions = true;
+    private string? _pageError;
+    private string? _pageOk;
+
+    private string _statusFilter = "0";
+    private static readonly IReadOnlyList<MimoSelectOption> _statusOptions =
+    [
+        new("0", "Pendientes"),
+        new("1", "Aprobadas"),
+        new("2", "Descartadas"),
+        new("", "Todas")
+    ];
+
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private string _draftTitle = "";
+    private string _draftContent = "";
+    private Guid? _sourceSignalId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadGapsAsync(), LoadSuggestionsAsync());
+    }
+
+    private async Task LoadGapsAsync()
+    {
+        _loadingGaps = true;
+        try { _gaps = await Knowledge.ListGapsAsync(); }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loadingGaps = false; }
+    }
+
+    private async Task LoadSuggestionsAsync()
+    {
+        _loadingSuggestions = true;
+        try
+        {
+            int? status = int.TryParse(_statusFilter, out var s) ? s : null;
+            _suggestions = await Knowledge.ListSuggestionsAsync(status);
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loadingSuggestions = false; }
+    }
+
+    private async Task OnStatusChangedAsync(string value)
+    {
+        _statusFilter = value;
+        await LoadSuggestionsAsync();
+    }
+
+    private void OpenCreate(string? prefillTitle, Guid? sourceSignalId)
+    {
+        _draftTitle = prefillTitle ?? "";
+        _draftContent = "";
+        _sourceSignalId = sourceSignalId;
+        _formError = null;
+        _showForm = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_draftTitle) || string.IsNullOrWhiteSpace(_draftContent))
+        {
+            _formError = "Indica título y contenido.";
+            return;
+        }
+        _saving = true;
+        _formError = null;
+        try
+        {
+            await Knowledge.CreateSuggestionAsync(_draftTitle.Trim(), _draftContent, _sourceSignalId);
+            _showForm = false;
+            _pageOk = "Sugerencia creada.";
+            _statusFilter = "0";
+            await LoadSuggestionsAsync();
+        }
+        catch (Exception ex) { _formError = Describe(ex); }
+        finally { _saving = false; }
+    }
+
+    private async Task ApproveAsync(KnowledgeSuggestionResponse s)
+    {
+        if (s.Id is null) return;
+        _pageError = null; _pageOk = null;
+        try
+        {
+            await Knowledge.ApproveAsync(s.Id.Value);
+            _pageOk = $"«{s.DraftTitle}» publicada como documento.";
+            await LoadSuggestionsAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+    }
+
+    private async Task DiscardAsync(KnowledgeSuggestionResponse s)
+    {
+        if (s.Id is null) return;
+        _pageError = null; _pageOk = null;
+        try
+        {
+            await Knowledge.DiscardAsync(s.Id.Value);
+            _pageOk = $"«{s.DraftTitle}» descartada.";
+            await LoadSuggestionsAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+    }
+
+    private static string FormatSimilarity(double? value, int? matchCount)
+        => (matchCount ?? 0) == 0 ? "—" : $"{value ?? 0:0.00}";
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 404 } => "El elemento no existe.",
+        ApiException { ResponseStatusCode: 409 } => "La sugerencia ya fue revisada.",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+}

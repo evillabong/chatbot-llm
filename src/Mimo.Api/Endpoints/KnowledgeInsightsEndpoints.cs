@@ -32,7 +32,7 @@ public static class KnowledgeInsightsEndpoints
         var gaps = await signals.GetRecentGapsAsync(take, ct);
         var response = gaps
             .Select(s => new KnowledgeGapResponse(
-                s.Id, s.ConversationId, s.QueryText, s.TopSimilarity, s.MatchCount, s.CreatedAt))
+                s.Id, s.ConversationId, s.QueryText, s.TopSimilarity ?? 0, s.MatchCount, s.CreatedAt))
             .ToList();
         return Results.Ok(response);
     }

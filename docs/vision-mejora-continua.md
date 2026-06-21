@@ -65,8 +65,9 @@ La materia prima ya se captura hoy (esquema por tenant); **no requiere reestruct
 **Señales a añadir (baratas):** *score* de recuperación semántica por consulta y un *flag*
 `knowledge_gap` cuando la recuperación queda por debajo de un umbral o el caso escala por falta de
 información. Es lo único que conviene instrumentar pronto para alimentar la Fase 1.
-**✅ Implementado** (corte 1, [ADR 0023](adr/0023-instrumentacion-de-vacios-de-conocimiento.md)):
-`KnowledgeQuerySignal` por consulta + `GET /knowledge/gaps`.
+**✅ Implementado** (cortes 1–2, [ADR 0023](adr/0023-instrumentacion-de-vacios-de-conocimiento.md)):
+`KnowledgeQuerySignal` por consulta + `GET /knowledge/gaps`; bandeja de curación
+(`KnowledgeSuggestion` + `/knowledge/suggestions`, aprobar → `Document`) y UI `/mejora-continua`.
 
 ---
 
@@ -84,10 +85,11 @@ información. Es lo único que conviene instrumentar pronto para alimentar la Fa
    `TenantAdmin` aprueba/edita → se publica como `Document` (con su embedding) → mejora el RAG.
 
 **Componentes/cambios:**
-- Instrumentar *retrieval score* + *flag* `knowledge_gap` (ver §4).
-- **Worker batch por tenant** (estilo `IHostedService`) que analiza conversaciones recientes y
-  genera sugerencias.
-- **UI de "Sugerencias de conocimiento"** (aprobar/editar/descartar) en el admin de tenant.
+- ✅ Instrumentar *retrieval score* + *flag* `knowledge_gap` (ver §4) — **corte 1**.
+- ✅ **UI/bandeja de "Sugerencias de conocimiento"** (crear/aprobar→`Document`/descartar) en el admin
+  de tenant — **corte 2** (`/mejora-continua`).
+- **Worker batch por tenant** (estilo `IHostedService`) que analiza conversaciones recientes y genera
+  sugerencias — **pendiente (corte 3)**.
 - Reutiliza `IVectorSearchService` (embeddings/clustering) y el gateway (resumen).
 
 **Métricas:** cobertura de conocimiento, tasa de auto-resolución, CSAT, reducción de escalamientos
@@ -194,7 +196,10 @@ Definir **línea base** y seguir en el tiempo, **por tenant**:
   *retrieval score* + *flag* `knowledge_gap`. El orquestador registra una `KnowledgeQuerySignal` por
   consulta (similitud + nº de coincidencias + flag) en el esquema del tenant; `GET /knowledge/gaps`
   (TenantAdmin) lista los vacíos recientes. Verificado E2E.
-- Worker batch por tenant + bandeja de curación de sugerencias (Fase 1) — **siguiente corte**.
+- ✅ **Hecho (corte 2, [ADR 0023](adr/0023-instrumentacion-de-vacios-de-conocimiento.md)):** **bandeja de
+  curación HITL**. Entidad `KnowledgeSuggestion` + endpoints `/knowledge/suggestions` (listar/crear/
+  aprobar/descartar, TenantAdmin); aprobar publica un `Document`. UI `/mejora-continua`. Verificado E2E.
+- Worker batch por tenant que **genera** los borradores con IA (Fase 1) — **siguiente corte** (requiere LLM).
 - Pipeline de *features* y etiquetas para el clasificador (Fase 2).
 - Pipeline de anonimización + exportación de dataset (Fase 3).
 

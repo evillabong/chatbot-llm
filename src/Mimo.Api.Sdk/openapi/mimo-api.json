@@ -817,6 +817,138 @@
         }
       }
     },
+    "/knowledge/suggestions": {
+      "get": {
+        "tags": [
+          "KnowledgeSuggestions"
+        ],
+        "summary": "Lista las sugerencias de conocimiento (query opcional: status 0=pendiente,1=aprobada,2=descartada).",
+        "operationId": "ListKnowledgeSuggestions",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeSuggestionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "KnowledgeSuggestions"
+        ],
+        "summary": "Crea una sugerencia de conocimiento candidata.",
+        "operationId": "CreateKnowledgeSuggestion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateKnowledgeSuggestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeSuggestionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge/suggestions/approve": {
+      "post": {
+        "tags": [
+          "KnowledgeSuggestions"
+        ],
+        "summary": "Aprueba una sugerencia y la publica como documento (query: id).",
+        "operationId": "ApproveKnowledgeSuggestion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeSuggestionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/knowledge/suggestions/discard": {
+      "post": {
+        "tags": [
+          "KnowledgeSuggestions"
+        ],
+        "summary": "Descarta una sugerencia pendiente (query: id).",
+        "operationId": "DiscardKnowledgeSuggestion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
     "/tenant/configuration": {
       "get": {
         "tags": [
@@ -2453,6 +2585,26 @@
           }
         }
       },
+      "CreateKnowledgeSuggestionRequest": {
+        "required": [
+          "draftTitle",
+          "draftContent"
+        ],
+        "type": "object",
+        "properties": {
+          "draftTitle": {
+            "type": "string"
+          },
+          "draftContent": {
+            "type": "string"
+          },
+          "sourceSignalId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        }
+      },
       "CreateRoleRequest": {
         "required": [
           "name"
@@ -2812,8 +2964,7 @@
           },
           "topSimilarity": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "format": "double",
-            "nullable": true
+            "format": "double"
           },
           "matchCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -2824,6 +2975,56 @@
             "format": "date-time"
           }
         }
+      },
+      "KnowledgeSuggestionResponse": {
+        "required": [
+          "id",
+          "sourceSignalId",
+          "draftTitle",
+          "draftContent",
+          "status",
+          "publishedDocumentId",
+          "createdAt",
+          "reviewedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceSignalId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "draftTitle": {
+            "type": "string"
+          },
+          "draftContent": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/KnowledgeSuggestionStatus"
+          },
+          "publishedDocumentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "KnowledgeSuggestionStatus": {
+        "type": "integer"
       },
       "LoginRequest": {
         "required": [
@@ -3631,6 +3832,9 @@
     },
     {
       "name": "KnowledgeInsights"
+    },
+    {
+      "name": "KnowledgeSuggestions"
     },
     {
       "name": "Tenant"

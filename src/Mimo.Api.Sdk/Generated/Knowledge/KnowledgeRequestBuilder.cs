@@ -3,6 +3,7 @@
 using Microsoft.Kiota.Abstractions.Extensions;
 using Microsoft.Kiota.Abstractions;
 using Mimo.Api.Sdk.Knowledge.Gaps;
+using Mimo.Api.Sdk.Knowledge.Suggestions;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -19,6 +20,11 @@ namespace Mimo.Api.Sdk.Knowledge
         public global::Mimo.Api.Sdk.Knowledge.Gaps.GapsRequestBuilder Gaps
         {
             get => new global::Mimo.Api.Sdk.Knowledge.Gaps.GapsRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The suggestions property</summary>
+        public global::Mimo.Api.Sdk.Knowledge.Suggestions.SuggestionsRequestBuilder Suggestions
+        {
+            get => new global::Mimo.Api.Sdk.Knowledge.Suggestions.SuggestionsRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>
         /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Knowledge.KnowledgeRequestBuilder"/> and sets the default values.

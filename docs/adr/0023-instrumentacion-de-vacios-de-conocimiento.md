@@ -56,6 +56,28 @@ tan buena fue la coincidencia.
   borradores** (resumen vía gateway) y la **UI de curación** (aprobar/editar/descartar → `Document`).
   Se registran como cortes siguientes del #22.
 
+## Corte 2 — Bandeja de curación (HITL)
+
+Extiende esta decisión cerrando el bucle humano de la Fase 1 (sin worker batch todavía):
+
+- **Entidad `KnowledgeSuggestion`** en el esquema del tenant (`knowledge_suggestions`): un borrador
+  (título + contenido) con estado `Pending`/`Approved`/`Discarded`, enlace opcional al vacío de origen
+  (`SourceSignalId`) y, al aprobar, el `PublishedDocumentId` resultante.
+- **Endpoints `/knowledge/suggestions`** (política **TenantAdmin**): listar (filtro por estado), crear
+  (manual o desde un vacío), **aprobar** y **descartar**. Aprobar **publica un `Document`** (visibilidad
+  Pública: el admin ya revisó el contenido que responde a una consulta real) reutilizando el mismo
+  camino de creación de documentos —incluida la generación de embedding, que **degrada** si el LLM no
+  está disponible (documento sin índice, reindexable luego). Aprobar/descartar exigen estado `Pending`
+  (→ 409 si ya se revisó).
+- **UI `/mejora-continua`** (`Mimo.App`): lista los vacíos detectados (con acción "Crear borrador"
+  prellenando desde el vacío) y la bandeja de sugerencias con aprobar/descartar y filtro por estado.
+- **Verificado E2E:** crear → listar pendientes → aprobar (estado `Approved` + `PublishedDocumentId`,
+  documento visible en `/documents`) → descartar (204) → reaprobar (409) → filtros por estado y authz
+  (sin token 401). El `TopSimilarity` del vacío se expone **no-nullable** (0 = sin coincidencias) para
+  evitar `UntypedNode` en el SDK (#18).
+- **Pendiente (corte 3):** worker batch que **agrupa** vacíos y **genera** borradores vía gateway de IA
+  (resumen), alimentando la misma bandeja; requiere credenciales de LLM.
+
 ## Alternativas consideradas
 
 - **Guardar la distancia en el `Message.Metadata`** en vez de una tabla propia: descartado; dificulta

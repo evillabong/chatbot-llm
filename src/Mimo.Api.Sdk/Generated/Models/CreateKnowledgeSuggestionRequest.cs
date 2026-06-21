@@ -9,45 +9,45 @@ namespace Mimo.Api.Sdk.Models
 {
     [global::System.CodeDom.Compiler.GeneratedCode("Kiota", "1.0.0")]
     #pragma warning disable CS1591
-    public partial class KnowledgeGapResponse : IAdditionalDataHolder, IParsable
+    public partial class CreateKnowledgeSuggestionRequest : IAdditionalDataHolder, IParsable
     #pragma warning restore CS1591
     {
         /// <summary>Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.</summary>
         public IDictionary<string, object> AdditionalData { get; set; }
-        /// <summary>The conversationId property</summary>
-        public Guid? ConversationId { get; set; }
-        /// <summary>The createdAt property</summary>
-        public DateTimeOffset? CreatedAt { get; set; }
-        /// <summary>The id property</summary>
-        public Guid? Id { get; set; }
-        /// <summary>The matchCount property</summary>
-        public int? MatchCount { get; set; }
-        /// <summary>The query property</summary>
+        /// <summary>The draftContent property</summary>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public string? Query { get; set; }
+        public string? DraftContent { get; set; }
 #nullable restore
 #else
-        public string Query { get; set; }
+        public string DraftContent { get; set; }
 #endif
-        /// <summary>The topSimilarity property</summary>
-        public double? TopSimilarity { get; set; }
+        /// <summary>The draftTitle property</summary>
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
+#nullable enable
+        public string? DraftTitle { get; set; }
+#nullable restore
+#else
+        public string DraftTitle { get; set; }
+#endif
+        /// <summary>The sourceSignalId property</summary>
+        public Guid? SourceSignalId { get; set; }
         /// <summary>
-        /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Models.KnowledgeGapResponse"/> and sets the default values.
+        /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Models.CreateKnowledgeSuggestionRequest"/> and sets the default values.
         /// </summary>
-        public KnowledgeGapResponse()
+        public CreateKnowledgeSuggestionRequest()
         {
             AdditionalData = new Dictionary<string, object>();
         }
         /// <summary>
         /// Creates a new instance of the appropriate class based on discriminator value
         /// </summary>
-        /// <returns>A <see cref="global::Mimo.Api.Sdk.Models.KnowledgeGapResponse"/></returns>
+        /// <returns>A <see cref="global::Mimo.Api.Sdk.Models.CreateKnowledgeSuggestionRequest"/></returns>
         /// <param name="parseNode">The parse node to use to read the discriminator value and create the object</param>
-        public static global::Mimo.Api.Sdk.Models.KnowledgeGapResponse CreateFromDiscriminatorValue(IParseNode parseNode)
+        public static global::Mimo.Api.Sdk.Models.CreateKnowledgeSuggestionRequest CreateFromDiscriminatorValue(IParseNode parseNode)
         {
             if(ReferenceEquals(parseNode, null)) throw new ArgumentNullException(nameof(parseNode));
-            return new global::Mimo.Api.Sdk.Models.KnowledgeGapResponse();
+            return new global::Mimo.Api.Sdk.Models.CreateKnowledgeSuggestionRequest();
         }
         /// <summary>
         /// The deserialization information for the current model
@@ -57,12 +57,9 @@ namespace Mimo.Api.Sdk.Models
         {
             return new Dictionary<string, Action<IParseNode>>
             {
-                { "conversationId", n => { ConversationId = n.GetGuidValue(); } },
-                { "createdAt", n => { CreatedAt = n.GetDateTimeOffsetValue(); } },
-                { "id", n => { Id = n.GetGuidValue(); } },
-                { "matchCount", n => { MatchCount = n.GetIntValue(); } },
-                { "query", n => { Query = n.GetStringValue(); } },
-                { "topSimilarity", n => { TopSimilarity = n.GetDoubleValue(); } },
+                { "draftContent", n => { DraftContent = n.GetStringValue(); } },
+                { "draftTitle", n => { DraftTitle = n.GetStringValue(); } },
+                { "sourceSignalId", n => { SourceSignalId = n.GetGuidValue(); } },
             };
         }
         /// <summary>
@@ -72,12 +69,9 @@ namespace Mimo.Api.Sdk.Models
         public virtual void Serialize(ISerializationWriter writer)
         {
             if(ReferenceEquals(writer, null)) throw new ArgumentNullException(nameof(writer));
-            writer.WriteGuidValue("conversationId", ConversationId);
-            writer.WriteDateTimeOffsetValue("createdAt", CreatedAt);
-            writer.WriteGuidValue("id", Id);
-            writer.WriteIntValue("matchCount", MatchCount);
-            writer.WriteStringValue("query", Query);
-            writer.WriteDoubleValue("topSimilarity", TopSimilarity);
+            writer.WriteStringValue("draftContent", DraftContent);
+            writer.WriteStringValue("draftTitle", DraftTitle);
+            writer.WriteGuidValue("sourceSignalId", SourceSignalId);
             writer.WriteAdditionalData(AdditionalData);
         }
     }
