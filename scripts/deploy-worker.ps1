@@ -32,8 +32,20 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Test-Administrator {
+    $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+# Anillo de llaves de Data Protection compartido con las APIs (descifra secretos HMAC; ADR 0010).
+function Initialize-DataProtectionKeys {
+    $dpKeys = Join-Path $env:ProgramData 'MIMO\dp-keys'
+    New-Item -ItemType Directory -Force -Path $dpKeys | Out-Null
+    icacls $dpKeys /grant 'IIS_IUSRS:(OI)(CI)M' /T | Out-Null
+    Write-Host "Anillo de llaves Data Protection: $dpKeys"
+}
+
 # ── Auto-elevación ────────────────────────────────────────────────────────────
-. (Join-Path $PSScriptRoot '_deploy-lib.ps1')
 if (-not (Test-Administrator)) {
     Write-Host 'Se requieren privilegios de administrador; elevando (UAC)...' -ForegroundColor Yellow
     $argList = @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$PSCommandPath`"",

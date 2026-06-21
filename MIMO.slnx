@@ -1,14 +1,16 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/Mimo.Admin.Api/Mimo.Admin.Api.csproj" />
+  <Folder Name="/libs/">
     <Project Path="src/Mimo.Admin.Api.Sdk/Mimo.Admin.Api.Sdk.csproj" />
-    <Project Path="src/Mimo.Admin.App/Mimo.Admin.App.csproj" />
-    <Project Path="src/Mimo.Api/Mimo.Api.csproj" />
     <Project Path="src/Mimo.Api.Sdk/Mimo.Api.Sdk.csproj" />
-    <Project Path="src/Mimo.App/Mimo.App.csproj" />
     <Project Path="src/Mimo.Core/Mimo.Core.csproj" />
     <Project Path="src/Mimo.Infrastructure/Mimo.Infrastructure.csproj" />
     <Project Path="src/Mimo.Ui/Mimo.Ui.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Mimo.Admin.Api/Mimo.Admin.Api.csproj" />
+    <Project Path="src/Mimo.Admin.App/Mimo.Admin.App.csproj" />
+    <Project Path="src/Mimo.Api/Mimo.Api.csproj" />
+    <Project Path="src/Mimo.App/Mimo.App.csproj" />
     <Project Path="src/Mimo.Worker/Mimo.Worker.csproj" />
   </Folder>
   <Folder Name="/tests/">

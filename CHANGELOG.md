@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.18.2] - 2026-06-21
+
+### Changed
+
+- **Scripts de despliegue a IIS consolidados a dos archivos autocontenidos**, uno por capa: `publish-mimo.ps1` (Mimo.Api + Mimo.App) y `publish-mimo-admin.ps1` (Mimo.Admin.Api + Mimo.Admin.App). Cada uno crea/actualiza el sitio y App Pool de IIS, respalda, publica, **aplana** el `wwwroot` de la WASM al sitio y escribe su `web.config` (MIME del framework de Blazor `.wasm`/`.webcil`/`.dll`/`.dat`/`.blat` + fallback SPA), preserva `appsettings.Production.json` del API y lo crea en el primer despliegue (cadena de conexión con `-DbPassword` + `Jwt:Key` generada), e inyecta `Cors:AllowedOrigins` y `Api:BaseUrl` con los valores públicos por defecto (`*.linkcorp.uk`). Esto reemplaza el copiado anterior que dejaba fuera el `web.config` de las WASM (el front no cargaba). Se eliminaron `_deploy-lib.ps1`, `deploy-tenant.ps1`, `deploy-admin.ps1` y `appsettings.Production.template.json` (sus funciones quedan integradas en los dos scripts). `deploy-worker.ps1` (Servicio de Windows) se mantiene, ahora autocontenido.
+
 ## [0.18.1] - 2026-06-21
 
 ### Fixed
@@ -314,7 +320,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.1...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.2...HEAD
+[0.18.2]: https://github.com/evillabong/chatbot-llm/compare/v0.18.1...v0.18.2
 [0.18.1]: https://github.com/evillabong/chatbot-llm/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/evillabong/chatbot-llm/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/evillabong/chatbot-llm/compare/v0.16.0...v0.17.0

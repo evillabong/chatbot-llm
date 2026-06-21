@@ -1,81 +1,70 @@
 # scripts
 
-Utilidades de desarrollo/despliegue.
+Utilidades de desarrollo y despliegue.
 
 ## Despliegue a IIS local
 
-El despliegue está separado por **capa de arquitectura**. Cada script publica un API
-(ASP.NET Core, hospedado por ANCM) y su app (Blazor WebAssembly, contenido estático). Ambos
-se auto-elevan (UAC) porque escribir en `C:\inetpub` y configurar IIS requieren administrador.
-La lógica común vive en [`_deploy-lib.ps1`](_deploy-lib.ps1) (no se ejecuta directamente).
+Dos scripts **autocontenidos**, uno por capa. Cada uno publica el API (ASP.NET Core, ANCM) y su
+app (Blazor WebAssembly estática), crea/actualiza el sitio y el App Pool ("Sin código administrado"),
+respalda lo anterior en `C:\inetpub\history`, preserva el `appsettings.Production.json` del API
+(secretos) e inyecta el CORS y la URL pública. Ejecutar en **PowerShell como Administrador**.
 
-### `deploy-tenant.ps1` — capa tenant
+Los hostnames públicos (`https://…linkcorp.uk`) los sirve un proxy inverso por delante; IIS escucha
+en `http://localhost` en los puertos indicados.
 
-`Mimo.Api` → sitio `mimo.api` · `Mimo.App` → sitio `mimo.app`.
-
-```powershell
-# desde la raíz del repo
-.\scripts\deploy-tenant.ps1
-# fijando la URL del API en el front publicado:
-.\scripts\deploy-tenant.ps1 -ApiBaseUrl https://localhost:4431
-```
-
-### `deploy-admin.ps1` — capa admin
-
-`Mimo.Admin.Api` → sitio `mimo.admin.api` · `Mimo.Admin.App` → sitio `mimo.admin.app`.
+### `publish-mimo.ps1` — capa tenant
+`Mimo.Api` → `mimo.api` (`:4431`) · `Mimo.App` → `mimo.app` (`:8081`).
 
 ```powershell
-.\scripts\deploy-admin.ps1 -ApiBaseUrl https://localhost:4432
+# desde la raíz del repo, la primera vez pasa la contraseña de Postgres:
+.\scripts\publish-mimo.ps1 -DbPassword 100
+# redepliegues posteriores (preserva appsettings.Production.json):
+.\scripts\publish-mimo.ps1
+# reutilizar binarios ya publicados:
+.\scripts\publish-mimo.ps1 -SkipBuild
 ```
+Valores por defecto: `Api:BaseUrl` de la WASM = `https://mimoapi.linkcorp.uk`; CORS del API =
+`https://mimo.linkcorp.uk`. Ajustables por parámetro (`-ApiPublicUrl`, `-AllowedAppOrigin`,
+`-AdditionalAllowedOrigins`, puertos, rutas, etc.).
 
-> `Mimo.Admin.App` aún no existe; el script lo **omite con aviso** hasta que se cree.
-
-Qué hace cada uno:
-- **API:** `dotnet publish` (Release) → staging en `%TEMP%` → App Pool "Sin código administrado"
-  → detiene sitio/pool → copia a la ruta física **preservando** `appsettings.Production.json` y
-  `appsettings.Development.json` del servidor → reinicia.
-- **App WASM:** `dotnet publish` → copia espejo (`/MIR`) de `publish\wwwroot` (incluye el
-  `web.config` con rewrite SPA y los MIME de `.wasm`/`.dat`). Con `-ApiBaseUrl` reescribe
-  `wwwroot/appsettings.json` (`Api:BaseUrl`) antes de copiar.
-
-## `generate-apiclient.ps1`
-
-Regenera el cliente Kiota [`Mimo.Api.Sdk`](../src/Mimo.Api.Sdk) desde el OpenAPI vivo de
-`Mimo.Api`: levanta la API en Development, descarga `openapi/v1.json`, la detiene y ejecuta
-`kiota generate`. Requiere la herramienta global `kiota`.
+### `publish-mimo-admin.ps1` — capa admin
+`Mimo.Admin.Api` → `mimo.admin.api` (`:4432`) · `Mimo.Admin.App` → `mimo.admin.app` (`:8082`).
 
 ```powershell
-.\scripts\generate-apiclient.ps1
+.\scripts\publish-mimo-admin.ps1 -DbPassword 100
 ```
+Por defecto: `Api:BaseUrl` = `https://mimoadmapi.linkcorp.uk`; CORS = `https://mimoadm.linkcorp.uk`.
 
-## `generate-admin-apiclient.ps1`
+Qué hace cada script:
+- **API:** `dotnet publish` (Release) → copia a la ruta del sitio **excluyendo** `appsettings.Production.json`
+  → en el primer despliegue crea ese archivo (cadena de conexión con `-DbPassword` + `Jwt:Key`
+  generada; lo preserva después) → inyecta `Cors:AllowedOrigins` en el `appsettings.json` publicado.
+- **App WASM:** `dotnet publish` → **aplana** `publish\wwwroot` al sitio → escribe un `web.config`
+  con los MIME del framework de Blazor (`.wasm`/`.webcil`/`.dll`/`.dat`/`.blat`) y el fallback SPA →
+  fija `Api:BaseUrl` en el `appsettings.json` publicado.
+- Asegura el anillo de **Data Protection** compartido (`C:\ProgramData\MIMO\dp-keys`, ADR 0010).
 
-Igual que el anterior pero para la **admin API**: regenera [`Mimo.Admin.Api.Sdk`](../src/Mimo.Admin.Api.Sdk)
-(namespace `Mimo.Admin.Api.Sdk`, clase `MimoAdminApiClient`) desde el OpenAPI de `Mimo.Admin.Api`.
+> Las APIs corren en **Production** por defecto bajo IIS; **no** fijes `ASPNETCORE_ENVIRONMENT=Development`
+> (rompería el CORS restringido y no cargaría `appsettings.Production.json`).
+
+### `deploy-worker.ps1` — Mimo.Worker (Servicio de Windows)
+El worker de background (entrega de webhooks, cierre por inactividad; ADR 0017) **no es IIS**: corre
+como Servicio de Windows. Se mantiene aparte porque no es API ni front.
 
 ```powershell
-.\scripts\generate-admin-apiclient.ps1
+.\scripts\deploy-worker.ps1
 ```
 
-## Configuración de Producción (una sola vez, fuera del repo)
+## Regeneración de los SDK Kiota (desarrollo)
 
-El despliegue **no** incluye secretos. La cadena de conexión y `Jwt:Key` se definen en un
-`appsettings.Production.json` que vive **solo** en la carpeta de cada sitio de API en IIS y que el
-script preserva (no lo sobrescribe ni lo borra):
+- `generate-apiclient.ps1` → [`Mimo.Api.Sdk`](../src/Mimo.Api.Sdk) desde el OpenAPI vivo de `Mimo.Api`.
+- `generate-admin-apiclient.ps1` → [`Mimo.Admin.Api.Sdk`](../src/Mimo.Admin.Api.Sdk) desde `Mimo.Admin.Api`.
 
-1. Copia [`appsettings.Production.template.json`](appsettings.Production.template.json) a:
-   - `C:\inetpub\mimo.api\appsettings.Production.json`
-   - `C:\inetpub\mimo.admin.api\appsettings.Production.json`
-2. Reemplaza los valores `CAMBIAR` por la contraseña real de PostgreSQL y una `Jwt:Key`
-   de al menos 32 caracteres (la **misma** en ambas APIs).
-
-> Bajo IIS el entorno es `Production` por defecto, así que se aplica `appsettings.Production.json`.
-> En desarrollo con `dotnet run` (entorno `Development`) la configuración se toma de user-secrets.
+Requieren la herramienta global `kiota`.
 
 ## Prerrequisitos (una sola vez)
 
-- PostgreSQL con la extensión **pgvector** instalada.
-- IIS habilitado + **.NET Hosting Bundle** (ASP.NET Core Module) y, para las apps WASM, el módulo
-  **URL Rewrite** de IIS.
-- Sitios creados en IIS apuntando a sus carpetas en `C:\inetpub`: `mimo.api`, `mimo.app`,
-  `mimo.admin.api`, `mimo.admin.app`.
+- PostgreSQL con la extensión **pgvector**; base `mimo` (usuario `postgres`).
+- IIS + **.NET Hosting Bundle** (ASP.NET Core Module), **Static Content**, **Default Document** y
+  **URL Rewrite** (este último para el fallback SPA de las WASM).
+- No hace falta crear los sitios a mano: los scripts los crean si no existen.
