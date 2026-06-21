@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-06-20
+
+### Added
+
+- **IA extensible — corte 1: catálogo de servidores MCP externos (#23)** ([ADR 0024](docs/adr/0024-catalogo-de-servidores-mcp-externos.md)): nueva entidad `McpServer` (esquema del tenant) y endpoints `/mcp-servers` (política TenantAdmin) para **registrar/listar/actualizar/eliminar** servidores MCP de terceros por organización — endpoint, allowlist de herramientas (deny-by-default), token de autenticación **cifrado en reposo y write-only** (`ISecretProtector`, ADR 0010; no se devuelve, un guardado en blanco lo conserva) y habilitación. Validación de endpoint (URL absoluta http/https → 400), nombre único (409), allowlist normalizada y timeout acotado (1–120 s). Nueva página `/mcp-servers` en `Mimo.App`. Es el catálogo: la invocación mediada por el gateway (con anti-SSRF), scopes y auditoría quedan para un corte posterior. **Verificado E2E** (CRUD; token cifrado en reposo y nunca expuesto; blanco conserva / rotación reemplaza; allowlist deduplicada; authz 401; 204→404).
+
 ## [0.10.0] - 2026-06-20
 
 ### Added
@@ -256,7 +262,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/evillabong/chatbot-llm/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/evillabong/chatbot-llm/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/evillabong/chatbot-llm/compare/v0.8.4...v0.9.0
 [0.8.4]: https://github.com/evillabong/chatbot-llm/compare/v0.8.3...v0.8.4
