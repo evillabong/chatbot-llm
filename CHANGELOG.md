@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.18.3] - 2026-06-21
+
+### Changed
+
+- **Cadena de conexión a PostgreSQL en el `appsettings.json` de las APIs y el worker** (`Host=localhost;Port=5432;Database=mimo;Username=postgres;Password=100`), de modo que tanto el desarrollo local como el despliegue usan la BD correcta sin pasar parámetros. Los scripts `publish-mimo.ps1` / `publish-mimo-admin.ps1` ya **no** gestionan la cadena de conexión (se quitaron los parámetros `-Db*`): solo aseguran una **clave JWT de firma** generada en `appsettings.Production.json` del servidor (fuera del repo) e inyectan `Cors:AllowedOrigins` + `Api:BaseUrl`.
+
 ## [0.18.2] - 2026-06-21
 
 ### Changed
@@ -320,7 +326,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.2...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.3...HEAD
+[0.18.3]: https://github.com/evillabong/chatbot-llm/compare/v0.18.2...v0.18.3
 [0.18.2]: https://github.com/evillabong/chatbot-llm/compare/v0.18.1...v0.18.2
 [0.18.1]: https://github.com/evillabong/chatbot-llm/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/evillabong/chatbot-llm/compare/v0.17.0...v0.18.0

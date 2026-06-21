@@ -16,9 +16,7 @@ en `http://localhost` en los puertos indicados.
 `Mimo.Api` → `mimo.api` (`:4431`) · `Mimo.App` → `mimo.app` (`:8081`).
 
 ```powershell
-# desde la raíz del repo, la primera vez pasa la contraseña de Postgres:
-.\scripts\publish-mimo.ps1 -DbPassword 100
-# redepliegues posteriores (preserva appsettings.Production.json):
+# desde la raíz del repo (PowerShell admin):
 .\scripts\publish-mimo.ps1
 # reutilizar binarios ya publicados:
 .\scripts\publish-mimo.ps1 -SkipBuild
@@ -31,14 +29,15 @@ Valores por defecto: `Api:BaseUrl` de la WASM = `https://mimoapi.linkcorp.uk`; C
 `Mimo.Admin.Api` → `mimo.admin.api` (`:4432`) · `Mimo.Admin.App` → `mimo.admin.app` (`:8082`).
 
 ```powershell
-.\scripts\publish-mimo-admin.ps1 -DbPassword 100
+.\scripts\publish-mimo-admin.ps1
 ```
 Por defecto: `Api:BaseUrl` = `https://mimoadmapi.linkcorp.uk`; CORS = `https://mimoadm.linkcorp.uk`.
 
 Qué hace cada script:
 - **API:** `dotnet publish` (Release) → copia a la ruta del sitio **excluyendo** `appsettings.Production.json`
-  → en el primer despliegue crea ese archivo (cadena de conexión con `-DbPassword` + `Jwt:Key`
-  generada; lo preserva después) → inyecta `Cors:AllowedOrigins` en el `appsettings.json` publicado.
+  → inyecta `Cors:AllowedOrigins` en el `appsettings.json` publicado → asegura una **clave JWT de firma**
+  generada en `appsettings.Production.json` del servidor (fuera del repo; se preserva). La **cadena de
+  conexión** a PostgreSQL vive en el `appsettings.json` versionado del API (`postgres`/`100`).
 - **App WASM:** `dotnet publish` → **aplana** `publish\wwwroot` al sitio → escribe un `web.config`
   con los MIME del framework de Blazor (`.wasm`/`.webcil`/`.dll`/`.dat`/`.blat`) y el fallback SPA →
   fija `Api:BaseUrl` en el `appsettings.json` publicado.

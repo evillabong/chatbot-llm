@@ -12,8 +12,9 @@ El script crea/actualiza sitios y application pools de IIS (No Managed Code), re
 carpetas actuales y preserva appsettings.Production.json del API (secretos). En la WASM aplana
 el contenido de wwwroot al sitio, escribe un web.config con los MIME del framework de Blazor
 (.wasm/.webcil/.dll/.dat/.blat) + fallback SPA, y fija Api:BaseUrl. En el API inyecta
-Cors:AllowedOrigins con el origen de la WASM y asegura appsettings.Production.json (cadena de
-conexion + clave JWT) en el primer despliegue.
+Cors:AllowedOrigins con el origen de la WASM. La cadena de conexion a PostgreSQL vive en el
+appsettings.json del API (versionado); el script solo asegura una clave JWT de firma fuerte en
+appsettings.Production.json del servidor (fuera del repo) y la preserva.
 
 Los hostnames publicos (https://mimoapi.linkcorp.uk, https://mimo.linkcorp.uk) los sirve un
 proxy inverso por delante; IIS escucha en http://localhost en los puertos indicados.
@@ -24,7 +25,7 @@ Requisitos:
 - ASP.NET Core Hosting Bundle compatible con net10.0 y .NET SDK 10.
 
 .EXAMPLE
-.\scripts\publish-mimo.ps1 -DbPassword 100
+.\scripts\publish-mimo.ps1
 
 .EXAMPLE
 .\scripts\publish-mimo.ps1 -SkipBuild
@@ -41,11 +42,6 @@ param(
     [string]$ApiPublicUrl = "https://mimoapi.linkcorp.uk",
     [string]$AllowedAppOrigin = "https://mimo.linkcorp.uk",
     [string[]]$AdditionalAllowedOrigins = @(),
-    [string]$DbHost = "localhost",
-    [int]$DbPort = 5432,
-    [string]$DbName = "mimo",
-    [string]$DbUser = "postgres",
-    [string]$DbPassword = "",
     [string]$Configuration = "Release",
     [string]$HistoryRoot = "C:\inetpub\history",
     [string]$PublishRoot = "",
@@ -197,21 +193,16 @@ function Set-ApiBaseUrl { param([string]$SettingsPath, [string]$Url)
     Write-Host "Api:BaseUrl => $Url"
 }
 
-# Crea appsettings.Production.json (secretos) en el primer despliegue; lo preserva si ya existe.
-function Ensure-ProductionSecrets { param([string]$ApiDir)
+# La cadena de conexion vive en appsettings.json (versionado). Aqui solo se asegura una clave JWT de
+# FIRMA fuerte en appsettings.Production.json del servidor (fuera del repo); se preserva si ya existe.
+function Ensure-JwtKey { param([string]$ApiDir)
     $prod = Join-Path $ApiDir 'appsettings.Production.json'
-    if ((Test-Path -LiteralPath $prod) -and -not $OverwriteApiSettings) { Write-Host "Preservando $prod (secretos)."; return }
-    $pwd = if ($DbPassword) { $DbPassword } else { 'CAMBIAR' }
+    if ((Test-Path -LiteralPath $prod) -and -not $OverwriteApiSettings) { Write-Host "Preservando $prod (clave JWT del servidor)."; return }
     $bytes = New-Object byte[] 36
     [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
     $key = ([Convert]::ToBase64String($bytes)) -replace '[+/=]', ''
-    $obj = [ordered]@{
-        ConnectionStrings = [ordered]@{ Default = "Host=$DbHost;Port=$DbPort;Database=$DbName;Username=$DbUser;Password=$pwd" }
-        Jwt = [ordered]@{ Key = $key }
-    }
-    $obj | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $prod -Encoding UTF8
-    Write-Host "Creado $prod (clave JWT generada)."
-    if ($pwd -eq 'CAMBIAR') { Write-Host "  ⚠ Falta la contraseña de Postgres: re-ejecuta con -DbPassword o edita ConnectionStrings:Default." -ForegroundColor Yellow }
+    ([ordered]@{ Jwt = [ordered]@{ Key = $key } }) | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $prod -Encoding UTF8
+    Write-Host "Creado $prod (clave JWT de firma generada; fuera del repo)."
 }
 
 function Ensure-AppPool { param([string]$Name)
@@ -286,7 +277,7 @@ Start-Sleep -Seconds 2
 Write-Step "Copiando API (preservando appsettings.Production.json)"
 $apiExcludes = @("appsettings.Production.json")
 Copy-PublishedDirectory -Source $apiPublish -Destination $ApiPath -ExcludeFiles $apiExcludes
-Ensure-ProductionSecrets -ApiDir $ApiPath
+Ensure-JwtKey -ApiDir $ApiPath
 Set-CorsOrigins -SettingsPath (Join-Path $ApiPath "appsettings.json") -Origins (@($AllowedAppOrigin) + $AdditionalAllowedOrigins | Where-Object { $_ } | Select-Object -Unique)
 
 Write-Step "Copiando WASM (aplanando wwwroot + web.config)"
