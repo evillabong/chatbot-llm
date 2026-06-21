@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-06-21
+
+### Fixed
+
+- **Despliegue de las WASM a IIS no incluía el `web.config` (front no cargaba).** `Publish-WasmApp` copiaba solo el contenido de `wwwroot`, pero el SDK de Blazor WebAssembly genera el `web.config` en la **raíz del publish** (con la regla "Serve subdir" que reescribe hacia `wwwroot\{R:0}` + fallback SPA y los MIME de `.wasm`/`.webcil`). Al quedar fuera, IIS servía los archivos con MIME incorrecto y sin enrutado SPA, así que el front no cargaba. Ahora el deploy copia **toda la raíz del publish** (web.config + `wwwroot/`) al sitio. La plantilla `appsettings.Production.template.json` también incorpora `Cors:AllowedOrigins`.
+
 ## [0.18.0] - 2026-06-21
 
 ### Added
@@ -308,7 +314,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.1...HEAD
+[0.18.1]: https://github.com/evillabong/chatbot-llm/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/evillabong/chatbot-llm/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/evillabong/chatbot-llm/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/evillabong/chatbot-llm/compare/v0.15.0...v0.16.0
