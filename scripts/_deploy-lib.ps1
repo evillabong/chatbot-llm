@@ -116,9 +116,12 @@ function Publish-WasmApp {
     Write-Host "App Pool=[$pool]  Ruta=[$path]"
 
     Stop-IisSite $Site $pool
-    # Copia espejo del contenido estático (incluye web.config con rewrite SPA + MIME de .wasm/.dat).
-    # /PURGE elimina del destino los archivos versionados (fingerprint) que ya no existen.
-    robocopy $content $path /MIR /R:2 /W:1 /NFL /NDL /NJH /NJS | Out-Null
+    # Copia espejo de TODO el publish: el web.config va en la RAÍZ del publish (junto a la carpeta
+    # wwwroot), NO dentro de wwwroot. El web.config que genera el SDK de Blazor WASM reescribe las
+    # peticiones hacia wwwroot\{R:0} (regla "Serve subdir") + fallback SPA, por lo que el sitio IIS debe
+    # apuntar a la raíz del publish. Copiar solo wwwroot dejaba fuera el web.config → MIME incorrecto de
+    # .wasm/.webcil y sin fallback SPA → el front no cargaba. /MIR purga del destino lo que ya no existe.
+    robocopy $out $path /MIR /R:2 /W:1 /NFL /NDL /NJH /NJS | Out-Null
     if ($LASTEXITCODE -ge 8) { throw "robocopy falló (exit $LASTEXITCODE) para $Site" }
     Start-IisSite $Site $pool
 
