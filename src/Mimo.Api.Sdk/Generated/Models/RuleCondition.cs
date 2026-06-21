@@ -22,6 +22,8 @@ namespace Mimo.Api.Sdk.Models
 #else
         public string Field { get; set; }
 #endif
+        /// <summary>The operator property</summary>
+        public int? Operator { get; set; }
         /// <summary>The value property</summary>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
@@ -36,6 +38,7 @@ namespace Mimo.Api.Sdk.Models
         public RuleCondition()
         {
             AdditionalData = new Dictionary<string, object>();
+            Operator = 0;
         }
         /// <summary>
         /// Creates a new instance of the appropriate class based on discriminator value
@@ -56,6 +59,7 @@ namespace Mimo.Api.Sdk.Models
             return new Dictionary<string, Action<IParseNode>>
             {
                 { "field", n => { Field = n.GetStringValue(); } },
+                { "operator", n => { Operator = n.GetIntValue(); } },
                 { "value", n => { Value = n.GetStringValue(); } },
             };
         }
@@ -67,6 +71,7 @@ namespace Mimo.Api.Sdk.Models
         {
             if(ReferenceEquals(writer, null)) throw new ArgumentNullException(nameof(writer));
             writer.WriteStringValue("field", Field);
+            writer.WriteIntValue("operator", Operator);
             writer.WriteStringValue("value", Value);
             writer.WriteAdditionalData(AdditionalData);
         }

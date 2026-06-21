@@ -70,9 +70,10 @@
         }
         <MimoTextField Label="Nombre" @bind-Value="_form.Name" Placeholder="p. ej. Tarea por nueva conversación" />
         <MimoSelect Label="Evento disparador" @bind-Value="_form.TriggerEvent" Options="_eventOptions" />
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-3">
             <MimoTextField Label="Condición — campo (opcional)" @bind-Value="_form.ConditionField" Placeholder="p. ej. channel" />
-            <MimoTextField Label="Condición — valor" @bind-Value="_form.ConditionValue" Placeholder="p. ej. WhatsApp" />
+            <MimoSelect Label="Operador" @bind-Value="_form.ConditionOperator" Options="_operatorOptions" />
+            <MimoTextField Label="Valor" @bind-Value="_form.ConditionValue" Placeholder="p. ej. WhatsApp" />
         </div>
         <MimoSelect Label="Acción" @bind-Value="_form.ActionType" Options="_actionOptions" />
         @if (_form.ActionType == "0")
@@ -127,6 +128,13 @@
         new("0", "Crear tarea"),
         new("1", "Escalar a funcionario")
     ];
+    private static readonly IReadOnlyList<MimoSelectOption> _operatorOptions =
+    [
+        new("0", "es igual a"),
+        new("1", "es distinto de"),
+        new("2", "contiene"),
+        new("3", "no contiene")
+    ];
     private IReadOnlyList<MimoSelectOption> _agentOptions = [];
 
     private bool _showForm;
@@ -168,7 +176,9 @@
     private static string ConditionSummary(AutomationRuleResponse r)
     {
         var c = r.Conditions?.FirstOrDefault();
-        return c is not null ? $"{c.Field} = {c.Value}" : "—";
+        if (c is null) return "—";
+        var op = _operatorOptions.FirstOrDefault(o => o.Value == (c.Operator ?? 0).ToString())?.Label ?? "=";
+        return $"{c.Field} {op} {c.Value}";
     }
 
     private static string ActionSummary(AutomationRuleResponse r)
@@ -191,6 +201,7 @@
         _form.TriggerEvent = r.TriggerEvent ?? "conversation.created";
         var c = r.Conditions?.FirstOrDefault();
         _form.ConditionField = c?.Field ?? "";
+        _form.ConditionOperator = (c?.Operator ?? 0).ToString();
         _form.ConditionValue = c?.Value ?? "";
         _form.ActionType = (r.ActionType ?? 0).ToString();
         _form.ActionTaskTitle = r.ActionTaskTitle ?? "";
@@ -219,7 +230,12 @@
         string? escalateReason = actionType == 1 && !string.IsNullOrWhiteSpace(_form.EscalateReason) ? _form.EscalateReason.Trim() : null;
         var conditions = new List<RuleCondition>();
         if (!string.IsNullOrWhiteSpace(_form.ConditionField))
-            conditions.Add(new RuleCondition { Field = _form.ConditionField.Trim(), Value = _form.ConditionValue?.Trim() ?? "" });
+            conditions.Add(new RuleCondition
+            {
+                Field = _form.ConditionField.Trim(),
+                Operator = int.TryParse(_form.ConditionOperator, out var co) ? co : 0,
+                Value = _form.ConditionValue?.Trim() ?? ""
+            });
         try
         {
             if (_editingId is null)
@@ -294,6 +310,7 @@
         public string Name { get; set; } = "";
         public string TriggerEvent { get; set; } = "conversation.created";
         public string ConditionField { get; set; } = "";
+        public string ConditionOperator { get; set; } = "0";
         public string ConditionValue { get; set; } = "";
         public string ActionType { get; set; } = "0";
         public string ActionTaskTitle { get; set; } = "";
@@ -306,6 +323,7 @@
             Name = "";
             TriggerEvent = "conversation.created";
             ConditionField = "";
+            ConditionOperator = "0";
             ConditionValue = "";
             ActionType = "0";
             ActionTaskTitle = "";

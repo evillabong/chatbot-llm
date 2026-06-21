@@ -17,11 +17,25 @@ public static class RuleEvaluator
 
         foreach (var c in conditions)
         {
-            if (!data.TryGetValue(c.Field, out var actual))
-                return false;
-            if (!string.Equals(actual?.Trim(), c.Value?.Trim(), StringComparison.OrdinalIgnoreCase))
+            data.TryGetValue(c.Field, out var raw);
+            if (!Evaluate(c.Operator, raw, c.Value))
                 return false;
         }
         return true;
+    }
+
+    private static bool Evaluate(ConditionOperator op, string? actual, string? expected)
+    {
+        var a = actual?.Trim();
+        var e = expected?.Trim() ?? "";
+
+        return op switch
+        {
+            ConditionOperator.Equals      => string.Equals(a, e, StringComparison.OrdinalIgnoreCase),
+            ConditionOperator.NotEquals   => !string.Equals(a, e, StringComparison.OrdinalIgnoreCase),
+            ConditionOperator.Contains    => a is not null && a.Contains(e, StringComparison.OrdinalIgnoreCase),
+            ConditionOperator.NotContains => a is null || !a.Contains(e, StringComparison.OrdinalIgnoreCase),
+            _                             => false
+        };
     }
 }

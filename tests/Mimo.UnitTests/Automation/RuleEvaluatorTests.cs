@@ -41,6 +41,30 @@ public class RuleEvaluatorTests
     }
 
     [Fact]
+    public void Matches_NotEquals_TrueWhenDifferent_AndWhenMissing()
+    {
+        Assert.True(RuleEvaluator.Matches([new("channel", "Telegram", ConditionOperator.NotEquals)], Data()));
+        Assert.True(RuleEvaluator.Matches([new("missing", "x", ConditionOperator.NotEquals)], Data()));
+        Assert.False(RuleEvaluator.Matches([new("channel", "WhatsApp", ConditionOperator.NotEquals)], Data()));
+    }
+
+    [Fact]
+    public void Matches_Contains_RespectsSubstringIgnoringCase()
+    {
+        Assert.True(RuleEvaluator.Matches([new("externalUserId", "U-1", ConditionOperator.Contains)], Data()));
+        Assert.False(RuleEvaluator.Matches([new("externalUserId", "zzz", ConditionOperator.Contains)], Data()));
+        Assert.False(RuleEvaluator.Matches([new("missing", "x", ConditionOperator.Contains)], Data()));
+    }
+
+    [Fact]
+    public void Matches_NotContains_TrueWhenAbsentOrMissing()
+    {
+        Assert.True(RuleEvaluator.Matches([new("externalUserId", "zzz", ConditionOperator.NotContains)], Data()));
+        Assert.True(RuleEvaluator.Matches([new("missing", "x", ConditionOperator.NotContains)], Data()));
+        Assert.False(RuleEvaluator.Matches([new("externalUserId", "u-1", ConditionOperator.NotContains)], Data()));
+    }
+
+    [Fact]
     public void Render_SubstitutesKnownPlaceholders_AndLeavesUnknown()
     {
         var result = TemplateRenderer.Render("Nuevo chat de {externalUserId} via {channel} ({missing})", Data());

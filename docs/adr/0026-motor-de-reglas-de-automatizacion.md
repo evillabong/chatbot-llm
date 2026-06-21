@@ -69,6 +69,18 @@ Amplía el motor con una segunda acción, sin tocar el diseño del fan-out:
   a `InQueue` y el motivo queda renderizado (`Escalada automatica por {channel}` → `…por WebChat`);
   crear una regla CreateTask sin título → 400. UI `/automatizaciones` con selector de acción.
 
+## Corte 4 — Operadores de condición
+
+Enriquece la expresividad de las condiciones sin romper lo existente:
+
+- `RuleCondition` gana `Operator` (`ConditionOperator`: `Equals`/`NotEquals`/`Contains`/`NotContains`),
+  con **default `Equals`** → las condiciones previas (sin operador en el JSON) se interpretan igual que
+  antes (retrocompatible). `RuleEvaluator` aplica el operador (ignorando mayúsculas/espacios); para
+  campos ausentes, `NotEquals`/`NotContains` dan verdadero y `Equals`/`Contains` falso.
+- UI `/automatizaciones`: selector de operador junto a campo/valor.
+- **Verificado E2E** (condición `externalUserId contiene "vip"`: solo la conversación VIP dispara la
+  tarea) + unit tests de los cuatro operadores (incluyendo el caso de campo ausente).
+
 ## Alternativas consideradas
 
 - **Llamar al dispatcher en cada endpoint junto al webhook:** descartado; duplica la llamada en 5 sitios

@@ -139,7 +139,7 @@ public static class AutomationRuleEndpoints
     {
         var clean = (conditions ?? [])
             .Where(c => !string.IsNullOrWhiteSpace(c.Field))
-            .Select(c => new RuleCondition(c.Field.Trim(), c.Value?.Trim() ?? ""))
+            .Select(c => new RuleCondition(c.Field.Trim(), c.Value?.Trim() ?? "", c.Operator))
             .ToList();
         return JsonSerializer.Serialize(clean, JsonOptions);
     }

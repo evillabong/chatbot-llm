@@ -2809,6 +2809,10 @@
           }
         }
       },
+      "ConditionOperator": {
+        "type": "integer",
+        "default": 0
+      },
       "ConversationResponse": {
         "required": [
           "id",
@@ -3863,6 +3867,9 @@
           },
           "value": {
             "type": "string"
+          },
+          "operator": {
+            "$ref": "#/components/schemas/ConditionOperator"
           }
         }
       },
