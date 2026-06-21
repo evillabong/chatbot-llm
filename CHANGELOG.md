@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-06-21
+
+### Added
+
+- **Ventas — corte 3: sincronización con CRM externo (proveedor simulado) (#26)** ([ADR 0028](docs/adr/0028-sincronizacion-crm-con-proveedor-simulado.md)): la sincronización de oportunidades con un CRM externo se construye contra una **abstracción `ICrmSyncProvider`** con un **proveedor simulado** por defecto (asigna un id externo determinista `SIM-…`), de modo que la capacidad funciona y se verifica sin depender de un CRM real. `ICrmSyncService` actualiza el estado de sync de la oportunidad (`ExternalCrmId`, `LastSyncedAt`) y registra una **bitácora** (`CrmSyncLog`). Disparo **manual** (`POST /opportunities/sync`, `GET /opportunities/sync-log`, botón «Sincronizar» y columna de estado en `/ventas`) y **automático**: la creación y el cambio de etapa emiten los eventos de dominio `opportunity.created` / `opportunity.stage_changed`, y una nueva acción del motor de automatización **`SyncCrm`** sincroniza la oportunidad del evento. El proveedor de CRM real (con credenciales/mapeo/anti-SSRF) se enchufará luego implementando la misma interfaz. **Verificado E2E** (sync manual fija estado + bitácora; regla `opportunity.created → SyncCrm` sincroniza automáticamente al crear) + unit tests del proveedor simulado.
+
 ## [0.17.0] - 2026-06-21
 
 ### Added
@@ -302,7 +308,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/evillabong/chatbot-llm/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/evillabong/chatbot-llm/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/evillabong/chatbot-llm/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/evillabong/chatbot-llm/compare/v0.14.0...v0.15.0
