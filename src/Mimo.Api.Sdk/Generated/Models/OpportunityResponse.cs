@@ -48,8 +48,18 @@ namespace Mimo.Api.Sdk.Models
         public Guid? ConversationId { get; set; }
         /// <summary>The createdAt property</summary>
         public DateTimeOffset? CreatedAt { get; set; }
+        /// <summary>The externalCrmId property</summary>
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
+#nullable enable
+        public string? ExternalCrmId { get; set; }
+#nullable restore
+#else
+        public string ExternalCrmId { get; set; }
+#endif
         /// <summary>The id property</summary>
         public Guid? Id { get; set; }
+        /// <summary>The lastSyncedAt property</summary>
+        public DateTimeOffset? LastSyncedAt { get; set; }
         /// <summary>The notes property</summary>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
@@ -103,7 +113,9 @@ namespace Mimo.Api.Sdk.Models
                 { "contactPhone", n => { ContactPhone = n.GetStringValue(); } },
                 { "conversationId", n => { ConversationId = n.GetGuidValue(); } },
                 { "createdAt", n => { CreatedAt = n.GetDateTimeOffsetValue(); } },
+                { "externalCrmId", n => { ExternalCrmId = n.GetStringValue(); } },
                 { "id", n => { Id = n.GetGuidValue(); } },
+                { "lastSyncedAt", n => { LastSyncedAt = n.GetDateTimeOffsetValue(); } },
                 { "notes", n => { Notes = n.GetStringValue(); } },
                 { "stage", n => { Stage = n.GetIntValue(); } },
                 { "title", n => { Title = n.GetStringValue(); } },
@@ -125,7 +137,9 @@ namespace Mimo.Api.Sdk.Models
             writer.WriteStringValue("contactPhone", ContactPhone);
             writer.WriteGuidValue("conversationId", ConversationId);
             writer.WriteDateTimeOffsetValue("createdAt", CreatedAt);
+            writer.WriteStringValue("externalCrmId", ExternalCrmId);
             writer.WriteGuidValue("id", Id);
+            writer.WriteDateTimeOffsetValue("lastSyncedAt", LastSyncedAt);
             writer.WriteStringValue("notes", Notes);
             writer.WriteIntValue("stage", Stage);
             writer.WriteStringValue("title", Title);

@@ -10,5 +10,8 @@ public enum AutomationActionType
     CreateTask = 0,
 
     /// <summary>Escala la conversación a un funcionario (crea ticket y lo encola).</summary>
-    Escalate = 1
+    Escalate = 1,
+
+    /// <summary>Sincroniza la oportunidad del evento con el CRM externo.</summary>
+    SyncCrm = 2
 }

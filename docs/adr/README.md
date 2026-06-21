@@ -47,3 +47,4 @@ decisión se revierte o cambia, se crea un ADR nuevo que marca al anterior como
 | [0025](0025-tareas-operativas.md) | Tareas operativas como base de la automatización (#24, corte 1) | Aceptado |
 | [0026](0026-motor-de-reglas-de-automatizacion.md) | Motor de reglas de automatización: evento → condición → acción (#24, corte 2) | Aceptado |
 | [0027](0027-ventas-oportunidades-y-pipeline.md) | Ventas: oportunidades y pipeline (#26, corte 1) | Aceptado |
+| [0028](0028-sincronizacion-crm-con-proveedor-simulado.md) | Sincronización con CRM externo mediante proveedor simulado (#26, corte 3) | Aceptado |

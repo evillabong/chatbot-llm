@@ -1499,6 +1499,76 @@
         }
       }
     },
+    "/opportunities/sync": {
+      "post": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Sincroniza una oportunidad con el CRM externo (query: id).",
+        "operationId": "SyncOpportunity",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrmSyncResultResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/opportunities/sync-log": {
+      "get": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Bitácora de sincronización de una oportunidad con el CRM (query: id).",
+        "operationId": "OpportunitySyncLog",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CrmSyncLogResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tenant/configuration": {
       "get": {
         "tags": [
@@ -3431,6 +3501,62 @@
           }
         }
       },
+      "CrmSyncLogResponse": {
+        "required": [
+          "id",
+          "provider",
+          "success",
+          "externalId",
+          "message",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "externalId": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CrmSyncResultResponse": {
+        "required": [
+          "success",
+          "externalId",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "externalId": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "CustomerAttentionConfig": {
         "type": "object",
         "properties": {
@@ -3957,6 +4083,8 @@
           "conversationId",
           "assignedAgentId",
           "notes",
+          "externalCrmId",
+          "lastSyncedAt",
           "createdAt",
           "updatedAt",
           "closedAt"
@@ -4001,6 +4129,15 @@
           },
           "notes": {
             "type": "string",
+            "nullable": true
+          },
+          "externalCrmId": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           },
           "createdAt": {

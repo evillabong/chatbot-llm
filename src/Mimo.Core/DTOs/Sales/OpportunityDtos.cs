@@ -15,9 +15,24 @@ public record OpportunityResponse(
     Guid? ConversationId,
     Guid? AssignedAgentId,
     string? Notes,
+    string? ExternalCrmId,
+    DateTime? LastSyncedAt,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
     DateTime? ClosedAt
+);
+
+/// <summary>Resultado de sincronizar una oportunidad con el CRM externo (#26).</summary>
+public record CrmSyncResultResponse(bool Success, string? ExternalId, string? Message);
+
+/// <summary>Entrada de la bitácora de sincronización con CRM externo (#26).</summary>
+public record CrmSyncLogResponse(
+    Guid Id,
+    string Provider,
+    bool Success,
+    string? ExternalId,
+    string? Message,
+    DateTime CreatedAt
 );
 
 /// <summary>Crea una oportunidad de venta.</summary>

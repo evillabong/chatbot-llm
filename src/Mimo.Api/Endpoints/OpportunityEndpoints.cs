@@ -5,6 +5,7 @@ using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
 using Mimo.Core.Sales;
+using Mimo.Core.Webhooks;
 
 namespace Mimo.Api.Endpoints;
 
@@ -43,6 +44,17 @@ public static class OpportunityEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound);
 
+        group.MapPost("/sync", SyncAsync)
+            .WithName("SyncOpportunity")
+            .WithSummary("Sincroniza una oportunidad con el CRM externo (query: id).")
+            .Produces<CrmSyncResultResponse>()
+            .Produces(StatusCodes.Status404NotFound);
+
+        group.MapGet("/sync-log", SyncLogAsync)
+            .WithName("OpportunitySyncLog")
+            .WithSummary("Bitácora de sincronización de una oportunidad con el CRM (query: id).")
+            .Produces<List<CrmSyncLogResponse>>();
+
         return app;
     }
 
@@ -58,7 +70,8 @@ public static class OpportunityEndpoints
     }
 
     private static async Task<IResult> CreateAsync(
-        CreateOpportunityRequest request, IOpportunityRepository repo, HttpContext context, CancellationToken ct = default)
+        CreateOpportunityRequest request, IOpportunityRepository repo, IDomainEventPublisher events,
+        HttpContext context, CancellationToken ct = default)
     {
         var opportunity = new Opportunity
         {
@@ -76,15 +89,28 @@ public static class OpportunityEndpoints
             CreatedAt       = DateTime.UtcNow
         };
         await repo.AddAsync(opportunity, ct);
+
+        await events.PublishAsync(WebhookEventTypes.OpportunityCreated, new
+        {
+            id = opportunity.Id,
+            title = opportunity.Title,
+            stage = opportunity.Stage.ToString(),
+            amount = opportunity.Amount,
+            assignedAgentId = opportunity.AssignedAgentId
+        }, ct);
+
         return Results.Created("/opportunities", ToResponse(opportunity));
     }
 
     private static async Task<IResult> UpdateAsync(
-        Guid id, UpdateOpportunityRequest request, IOpportunityRepository repo, CancellationToken ct = default)
+        Guid id, UpdateOpportunityRequest request, IOpportunityRepository repo, IDomainEventPublisher events,
+        CancellationToken ct = default)
     {
         var opportunity = await repo.GetByIdAsync(id, ct);
         if (opportunity is null)
             return Results.NotFound(new { error = "Oportunidad no encontrada." });
+
+        var previousStage = opportunity.Stage;
 
         opportunity.Title           = request.Title.Trim();
         opportunity.ContactName     = request.ContactName;
@@ -97,6 +123,19 @@ public static class OpportunityEndpoints
         opportunity.ClosedAt        = OpportunityStageRules.ResolveClosedAt(request.Stage, opportunity.ClosedAt, DateTime.UtcNow);
         opportunity.UpdatedAt       = DateTime.UtcNow;
         await repo.SaveChangesAsync(ct);
+
+        if (previousStage != opportunity.Stage)
+        {
+            await events.PublishAsync(WebhookEventTypes.OpportunityStageChanged, new
+            {
+                id = opportunity.Id,
+                title = opportunity.Title,
+                stage = opportunity.Stage.ToString(),
+                previousStage = previousStage.ToString(),
+                amount = opportunity.Amount,
+                assignedAgentId = opportunity.AssignedAgentId
+            }, ct);
+        }
 
         return Results.Ok(ToResponse(opportunity));
     }
@@ -111,7 +150,28 @@ public static class OpportunityEndpoints
         return Results.NoContent();
     }
 
+    private static async Task<IResult> SyncAsync(
+        Guid id, IOpportunityRepository repo, ICrmSyncService crmSync, CancellationToken ct = default)
+    {
+        if (await repo.GetByIdAsync(id, ct) is null)
+            return Results.NotFound(new { error = "Oportunidad no encontrada." });
+
+        var result = await crmSync.SyncOpportunityAsync(id, ct);
+        return Results.Ok(new CrmSyncResultResponse(result.Success, result.ExternalId, result.Message));
+    }
+
+    private static async Task<IResult> SyncLogAsync(
+        Guid id, ICrmSyncLogRepository logs, CancellationToken ct = default)
+    {
+        var items = await logs.ListByOpportunityAsync(id, 50, ct);
+        var response = items
+            .Select(l => new CrmSyncLogResponse(l.Id, l.Provider, l.Success, l.ExternalId, l.Message, l.CreatedAt))
+            .ToList();
+        return Results.Ok(response);
+    }
+
     private static OpportunityResponse ToResponse(Opportunity o) => new(
         o.Id, o.Title, o.ContactName, o.ContactEmail, o.ContactPhone, o.Stage, o.Amount,
-        o.ConversationId, o.AssignedAgentId, o.Notes, o.CreatedAt, o.UpdatedAt, o.ClosedAt);
+        o.ConversationId, o.AssignedAgentId, o.Notes, o.ExternalCrmId, o.LastSyncedAt,
+        o.CreatedAt, o.UpdatedAt, o.ClosedAt);
 }

@@ -27,6 +27,8 @@ public class OpportunityConfiguration : IEntityTypeConfiguration<Opportunity>
         b.Property(o => o.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
         b.Property(o => o.UpdatedAt).HasColumnName("updated_at");
         b.Property(o => o.ClosedAt).HasColumnName("closed_at");
+        b.Property(o => o.ExternalCrmId).HasColumnName("external_crm_id").HasMaxLength(200);
+        b.Property(o => o.LastSyncedAt).HasColumnName("last_synced_at");
 
         // Pipeline por etapa y por responsable, más recientes primero.
         b.HasIndex(o => new { o.Stage, o.CreatedAt }).HasDatabaseName("ix_opportunities_stage_created");

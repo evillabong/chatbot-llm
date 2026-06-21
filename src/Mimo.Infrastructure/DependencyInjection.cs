@@ -15,6 +15,7 @@ using Mimo.Infrastructure.Mcp;
 using Mimo.Infrastructure.MultiTenancy;
 using Mimo.Infrastructure.Orchestration;
 using Mimo.Infrastructure.Queuing;
+using Mimo.Infrastructure.Sales;
 using Mimo.Infrastructure.Security;
 using Mimo.Infrastructure.Services;
 using Mimo.Infrastructure.Ticketing;
@@ -80,6 +81,9 @@ public static class DependencyInjection
         services.AddScoped<IMcpServerRepository, McpServerRepository>();
         services.AddScoped<IWorkTaskRepository, WorkTaskRepository>();
         services.AddScoped<IOpportunityRepository, OpportunityRepository>();
+        services.AddScoped<ICrmSyncLogRepository, CrmSyncLogRepository>();
+        services.AddScoped<ICrmSyncProvider, SimulatedCrmSyncProvider>();
+        services.AddScoped<ICrmSyncService, CrmSyncService>();
 
         // ── Servicios de dominio ───────────────────────────────────────────────
         services.AddScoped<ITicketService,             TicketService>();

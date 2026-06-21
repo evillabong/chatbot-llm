@@ -36,6 +36,7 @@
         <MimoTh>Monto</MimoTh>
         <MimoTh>Etapa</MimoTh>
         <MimoTh>Responsable</MimoTh>
+        <MimoTh>CRM</MimoTh>
         <MimoTh AlignRight="true">Acciones</MimoTh>
     </Header>
     <Body>
@@ -66,8 +67,19 @@
                     }
                 </MimoTd>
                 <MimoTd>@AgentName(o.AssignedAgentId)</MimoTd>
+                <MimoTd>
+                    @if (!string.IsNullOrEmpty(o.ExternalCrmId))
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Success">@o.ExternalCrmId</MimoBadge>
+                    }
+                    else
+                    {
+                        <MimoText Muted Small>sin sincronizar</MimoText>
+                    }
+                </MimoTd>
                 <MimoTd AlignRight="true">
                     <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => SyncAsync(o)">Sincronizar</MimoButton>
                         <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenTasks(o)">Tareas</MimoButton>
                         <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(o)">Editar</MimoButton>
                         <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDelete(o)">Eliminar</MimoButton>
@@ -364,6 +376,22 @@
         }
         catch (Exception ex) { _pageError = Describe(ex); _showDelete = false; }
         finally { _saving = false; }
+    }
+
+    private async Task SyncAsync(OpportunityResponse o)
+    {
+        if (o.Id is null) return;
+        _pageError = null; _pageOk = null;
+        try
+        {
+            var result = await Opportunities.SyncAsync(o.Id.Value);
+            if (result?.Success == true)
+                _pageOk = $"«{o.Title}» sincronizada con el CRM ({result.ExternalId}).";
+            else
+                _pageError = $"No se pudo sincronizar: {result?.Message ?? "error desconocido"}";
+            await LoadAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
     }
 
     private async Task OpenTasks(OpportunityResponse o)

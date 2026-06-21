@@ -26,4 +26,13 @@ public sealed class OpportunitiesService(MimoApiClient api)
 
     public Task DeleteAsync(Guid id, CancellationToken ct = default) =>
         api.Opportunities.DeleteAsync(rc => rc.QueryParameters.Id = id, ct);
+
+    public Task<CrmSyncResultResponse?> SyncAsync(Guid id, CancellationToken ct = default) =>
+        api.Opportunities.Sync.PostAsync(rc => rc.QueryParameters.Id = id, ct);
+
+    public async Task<List<CrmSyncLogResponse>> SyncLogAsync(Guid id, CancellationToken ct = default)
+    {
+        var result = await api.Opportunities.SyncLog.GetAsync(rc => rc.QueryParameters.Id = id, ct);
+        return result ?? [];
+    }
 }

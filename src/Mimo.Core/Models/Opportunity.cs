@@ -38,4 +38,10 @@ public class Opportunity
 
     /// <summary>Fecha de cierre (al pasar a Won/Lost); null si sigue abierta.</summary>
     public DateTime? ClosedAt { get; set; }
+
+    /// <summary>Id de la oportunidad en el CRM externo (#26); null si nunca se sincronizó.</summary>
+    public string? ExternalCrmId { get; set; }
+
+    /// <summary>Última sincronización exitosa con el CRM externo; null si nunca.</summary>
+    public DateTime? LastSyncedAt { get; set; }
 }

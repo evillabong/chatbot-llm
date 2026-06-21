@@ -7,14 +7,17 @@ namespace Mimo.Core.Webhooks;
 /// </summary>
 public static class WebhookEventTypes
 {
-    public const string ConversationCreated = "conversation.created";
-    public const string TicketAssigned      = "ticket.assigned";
-    public const string TicketResolved      = "ticket.resolved";
-    public const string SurveyRecorded      = "survey.recorded";
+    public const string ConversationCreated     = "conversation.created";
+    public const string TicketAssigned          = "ticket.assigned";
+    public const string TicketResolved          = "ticket.resolved";
+    public const string SurveyRecorded          = "survey.recorded";
+    public const string OpportunityCreated      = "opportunity.created";
+    public const string OpportunityStageChanged = "opportunity.stage_changed";
 
     /// <summary>Todos los eventos soportados (para validar suscripciones).</summary>
     public static readonly IReadOnlySet<string> All = new HashSet<string>
     {
-        ConversationCreated, TicketAssigned, TicketResolved, SurveyRecorded
+        ConversationCreated, TicketAssigned, TicketResolved, SurveyRecorded,
+        OpportunityCreated, OpportunityStageChanged
     };
 }

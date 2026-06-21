@@ -4,6 +4,8 @@ using Microsoft.Kiota.Abstractions.Extensions;
 using Microsoft.Kiota.Abstractions.Serialization;
 using Microsoft.Kiota.Abstractions;
 using Mimo.Api.Sdk.Models;
+using Mimo.Api.Sdk.Opportunities.Sync;
+using Mimo.Api.Sdk.Opportunities.SyncLog;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -17,6 +19,16 @@ namespace Mimo.Api.Sdk.Opportunities
     [global::System.CodeDom.Compiler.GeneratedCode("Kiota", "1.0.0")]
     public partial class OpportunitiesRequestBuilder : BaseRequestBuilder
     {
+        /// <summary>The sync property</summary>
+        public global::Mimo.Api.Sdk.Opportunities.Sync.SyncRequestBuilder Sync
+        {
+            get => new global::Mimo.Api.Sdk.Opportunities.Sync.SyncRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The syncLog property</summary>
+        public global::Mimo.Api.Sdk.Opportunities.SyncLog.SyncLogRequestBuilder SyncLog
+        {
+            get => new global::Mimo.Api.Sdk.Opportunities.SyncLog.SyncLogRequestBuilder(PathParameters, RequestAdapter);
+        }
         /// <summary>
         /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Opportunities.OpportunitiesRequestBuilder"/> and sets the default values.
         /// </summary>

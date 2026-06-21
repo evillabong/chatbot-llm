@@ -16,6 +16,7 @@ public sealed class AutomationDispatcher(
     IAutomationRuleRepository rules,
     IWorkTaskRepository tasks,
     IMcpToolProvider mcp,
+    ICrmSyncService crmSync,
     ILogger<AutomationDispatcher> logger) : IAutomationDispatcher
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -77,6 +78,17 @@ public sealed class AutomationDispatcher(
                 var reason = TemplateRenderer.Render(rule.ActionEscalateReason ?? "Escalada automática", data);
                 await mcp.RequestHumanAgentAsync(conversationId.Value, reason, ct);
                 logger.LogInformation("Automatización: regla {RuleId} escaló la conversación {ConversationId}.", rule.Id, conversationId);
+                break;
+
+            case AutomationActionType.SyncCrm:
+                var opportunityId = TryGuid(data, "id", "opportunityId");
+                if (opportunityId is null)
+                {
+                    logger.LogWarning("Automatización: regla {RuleId} (SyncCrm) sin oportunidad en el evento {Trigger}; se omite.", rule.Id, rule.TriggerEvent);
+                    break;
+                }
+                await crmSync.SyncOpportunityAsync(opportunityId.Value, ct);
+                logger.LogInformation("Automatización: regla {RuleId} sincronizó la oportunidad {OpportunityId} con el CRM.", rule.Id, opportunityId);
                 break;
 
             default:
