@@ -279,6 +279,7 @@ app.MapKnowledgeSuggestionEndpoints();
 app.MapMcpServerEndpoints();
 app.MapWorkTaskEndpoints();
 app.MapAutomationRuleEndpoints();
+app.MapOpportunityEndpoints();
 app.MapTenantConfigurationEndpoints();
 app.MapIntegrationEndpoints();
 app.MapIntegrationApiEndpoints();

@@ -1351,6 +1351,146 @@
         }
       }
     },
+    "/opportunities": {
+      "get": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Lista las oportunidades (query opcional: stage, assignedAgentId).",
+        "operationId": "ListOpportunities",
+        "parameters": [
+          {
+            "name": "stage",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "assignedAgentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OpportunityResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Crea una oportunidad de venta.",
+        "operationId": "CreateOpportunity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOpportunityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpportunityResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Actualiza una oportunidad, incluida su etapa (query: id).",
+        "operationId": "UpdateOpportunity",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOpportunityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpportunityResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Elimina una oportunidad (query: id).",
+        "operationId": "DeleteOpportunity",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/tenant/configuration": {
       "get": {
         "tags": [
@@ -3155,6 +3295,48 @@
           }
         }
       },
+      "CreateOpportunityRequest": {
+        "required": [
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double",
+            "default": 0
+          },
+          "conversationId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "assignedAgentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "CreateRoleRequest": {
         "required": [
           "name"
@@ -3748,6 +3930,83 @@
         }
       },
       "MessageRole": {
+        "type": "integer"
+      },
+      "OpportunityResponse": {
+        "required": [
+          "id",
+          "title",
+          "contactName",
+          "contactEmail",
+          "contactPhone",
+          "stage",
+          "amount",
+          "conversationId",
+          "assignedAgentId",
+          "notes",
+          "createdAt",
+          "updatedAt",
+          "closedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "stage": {
+            "$ref": "#/components/schemas/OpportunityStage"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "conversationId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "assignedAgentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "OpportunityStage": {
         "type": "integer"
       },
       "PagedResultOfAgentResponse": {
@@ -4394,6 +4653,52 @@
           }
         }
       },
+      "UpdateOpportunityRequest": {
+        "required": [
+          "title",
+          "contactName",
+          "contactEmail",
+          "contactPhone",
+          "stage",
+          "amount",
+          "assignedAgentId",
+          "notes"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "stage": {
+            "$ref": "#/components/schemas/OpportunityStage"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "assignedAgentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "UpdateRoleRequest": {
         "required": [
           "name",
@@ -4683,6 +4988,9 @@
     },
     {
       "name": "AutomationRules"
+    },
+    {
+      "name": "Opportunities"
     },
     {
       "name": "Tenant"

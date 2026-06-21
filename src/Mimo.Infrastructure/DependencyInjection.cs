@@ -79,6 +79,7 @@ public static class DependencyInjection
         services.AddScoped<IKnowledgeSuggestionRepository, KnowledgeSuggestionRepository>();
         services.AddScoped<IMcpServerRepository, McpServerRepository>();
         services.AddScoped<IWorkTaskRepository, WorkTaskRepository>();
+        services.AddScoped<IOpportunityRepository, OpportunityRepository>();
 
         // ── Servicios de dominio ───────────────────────────────────────────────
         services.AddScoped<ITicketService,             TicketService>();

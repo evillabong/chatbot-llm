@@ -1,0 +1,327 @@
+@page "/ventas"
+@attribute [Authorize]
+@using System.Globalization
+@using Microsoft.Kiota.Abstractions
+@using Mimo.Api.Sdk.Models
+@inject OpportunitiesService Opportunities
+@inject AgentsService AgentsApi
+
+<PageTitle>Ventas · MIMO</PageTitle>
+
+<MimoPageHeader Title="Ventas"
+                Description="Oportunidades de venta y su avance por el pipeline.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nueva oportunidad</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+@if (_pageOk is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Success" Text="@_pageOk" OnDismiss="() => _pageOk = null" />
+}
+
+<div class="mb-4 max-w-xs">
+    <MimoSelect Label="Filtrar por etapa" Value="_stageFilter" ValueChanged="OnStageChangedAsync" Options="_stageFilterOptions" />
+</div>
+
+<MimoTable Loading="_loading" IsEmpty="@(_items.Count == 0)" EmptyText="No hay oportunidades para este filtro.">
+    <Header>
+        <MimoTh>Oportunidad</MimoTh>
+        <MimoTh>Contacto</MimoTh>
+        <MimoTh>Monto</MimoTh>
+        <MimoTh>Etapa</MimoTh>
+        <MimoTh>Responsable</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var o in _items)
+        {
+            <MimoTr>
+                <MimoTd>@o.Title</MimoTd>
+                <MimoTd>@(string.IsNullOrWhiteSpace(o.ContactName) ? "—" : o.ContactName)</MimoTd>
+                <MimoTd>@FormatAmount(o.Amount)</MimoTd>
+                <MimoTd>
+                    @switch (o.Stage)
+                    {
+                        case 1:
+                            <MimoBadge Variant="MimoBadgeVariant.Info">Calificada</MimoBadge>
+                            break;
+                        case 2:
+                            <MimoBadge Variant="MimoBadgeVariant.Info">Propuesta</MimoBadge>
+                            break;
+                        case 3:
+                            <MimoBadge Variant="MimoBadgeVariant.Success">Ganada</MimoBadge>
+                            break;
+                        case 4:
+                            <MimoBadge Variant="MimoBadgeVariant.Neutral">Perdida</MimoBadge>
+                            break;
+                        default:
+                            <MimoBadge Variant="MimoBadgeVariant.Warning">Nueva</MimoBadge>
+                            break;
+                    }
+                </MimoTd>
+                <MimoTd>@AgentName(o.AssignedAgentId)</MimoTd>
+                <MimoTd AlignRight="true">
+                    <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(o)">Editar</MimoButton>
+                        <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDelete(o)">Eliminar</MimoButton>
+                    </MimoActions>
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+@* ── Modal crear/editar ─────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showForm" Title="@(_editingId is null ? "Nueva oportunidad" : "Editar oportunidad")" Size="MimoModalSize.Large">
+    <ChildContent>
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+        <MimoTextField Label="Título" @bind-Value="_form.Title" Placeholder="p. ej. Plan Premium para ACME" />
+        <div class="grid grid-cols-2 gap-3">
+            <MimoTextField Label="Contacto — nombre" @bind-Value="_form.ContactName" />
+            <MimoTextField Label="Contacto — correo" @bind-Value="_form.ContactEmail" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <MimoTextField Label="Contacto — teléfono" @bind-Value="_form.ContactPhone" />
+            <MimoTextField Label="Monto estimado" Type="number" @bind-Value="_form.Amount" />
+        </div>
+        <MimoSelect Label="Responsable" @bind-Value="_form.AssignedAgentId" Options="_agentOptions" Placeholder="(sin asignar)" />
+        @if (_editingId is not null)
+        {
+            <MimoSelect Label="Etapa" @bind-Value="_form.Stage" Options="_stageEditOptions" />
+        }
+        <MimoTextArea Label="Notas" @bind-Value="_form.Notes" Rows="3" />
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Primary" Loading="_saving" OnClick="SaveAsync">Guardar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@* ── Modal eliminar ─────────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showDelete" Title="Eliminar oportunidad" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Seguro que deseas eliminar «@(_deleteTarget?.Title)»?</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showDelete = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmDeleteAsync">Eliminar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<OpportunityResponse> _items = [];
+    private bool _loading = true;
+    private string? _pageError;
+    private string? _pageOk;
+
+    private string _stageFilter = "";
+    private static readonly IReadOnlyList<MimoSelectOption> _stageFilterOptions =
+    [
+        new("", "Todas"),
+        new("0", "Nuevas"),
+        new("1", "Calificadas"),
+        new("2", "Propuesta"),
+        new("3", "Ganadas"),
+        new("4", "Perdidas")
+    ];
+    private static readonly IReadOnlyList<MimoSelectOption> _stageEditOptions =
+    [
+        new("0", "Nueva"),
+        new("1", "Calificada"),
+        new("2", "Propuesta"),
+        new("3", "Ganada"),
+        new("4", "Perdida")
+    ];
+    private IReadOnlyList<MimoSelectOption> _agentOptions = [];
+    private readonly Dictionary<Guid, string> _agentNames = [];
+
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private Guid? _editingId;
+    private readonly OpportunityForm _form = new();
+
+    private bool _showDelete;
+    private OpportunityResponse? _deleteTarget;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var agents = await AgentsApi.ListAsync(isActive: true);
+            _agentOptions = agents
+                .Where(a => a.Id is not null)
+                .Select(a => new MimoSelectOption(a.Id!.Value.ToString(), a.FullName ?? ""))
+                .ToList();
+            foreach (var a in agents.Where(a => a.Id is not null))
+                _agentNames[a.Id!.Value] = a.FullName ?? "";
+        }
+        catch { /* el responsable es opcional */ }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try
+        {
+            int? stage = int.TryParse(_stageFilter, out var s) ? s : null;
+            _items = await Opportunities.ListAsync(stage);
+        }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+    }
+
+    private async Task OnStageChangedAsync(string value)
+    {
+        _stageFilter = value;
+        await LoadAsync();
+    }
+
+    private string AgentName(Guid? id)
+        => id is not null && _agentNames.TryGetValue(id.Value, out var name) && name.Length > 0 ? name : "—";
+
+    private static string FormatAmount(double? amount)
+        => amount is null or 0 ? "—" : amount.Value.ToString("N2", CultureInfo.InvariantCulture);
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form.Reset();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private void OpenEdit(OpportunityResponse o)
+    {
+        _editingId = o.Id;
+        _form.Title = o.Title ?? "";
+        _form.ContactName = o.ContactName ?? "";
+        _form.ContactEmail = o.ContactEmail ?? "";
+        _form.ContactPhone = o.ContactPhone ?? "";
+        _form.Amount = (o.Amount ?? 0).ToString(CultureInfo.InvariantCulture);
+        _form.AssignedAgentId = o.AssignedAgentId?.ToString() ?? "";
+        _form.Stage = (o.Stage ?? 0).ToString();
+        _form.Notes = o.Notes ?? "";
+        _formError = null;
+        _showForm = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Title))
+        {
+            _formError = "Indica el título.";
+            return;
+        }
+        _saving = true;
+        _formError = null;
+        Guid? agentId = Guid.TryParse(_form.AssignedAgentId, out var aid) ? aid : null;
+        double amount = double.TryParse(_form.Amount, NumberStyles.Any, CultureInfo.InvariantCulture, out var am) ? am : 0;
+        try
+        {
+            if (_editingId is null)
+            {
+                await Opportunities.CreateAsync(new CreateOpportunityRequest
+                {
+                    Title = _form.Title.Trim(),
+                    ContactName = Nullify(_form.ContactName),
+                    ContactEmail = Nullify(_form.ContactEmail),
+                    ContactPhone = Nullify(_form.ContactPhone),
+                    Amount = amount,
+                    AssignedAgentId = agentId,
+                    Notes = Nullify(_form.Notes)
+                });
+            }
+            else
+            {
+                await Opportunities.UpdateAsync(_editingId.Value, new UpdateOpportunityRequest
+                {
+                    Title = _form.Title.Trim(),
+                    ContactName = Nullify(_form.ContactName),
+                    ContactEmail = Nullify(_form.ContactEmail),
+                    ContactPhone = Nullify(_form.ContactPhone),
+                    Stage = int.TryParse(_form.Stage, out var st) ? st : 0,
+                    Amount = amount,
+                    AssignedAgentId = agentId,
+                    Notes = Nullify(_form.Notes)
+                });
+            }
+            _showForm = false;
+            _pageOk = "Oportunidad guardada.";
+            await LoadAsync();
+        }
+        catch (Exception ex) { _formError = Describe(ex); }
+        finally { _saving = false; }
+    }
+
+    private void OpenDelete(OpportunityResponse o)
+    {
+        _deleteTarget = o;
+        _showDelete = true;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteTarget?.Id is null) return;
+        _saving = true;
+        try
+        {
+            await Opportunities.DeleteAsync(_deleteTarget.Id.Value);
+            _showDelete = false;
+            _pageOk = "Oportunidad eliminada.";
+            await LoadAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); _showDelete = false; }
+        finally { _saving = false; }
+    }
+
+    private static string? Nullify(string? v) => string.IsNullOrWhiteSpace(v) ? null : v.Trim();
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 404 } => "La oportunidad no existe.",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class OpportunityForm
+    {
+        public string Title { get; set; } = "";
+        public string ContactName { get; set; } = "";
+        public string ContactEmail { get; set; } = "";
+        public string ContactPhone { get; set; } = "";
+        public string Amount { get; set; } = "0";
+        public string AssignedAgentId { get; set; } = "";
+        public string Stage { get; set; } = "0";
+        public string Notes { get; set; } = "";
+
+        public void Reset()
+        {
+            Title = "";
+            ContactName = "";
+            ContactEmail = "";
+            ContactPhone = "";
+            Amount = "0";
+            AssignedAgentId = "";
+            Stage = "0";
+            Notes = "";
+        }
+    }
+}

@@ -31,6 +31,7 @@ public class TenantDbContext(DbContextOptions<TenantDbContext> options) : DbCont
     public DbSet<McpServer> McpServers => Set<McpServer>();
     public DbSet<WorkTask> Tasks => Set<WorkTask>();
     public DbSet<AutomationRule> AutomationRules => Set<AutomationRule>();
+    public DbSet<Opportunity> Opportunities => Set<Opportunity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -57,6 +58,7 @@ public class TenantDbContext(DbContextOptions<TenantDbContext> options) : DbCont
         modelBuilder.ApplyConfiguration(new McpServerConfiguration());
         modelBuilder.ApplyConfiguration(new WorkTaskConfiguration());
         modelBuilder.ApplyConfiguration(new AutomationRuleConfiguration());
+        modelBuilder.ApplyConfiguration(new OpportunityConfiguration());
 
         // Habilita la extensión pgvector para el esquema activo
         modelBuilder.HasPostgresExtension("vector");
