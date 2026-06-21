@@ -53,6 +53,12 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+# appcmd devuelve códigos !=0 esperables (p. ej. detener un sitio inexistente); no convertirlos en
+# excepción (PS 7.4+ lo haría con ErrorActionPreference=Stop). Los exit codes críticos se revisan a mano.
+$PSNativeCommandUseErrorActionPreference = $false
+
+# IIS se administra con appcmd.exe (no con el proveedor IIS:\, que no existe en PowerShell 7).
+$AppCmd = Join-Path $env:windir 'system32\inetsrv\appcmd.exe'
 
 # Proyectos de esta capa (relativos a la raiz del repo).
 $ApiProjectRelative = "src\Mimo.Api\Mimo.Api.csproj"
@@ -101,7 +107,10 @@ function Copy-PublishedDirectory { param([string]$Source, [string]$Destination, 
     if ($LASTEXITCODE -gt 7) { throw "Fallo robocopy al copiar $Source -> $Destination. ExitCode=$LASTEXITCODE" }
 }
 
-function Test-IisGlobalModule { param([string]$Name) return $null -ne (Get-WebGlobalModule -Name $Name -ErrorAction SilentlyContinue) }
+function Test-IisGlobalModule { param([string]$Name)
+    $found = (& $AppCmd list module "$Name" /text:name 2>$null)
+    return -not [string]::IsNullOrWhiteSpace($found)
+}
 
 function Assert-FrontendIisRequirements {
     $missing = @()
@@ -206,22 +215,24 @@ function Ensure-JwtKey { param([string]$ApiDir)
 }
 
 function Ensure-AppPool { param([string]$Name)
-    if (-not (Test-Path "IIS:\AppPools\$Name")) { New-WebAppPool -Name $Name | Out-Null }
-    Set-ItemProperty "IIS:\AppPools\$Name" -Name managedRuntimeVersion -Value ""        # No Managed Code (ANCM / estatico)
-    Set-ItemProperty "IIS:\AppPools\$Name" -Name managedPipelineMode -Value "Integrated"
-    Set-ItemProperty "IIS:\AppPools\$Name" -Name startMode -Value "AlwaysRunning"
-    Set-ItemProperty "IIS:\AppPools\$Name" -Name processModel.identityType -Value "ApplicationPoolIdentity"
+    $exists = (& $AppCmd list apppool "$Name" /text:name 2>$null)
+    if ([string]::IsNullOrWhiteSpace($exists)) { & $AppCmd add apppool /name:"$Name" | Out-Null }
+    # No Managed Code (ANCM / estatico) + identidad del App Pool.
+    & $AppCmd set apppool "$Name" /managedRuntimeVersion:"" /managedPipelineMode:Integrated /startMode:AlwaysRunning /processModel.identityType:ApplicationPoolIdentity | Out-Null
 }
 
 function Ensure-HttpSite { param([string]$Name, [string]$PhysicalPath, [int]$Port)
-    if (-not (Get-Website -Name $Name -ErrorAction SilentlyContinue)) {
-        New-Website -Name $Name -Port $Port -IPAddress "*" -HostHeader "" -PhysicalPath $PhysicalPath -ApplicationPool $Name | Out-Null
+    $exists = (& $AppCmd list site "$Name" /text:name 2>$null)
+    if ([string]::IsNullOrWhiteSpace($exists)) {
+        & $AppCmd add site /name:"$Name" /physicalPath:"$PhysicalPath" /bindings:"http/*:${Port}:" | Out-Null
     } else {
-        Set-ItemProperty "IIS:\Sites\$Name" -Name physicalPath -Value $PhysicalPath
-        Set-ItemProperty "IIS:\Sites\$Name" -Name applicationPool -Value $Name
+        & $AppCmd set vdir "$Name/" /physicalPath:"$PhysicalPath" | Out-Null
+        $bindings = (& $AppCmd list site "$Name" /text:bindings 2>$null)
+        if ($bindings -notlike "*http/*:${Port}:*") {
+            & $AppCmd set site "$Name" "/+bindings.[protocol='http',bindingInformation='*:${Port}:']" | Out-Null
+        }
     }
-    $binding = Get-WebBinding -Name $Name -Protocol "http" -ErrorAction SilentlyContinue | Where-Object { $_.bindingInformation -eq "*:${Port}:" }
-    if (-not $binding) { New-WebBinding -Name $Name -Protocol "http" -IPAddress "*" -Port $Port -HostHeader "" | Out-Null }
+    & $AppCmd set app "$Name/" /applicationPool:"$Name" | Out-Null
 }
 
 # Anillo de llaves de Data Protection compartido por las APIs (cifra/descifra API keys; ADR 0010).
@@ -243,7 +254,7 @@ $appPublish = Join-Path $PublishRoot $AppSiteName
 
 Assert-Administrator
 Assert-Command "dotnet"
-Import-Module WebAdministration -ErrorAction Stop
+if (-not (Test-Path $AppCmd)) { throw "No se encontro appcmd.exe ($AppCmd). ¿IIS instalado?" }
 Assert-FrontendIisRequirements
 
 if (-not $SkipBuild) {
@@ -268,10 +279,8 @@ Backup-Directory -Path $ApiPath -Name $ApiSiteName -Stamp $stamp
 Backup-Directory -Path $AppPath -Name $AppSiteName -Stamp $stamp
 
 Write-Step "Deteniendo sitios y application pools"
-Stop-Website -Name $ApiSiteName -ErrorAction SilentlyContinue
-Stop-Website -Name $AppSiteName -ErrorAction SilentlyContinue
-Stop-WebAppPool -Name $ApiSiteName -ErrorAction SilentlyContinue
-Stop-WebAppPool -Name $AppSiteName -ErrorAction SilentlyContinue
+foreach ($s in $ApiSiteName, $AppSiteName) { & $AppCmd stop site "$s" 2>$null | Out-Null }
+foreach ($p in $ApiSiteName, $AppSiteName) { & $AppCmd stop apppool "$p" 2>$null | Out-Null }
 Start-Sleep -Seconds 2
 
 Write-Step "Copiando API (preservando appsettings.Production.json)"
@@ -293,10 +302,8 @@ Ensure-HttpSite -Name $ApiSiteName -PhysicalPath $ApiPath -Port $ApiPort
 Ensure-HttpSite -Name $AppSiteName -PhysicalPath $AppPath -Port $AppPort
 
 Write-Step "Iniciando sitios"
-Start-WebAppPool -Name $ApiSiteName
-Start-WebAppPool -Name $AppSiteName
-Start-Website -Name $ApiSiteName
-Start-Website -Name $AppSiteName
+foreach ($p in $ApiSiteName, $AppSiteName) { & $AppCmd start apppool "$p" 2>$null | Out-Null }
+foreach ($s in $ApiSiteName, $AppSiteName) { & $AppCmd start site "$s" 2>$null | Out-Null }
 
 Write-Step "Resumen"
 Write-Host "API  : http://localhost:$ApiPort  (publico: $ApiPublicUrl)"

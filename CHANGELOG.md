@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.18.4] - 2026-06-21
+
+### Fixed
+
+- **Los scripts de despliegue fallaban bajo PowerShell 7** al configurar IIS (`Cannot find drive 'IIS'`): el proveedor `IIS:\` del módulo `WebAdministration` no existe en PowerShell 7 (se carga por compatibilidad). `publish-mimo.ps1` y `publish-mimo-admin.ps1` ahora administran IIS con **`appcmd.exe`** (crear/configurar App Pool y sitio, bindings, módulos, start/stop), sin depender del proveedor `IIS:\` ni de `Import-Module WebAdministration`. Funciona igual en PowerShell 7 y Windows PowerShell 5.1. Se fija `$PSNativeCommandUseErrorActionPreference = $false` para que los códigos de salida esperables de appcmd no aborten el script.
+
 ## [0.18.3] - 2026-06-21
 
 ### Changed
@@ -326,7 +332,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.3...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.4...HEAD
+[0.18.4]: https://github.com/evillabong/chatbot-llm/compare/v0.18.3...v0.18.4
 [0.18.3]: https://github.com/evillabong/chatbot-llm/compare/v0.18.2...v0.18.3
 [0.18.2]: https://github.com/evillabong/chatbot-llm/compare/v0.18.1...v0.18.2
 [0.18.1]: https://github.com/evillabong/chatbot-llm/compare/v0.18.0...v0.18.1
