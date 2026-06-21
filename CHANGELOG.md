@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-06-20
+
+### Added
+
+- **Automatización — corte 1: tareas operativas (#24)** ([ADR 0025](docs/adr/0025-tareas-operativas.md)): nueva entidad `WorkTask` (esquema del tenant, tabla `tasks`) y endpoints `/tasks` (política Agent) para **listar** (filtro por estado y responsable), **crear**, **actualizar** (incluido el estado) y **eliminar** tareas con responsable, vencimiento, vínculos opcionales a conversación/ticket y ciclo de vida (`Pending`/`InProgress`/`Done`/`Cancelled`): pasar a estado terminal fija `CompletedAt` y reabrir lo limpia (reglas puras `WorkTaskStatusRules`). Nueva página `/tareas` en `Mimo.App` (bandeja con filtro por estado, alta/edición con responsable y vencimiento, borrado). Es la base sobre la que el motor de reglas creará tareas como acción. **Verificado E2E** (crear; Done fija completedAt; reabrir lo limpia; filtros por estado; authz 401; 204→404) + unit tests de las reglas de estado.
+
 ## [0.11.0] - 2026-06-20
 
 ### Added
@@ -262,7 +268,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/evillabong/chatbot-llm/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/evillabong/chatbot-llm/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/evillabong/chatbot-llm/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/evillabong/chatbot-llm/compare/v0.8.4...v0.9.0
