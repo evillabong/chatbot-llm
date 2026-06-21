@@ -5,6 +5,7 @@ using Mimo.Core.Interfaces;
 using Mimo.Core.Models.Configuration;
 using Mimo.Infrastructure.AI;
 using Mimo.Infrastructure.Assignment;
+using Mimo.Infrastructure.Automation;
 using Mimo.Infrastructure.Channels;
 using Mimo.Infrastructure.Chat;
 using Mimo.Infrastructure.Chatbot;
@@ -89,6 +90,9 @@ public static class DependencyInjection
         services.AddScoped<IConversationOrchestrator,  ConversationOrchestrator>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
         services.AddScoped<IWebhookPublisher,          WebhookPublisher>();
+        services.AddScoped<IAutomationDispatcher,       AutomationDispatcher>();
+        services.AddScoped<IDomainEventPublisher,       DomainEventPublisher>();
+        services.AddScoped<IAutomationRuleRepository,   AutomationRuleRepository>();
         services.AddScoped<IChatbotFlowRepository,     ChatbotFlowRepository>();
         services.AddSingleton<IChatbotFlowEngine,      ChatbotFlowEngine>();
         services.AddSingleton<IChatbotApiCaller,       ChatbotApiCaller>();

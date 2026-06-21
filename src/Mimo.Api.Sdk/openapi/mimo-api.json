@@ -1223,6 +1223,134 @@
         }
       }
     },
+    "/automation-rules": {
+      "get": {
+        "tags": [
+          "AutomationRules"
+        ],
+        "summary": "Lista las reglas de automatización del tenant.",
+        "operationId": "ListAutomationRules",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AutomationRuleResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "AutomationRules"
+        ],
+        "summary": "Crea una regla de automatización.",
+        "operationId": "CreateAutomationRule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAutomationRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationRuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "AutomationRules"
+        ],
+        "summary": "Actualiza una regla de automatización (query: id).",
+        "operationId": "UpdateAutomationRule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAutomationRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationRuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "AutomationRules"
+        ],
+        "summary": "Elimina una regla de automatización (query: id).",
+        "operationId": "DeleteAutomationRule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/tenant/configuration": {
       "get": {
         "tags": [
@@ -2530,6 +2658,65 @@
       "AssignmentMode": {
         "type": "integer"
       },
+      "AutomationActionType": {
+        "type": "integer"
+      },
+      "AutomationRuleResponse": {
+        "required": [
+          "id",
+          "name",
+          "triggerEvent",
+          "conditions",
+          "actionType",
+          "actionTaskTitle",
+          "actionAssignedAgentId",
+          "isEnabled",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "triggerEvent": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleCondition"
+            }
+          },
+          "actionType": {
+            "$ref": "#/components/schemas/AutomationActionType"
+          },
+          "actionTaskTitle": {
+            "type": "string"
+          },
+          "actionAssignedAgentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
       "BusinessHoursConfig": {
         "type": "object",
         "properties": {
@@ -2716,6 +2903,42 @@
         "properties": {
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "CreateAutomationRuleRequest": {
+        "required": [
+          "name",
+          "triggerEvent",
+          "conditions",
+          "actionTaskTitle"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "triggerEvent": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleCondition"
+            },
+            "nullable": true
+          },
+          "actionTaskTitle": {
+            "type": "string"
+          },
+          "actionAssignedAgentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "default": true
           }
         }
       },
@@ -3614,6 +3837,21 @@
           }
         }
       },
+      "RuleCondition": {
+        "required": [
+          "field",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
       "SatisfactionSurveyConfig": {
         "type": "object",
         "properties": {
@@ -4003,6 +4241,43 @@
           }
         }
       },
+      "UpdateAutomationRuleRequest": {
+        "required": [
+          "name",
+          "triggerEvent",
+          "conditions",
+          "actionTaskTitle",
+          "actionAssignedAgentId",
+          "isEnabled"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "triggerEvent": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleCondition"
+            },
+            "nullable": true
+          },
+          "actionTaskTitle": {
+            "type": "string"
+          },
+          "actionAssignedAgentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "isEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
       "UpdateDocumentRequest": {
         "required": [
           "title",
@@ -4374,6 +4649,9 @@
     },
     {
       "name": "Tasks"
+    },
+    {
+      "name": "AutomationRules"
     },
     {
       "name": "Tenant"

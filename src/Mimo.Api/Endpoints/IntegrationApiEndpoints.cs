@@ -69,7 +69,7 @@ public static class IntegrationApiEndpoints
     private static async Task<IResult> StartConversationAsync(
         StartConversationRequest request,
         IConversationRepository repo,
-        IWebhookPublisher webhooks,
+        IDomainEventPublisher webhooks,
         HttpContext context,
         CancellationToken ct = default)
     {

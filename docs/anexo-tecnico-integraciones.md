@@ -106,9 +106,13 @@ organización y aislado.
 
 ## 5. Automatización: flujos, campañas y tareas — ▹
 
-- **Flujos de trabajo:** motor de reglas "evento → condición → acción" (enrutar, etiquetar,
-  responder, crear tarea, escalar, disparar encuesta). Se apoya en los eventos que ya emite el
-  sistema (mensaje entrante, inactividad, cambio de estado de ticket).
+- **Flujos de trabajo (◐ motor base hecho):** motor de reglas "evento → condición → acción" (enrutar,
+  etiquetar, responder, crear tarea, escalar, disparar encuesta). Se apoya en los eventos que ya emite
+  el sistema. ✅ **Corte 1 ([ADR 0026](adr/0026-motor-de-reglas-de-automatizacion.md)):** `AutomationRule`
+  + `IDomainEventPublisher` (fan-out webhooks + automatización) + `AutomationDispatcher`; condiciones AND
+  sobre campos del evento, acción **crear tarea** (título con marcadores `{campo}`); endpoints
+  `/automation-rules` (TenantAdmin) y UI `/automatizaciones`. **Pendiente:** más acciones
+  (etiquetar/enrutar/escalar/encuesta) y operadores de condición más ricos.
 - **Campañas:** envíos **salientes** por canal, segmentados y programados; respetan las ventanas y
   reglas de cada proveedor (p. ej. plantillas/ventana de 24 h en WhatsApp). Las respuestas reingresan
   a la bandeja.

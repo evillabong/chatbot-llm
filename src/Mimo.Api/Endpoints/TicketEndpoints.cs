@@ -154,7 +154,7 @@ public static class TicketEndpoints
         ITicketService service,
         ITicketQueueService queue,
         IAgentRepository agentRepo,
-        IWebhookPublisher webhooks,
+        IDomainEventPublisher webhooks,
         IHubContext<TicketHub> hub,
         IHubContext<ChatHub> chatHub,
         CancellationToken ct = default)
@@ -196,7 +196,7 @@ public static class TicketEndpoints
         Guid id,
         UpdateTicketNotesRequest? request,
         ITicketService service,
-        IWebhookPublisher webhooks,
+        IDomainEventPublisher webhooks,
         IHubContext<TicketHub> hub,
         IHubContext<ChatHub> chatHub,
         CancellationToken ct = default)

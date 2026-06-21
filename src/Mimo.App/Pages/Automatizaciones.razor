@@ -1,0 +1,284 @@
+@page "/automatizaciones"
+@attribute [Authorize]
+@using Microsoft.Kiota.Abstractions
+@using Mimo.Api.Sdk.Models
+@inject AutomationRulesService Rules
+@inject AgentsService AgentsApi
+
+<PageTitle>Automatizaciones · MIMO</PageTitle>
+
+<MimoPageHeader Title="Automatizaciones"
+                Description="Reglas «evento → condición → acción». Hoy la acción crea una tarea.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nueva regla</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+@if (_pageOk is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Success" Text="@_pageOk" OnDismiss="() => _pageOk = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_rules.Count == 0)" EmptyText="Aún no hay reglas. Crea la primera.">
+    <Header>
+        <MimoTh>Nombre</MimoTh>
+        <MimoTh>Evento</MimoTh>
+        <MimoTh>Condición</MimoTh>
+        <MimoTh>Acción</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var r in _rules)
+        {
+            <MimoTr>
+                <MimoTd>@r.Name</MimoTd>
+                <MimoTd>@EventLabel(r.TriggerEvent)</MimoTd>
+                <MimoTd>@ConditionSummary(r)</MimoTd>
+                <MimoTd>Crear tarea: @r.ActionTaskTitle</MimoTd>
+                <MimoTd>
+                    @if (r.IsEnabled == true)
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Success">Activa</MimoBadge>
+                    }
+                    else
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Neutral">Inactiva</MimoBadge>
+                    }
+                </MimoTd>
+                <MimoTd AlignRight="true">
+                    <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(r)">Editar</MimoButton>
+                        <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDelete(r)">Eliminar</MimoButton>
+                    </MimoActions>
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+@* ── Modal crear/editar ─────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showForm" Title="@(_editingId is null ? "Nueva regla" : "Editar regla")" Size="MimoModalSize.Large">
+    <ChildContent>
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+        <MimoTextField Label="Nombre" @bind-Value="_form.Name" Placeholder="p. ej. Tarea por nueva conversación" />
+        <MimoSelect Label="Evento disparador" @bind-Value="_form.TriggerEvent" Options="_eventOptions" />
+        <div class="grid grid-cols-2 gap-3">
+            <MimoTextField Label="Condición — campo (opcional)" @bind-Value="_form.ConditionField" Placeholder="p. ej. channel" />
+            <MimoTextField Label="Condición — valor" @bind-Value="_form.ConditionValue" Placeholder="p. ej. WhatsApp" />
+        </div>
+        <MimoTextField Label="Título de la tarea" @bind-Value="_form.ActionTaskTitle" Placeholder="Admite {campo}, p. ej. Atender a {externalUserId}" />
+        <MimoSelect Label="Responsable de la tarea" @bind-Value="_form.AssignedAgentId" Options="_agentOptions" Placeholder="(sin asignar)" />
+        <MimoFormGroup>
+            <MimoCheckbox Label="Regla activa" @bind-Checked="_form.IsEnabled" />
+        </MimoFormGroup>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Primary" Loading="_saving" OnClick="SaveAsync">Guardar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@* ── Modal eliminar ─────────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showDelete" Title="Eliminar regla" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Seguro que deseas eliminar «@(_deleteTarget?.Name)»?</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showDelete = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmDeleteAsync">Eliminar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<AutomationRuleResponse> _rules = [];
+    private bool _loading = true;
+    private string? _pageError;
+    private string? _pageOk;
+
+    private static readonly IReadOnlyList<MimoSelectOption> _eventOptions =
+    [
+        new("conversation.created", "Conversación creada"),
+        new("ticket.assigned", "Ticket asignado"),
+        new("ticket.resolved", "Ticket resuelto"),
+        new("survey.recorded", "Encuesta registrada")
+    ];
+    private IReadOnlyList<MimoSelectOption> _agentOptions = [];
+
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private Guid? _editingId;
+    private readonly RuleForm _form = new();
+
+    private bool _showDelete;
+    private AutomationRuleResponse? _deleteTarget;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var agents = await AgentsApi.ListAsync(isActive: true);
+            _agentOptions = agents
+                .Where(a => a.Id is not null)
+                .Select(a => new MimoSelectOption(a.Id!.Value.ToString(), a.FullName ?? ""))
+                .ToList();
+        }
+        catch { /* el responsable es opcional */ }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try { _rules = await Rules.ListAsync(); }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+    }
+
+    private static string EventLabel(string? ev)
+        => _eventOptions.FirstOrDefault(o => o.Value == ev)?.Label ?? ev ?? "";
+
+    private static string ConditionSummary(AutomationRuleResponse r)
+    {
+        var c = r.Conditions?.FirstOrDefault();
+        return c is not null ? $"{c.Field} = {c.Value}" : "—";
+    }
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form.Reset();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private void OpenEdit(AutomationRuleResponse r)
+    {
+        _editingId = r.Id;
+        _form.Name = r.Name ?? "";
+        _form.TriggerEvent = r.TriggerEvent ?? "conversation.created";
+        var c = r.Conditions?.FirstOrDefault();
+        _form.ConditionField = c?.Field ?? "";
+        _form.ConditionValue = c?.Value ?? "";
+        _form.ActionTaskTitle = r.ActionTaskTitle ?? "";
+        _form.AssignedAgentId = r.ActionAssignedAgentId?.ToString() ?? "";
+        _form.IsEnabled = r.IsEnabled ?? true;
+        _formError = null;
+        _showForm = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.TriggerEvent)
+            || string.IsNullOrWhiteSpace(_form.ActionTaskTitle))
+        {
+            _formError = "Indica nombre, evento y título de la tarea.";
+            return;
+        }
+        _saving = true;
+        _formError = null;
+        Guid? agentId = Guid.TryParse(_form.AssignedAgentId, out var aid) ? aid : null;
+        var conditions = new List<RuleCondition>();
+        if (!string.IsNullOrWhiteSpace(_form.ConditionField))
+            conditions.Add(new RuleCondition { Field = _form.ConditionField.Trim(), Value = _form.ConditionValue?.Trim() ?? "" });
+        try
+        {
+            if (_editingId is null)
+            {
+                await Rules.CreateAsync(new CreateAutomationRuleRequest
+                {
+                    Name = _form.Name.Trim(),
+                    TriggerEvent = _form.TriggerEvent,
+                    Conditions = conditions,
+                    ActionTaskTitle = _form.ActionTaskTitle.Trim(),
+                    ActionAssignedAgentId = agentId,
+                    IsEnabled = _form.IsEnabled
+                });
+            }
+            else
+            {
+                await Rules.UpdateAsync(_editingId.Value, new UpdateAutomationRuleRequest
+                {
+                    Name = _form.Name.Trim(),
+                    TriggerEvent = _form.TriggerEvent,
+                    Conditions = conditions,
+                    ActionTaskTitle = _form.ActionTaskTitle.Trim(),
+                    ActionAssignedAgentId = agentId,
+                    IsEnabled = _form.IsEnabled
+                });
+            }
+            _showForm = false;
+            _pageOk = "Regla guardada.";
+            await LoadAsync();
+        }
+        catch (Exception ex) { _formError = Describe(ex); }
+        finally { _saving = false; }
+    }
+
+    private void OpenDelete(AutomationRuleResponse r)
+    {
+        _deleteTarget = r;
+        _showDelete = true;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteTarget?.Id is null) return;
+        _saving = true;
+        try
+        {
+            await Rules.DeleteAsync(_deleteTarget.Id.Value);
+            _showDelete = false;
+            _pageOk = "Regla eliminada.";
+            await LoadAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); _showDelete = false; }
+        finally { _saving = false; }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 400 } => "Evento disparador no soportado.",
+        ApiException { ResponseStatusCode: 404 } => "La regla no existe.",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class RuleForm
+    {
+        public string Name { get; set; } = "";
+        public string TriggerEvent { get; set; } = "conversation.created";
+        public string ConditionField { get; set; } = "";
+        public string ConditionValue { get; set; } = "";
+        public string ActionTaskTitle { get; set; } = "";
+        public string AssignedAgentId { get; set; } = "";
+        public bool IsEnabled { get; set; } = true;
+
+        public void Reset()
+        {
+            Name = "";
+            TriggerEvent = "conversation.created";
+            ConditionField = "";
+            ConditionValue = "";
+            ActionTaskTitle = "";
+            AssignedAgentId = "";
+            IsEnabled = true;
+        }
+    }
+}

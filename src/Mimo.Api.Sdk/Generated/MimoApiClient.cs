@@ -8,6 +8,7 @@ using Microsoft.Kiota.Serialization.Multipart;
 using Microsoft.Kiota.Serialization.Text;
 using Mimo.Api.Sdk.Agents;
 using Mimo.Api.Sdk.Auth;
+using Mimo.Api.Sdk.AutomationRules;
 using Mimo.Api.Sdk.Chatbot;
 using Mimo.Api.Sdk.Conversations;
 using Mimo.Api.Sdk.DocumentCategories;
@@ -43,6 +44,11 @@ namespace Mimo.Api.Sdk
         public global::Mimo.Api.Sdk.Auth.AuthRequestBuilder Auth
         {
             get => new global::Mimo.Api.Sdk.Auth.AuthRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The automationRules property</summary>
+        public global::Mimo.Api.Sdk.AutomationRules.AutomationRulesRequestBuilder AutomationRules
+        {
+            get => new global::Mimo.Api.Sdk.AutomationRules.AutomationRulesRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>The chatbot property</summary>
         public global::Mimo.Api.Sdk.Chatbot.ChatbotRequestBuilder Chatbot

@@ -44,7 +44,7 @@ public static class SurveyEndpoints
         [FromBody] SubmitSurveyRequest request,
         TenantDbContext db,
         GlobalDbContext globalDb,
-        IWebhookPublisher webhooks,
+        IDomainEventPublisher webhooks,
         HttpContext context,
         CancellationToken ct)
     {

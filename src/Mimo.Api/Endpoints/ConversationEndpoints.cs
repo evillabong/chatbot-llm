@@ -57,7 +57,7 @@ public static class ConversationEndpoints
     private static async Task<IResult> StartConversationAsync(
         StartConversationRequest request,
         IConversationRepository repo,
-        IWebhookPublisher webhooks,
+        IDomainEventPublisher webhooks,
         HttpContext context,
         CancellationToken ct = default)
     {
