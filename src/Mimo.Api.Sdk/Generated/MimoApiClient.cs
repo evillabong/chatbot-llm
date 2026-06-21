@@ -10,6 +10,7 @@ using Mimo.Api.Sdk.Agents;
 using Mimo.Api.Sdk.Auth;
 using Mimo.Api.Sdk.Chatbot;
 using Mimo.Api.Sdk.Conversations;
+using Mimo.Api.Sdk.DocumentCategories;
 using Mimo.Api.Sdk.Documents;
 using Mimo.Api.Sdk.Integration;
 using Mimo.Api.Sdk.InternalChat;
@@ -49,6 +50,11 @@ namespace Mimo.Api.Sdk
         public global::Mimo.Api.Sdk.Conversations.ConversationsRequestBuilder Conversations
         {
             get => new global::Mimo.Api.Sdk.Conversations.ConversationsRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The documentCategories property</summary>
+        public global::Mimo.Api.Sdk.DocumentCategories.DocumentCategoriesRequestBuilder DocumentCategories
+        {
+            get => new global::Mimo.Api.Sdk.DocumentCategories.DocumentCategoriesRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>The documents property</summary>
         public global::Mimo.Api.Sdk.Documents.DocumentsRequestBuilder Documents

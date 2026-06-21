@@ -698,6 +698,91 @@
         }
       }
     },
+    "/document-categories": {
+      "get": {
+        "tags": [
+          "DocumentCategories"
+        ],
+        "summary": "Lista las categorías documentales del tenant.",
+        "operationId": "ListDocumentCategories",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentCategoryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "DocumentCategories"
+        ],
+        "summary": "Crea una categoría documental.",
+        "operationId": "CreateDocumentCategory",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDocumentCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentCategoryResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "DocumentCategories"
+        ],
+        "summary": "Elimina una categoría documental si no está en uso (query: id).",
+        "operationId": "DeleteDocumentCategory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
     "/tenant/configuration": {
       "get": {
         "tags": [
@@ -2242,6 +2327,22 @@
           }
         }
       },
+      "CreateDocumentCategoryRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "parentCategoryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        }
+      },
       "CreateDocumentRequest": {
         "required": [
           "title",
@@ -2381,6 +2482,28 @@
           "inactivityTimeoutMinutes": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "DocumentCategoryResponse": {
+        "required": [
+          "id",
+          "name",
+          "parentCategoryId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parentCategoryId": {
+            "type": "string",
+            "format": "uuid",
             "nullable": true
           }
         }
@@ -3431,6 +3554,9 @@
     },
     {
       "name": "Documents"
+    },
+    {
+      "name": "DocumentCategories"
     },
     {
       "name": "Tenant"

@@ -4,6 +4,7 @@
 @using Microsoft.Kiota.Abstractions
 @inject DocumentsService Documents
 @inject RolesService RolesApi
+@inject DocumentCategoriesService Categories
 
 <PageTitle>Conocimiento · MIMO</PageTitle>
 
@@ -95,6 +96,8 @@
         <MimoTextArea Label="Contenido" @bind-Value="_form.Content" Rows="6" Required="true" />
         <MimoSelect Label="Visibilidad" @bind-Value="_form.Visibility" Options="_visibilityOptions" />
         <MimoSelect Label="Rol relacionado" @bind-Value="_form.RelatedRoleId" Options="_roleOptions" Placeholder="(ninguno)" />
+        <MimoSelect Label="Categoría" @bind-Value="_form.CategoryId" Options="_categoryOptions" Placeholder="(sin categoría)" />
+        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="OpenCreateCategory">+ Nueva categoría</MimoButton>
         <MimoTextField Label="Prioridad" Type="number" @bind-Value="_form.PriorityLevel" />
         <MimoTextField Label="Etiquetas" @bind-Value="_form.TagsCsv" Placeholder="separadas por coma"
                        HelperText="Ej.: horarios, soporte, faq" />
@@ -119,11 +122,34 @@
     </FooterContent>
 </MimoModal>
 
+@* ── Modal nueva categoría (#17) ───────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showCategory" Title="Nueva categoría" Size="MimoModalSize.Small">
+    <ChildContent>
+        @if (_categoryError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_categoryError" />
+        }
+        <MimoTextField Label="Nombre" @bind-Value="_newCategoryName" Placeholder="p. ej. Envíos" />
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showCategory = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Primary" Loading="_savingCategory" OnClick="SaveCategoryAsync">Crear</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
 @code {
     private List<DocumentResponse> _docs = [];
     private bool _loading = true;
     private string? _pageError;
     private string? _pageOk;
+
+    private IReadOnlyList<MimoSelectOption> _categoryOptions = [];
+    private bool _showCategory;
+    private bool _savingCategory;
+    private string _newCategoryName = "";
+    private string? _categoryError;
 
     private static readonly IReadOnlyList<MimoSelectOption> _visibilityOptions =
     [
@@ -153,6 +179,20 @@
                 .ToList();
         }
         catch { /* el rol relacionado es opcional */ }
+
+        await LoadCategoriesAsync();
+    }
+
+    private async Task LoadCategoriesAsync()
+    {
+        try
+        {
+            var categories = await Categories.ListAsync();
+            _categoryOptions = categories
+                .Select(c => new MimoSelectOption(c.Id?.ToString() ?? "", c.Name ?? ""))
+                .ToList();
+        }
+        catch { /* la categoría es opcional */ }
     }
 
     private async Task LoadAsync()
@@ -188,6 +228,7 @@
         _form.Content = d.Content ?? "";
         _form.Visibility = (d.Visibility ?? 0).ToString();
         _form.RelatedRoleId = d.RelatedRoleId?.ToString() ?? "";
+        _form.CategoryId = d.CategoryId?.ToString() ?? "";
         _form.PriorityLevel = d.PriorityLevel ?? 0;
         _form.TagsCsv = d.Tags is { Count: > 0 } ? string.Join(", ", d.Tags) : "";
         _form.IsActive = d.IsActive ?? true;
@@ -201,6 +242,7 @@
         _formError = null;
         var visibility = int.TryParse(_form.Visibility, out var v) ? v : 0;
         Guid? relatedRole = Guid.TryParse(_form.RelatedRoleId, out var rid) ? rid : null;
+        Guid? categoryId = Guid.TryParse(_form.CategoryId, out var cid) ? cid : null;
         var tags = _form.TagsCsv
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
@@ -214,6 +256,7 @@
                     Content = _form.Content,
                     Visibility = visibility,
                     RelatedRoleId = relatedRole,
+                    CategoryId = categoryId,
                     PriorityLevel = _form.PriorityLevel,
                     Tags = tags
                 });
@@ -226,6 +269,7 @@
                     Content = _form.Content,
                     Visibility = visibility,
                     RelatedRoleId = relatedRole,
+                    CategoryId = categoryId,
                     PriorityLevel = _form.PriorityLevel,
                     Tags = tags,
                     IsActive = _form.IsActive
@@ -289,6 +333,45 @@
         }
     }
 
+    private void OpenCreateCategory()
+    {
+        _newCategoryName = "";
+        _categoryError = null;
+        _showCategory = true;
+    }
+
+    private async Task SaveCategoryAsync()
+    {
+        var name = _newCategoryName.Trim();
+        if (string.IsNullOrEmpty(name))
+        {
+            _categoryError = "Indica el nombre de la categoría.";
+            return;
+        }
+        _savingCategory = true;
+        _categoryError = null;
+        try
+        {
+            var created = await Categories.CreateAsync(name);
+            await LoadCategoriesAsync();
+            if (created?.Id is { } id)
+                _form.CategoryId = id.ToString();
+            _showCategory = false;
+        }
+        catch (ApiException api) when (api.ResponseStatusCode == 409)
+        {
+            _categoryError = "Ya existe una categoría con ese nombre.";
+        }
+        catch (Exception ex)
+        {
+            _categoryError = Describe(ex);
+        }
+        finally
+        {
+            _savingCategory = false;
+        }
+    }
+
     private static string Describe(Exception ex) => ex switch
     {
         ApiException { ResponseStatusCode: 404 } => "El documento no existe.",
@@ -310,6 +393,8 @@
 
         public string RelatedRoleId { get; set; } = "";
 
+        public string CategoryId { get; set; } = "";
+
         [Range(0, 100, ErrorMessage = "Entre 0 y 100.")]
         public int PriorityLevel { get; set; }
 
@@ -323,6 +408,7 @@
             Content = "";
             Visibility = "0";
             RelatedRoleId = "";
+            CategoryId = "";
             PriorityLevel = 0;
             TagsCsv = "";
             IsActive = true;

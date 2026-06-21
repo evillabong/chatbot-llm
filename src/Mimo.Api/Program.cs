@@ -273,6 +273,7 @@ app.MapAuthEndpoints();
 app.MapAgentEndpoints();
 app.MapRoleEndpoints();
 app.MapDocumentEndpoints();
+app.MapDocumentCategoryEndpoints();
 app.MapTenantConfigurationEndpoints();
 app.MapIntegrationEndpoints();
 app.MapIntegrationApiEndpoints();

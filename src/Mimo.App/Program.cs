@@ -44,6 +44,7 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddScoped<AgentsService>();
 builder.Services.AddScoped<RolesService>();
 builder.Services.AddScoped<DocumentsService>();
+builder.Services.AddScoped<DocumentCategoriesService>();
 builder.Services.AddScoped<TenantConfigService>();
 builder.Services.AddScoped<ApiKeysService>();
 builder.Services.AddScoped<WebhooksService>();
