@@ -276,6 +276,7 @@ app.MapDocumentEndpoints();
 app.MapDocumentCategoryEndpoints();
 app.MapKnowledgeInsightsEndpoints();
 app.MapKnowledgeSuggestionEndpoints();
+app.MapMcpServerEndpoints();
 app.MapTenantConfigurationEndpoints();
 app.MapIntegrationEndpoints();
 app.MapIntegrationApiEndpoints();

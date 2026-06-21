@@ -28,6 +28,7 @@ public class TenantDbContext(DbContextOptions<TenantDbContext> options) : DbCont
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<KnowledgeQuerySignal> KnowledgeQuerySignals => Set<KnowledgeQuerySignal>();
     public DbSet<KnowledgeSuggestion> KnowledgeSuggestions => Set<KnowledgeSuggestion>();
+    public DbSet<McpServer> McpServers => Set<McpServer>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,6 +52,7 @@ public class TenantDbContext(DbContextOptions<TenantDbContext> options) : DbCont
         modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
         modelBuilder.ApplyConfiguration(new KnowledgeQuerySignalConfiguration());
         modelBuilder.ApplyConfiguration(new KnowledgeSuggestionConfiguration());
+        modelBuilder.ApplyConfiguration(new McpServerConfiguration());
 
         // Habilita la extensión pgvector para el esquema activo
         modelBuilder.HasPostgresExtension("vector");

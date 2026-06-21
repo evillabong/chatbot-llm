@@ -15,6 +15,7 @@ using Mimo.Api.Sdk.Documents;
 using Mimo.Api.Sdk.Integration;
 using Mimo.Api.Sdk.InternalChat;
 using Mimo.Api.Sdk.Knowledge;
+using Mimo.Api.Sdk.McpServers;
 using Mimo.Api.Sdk.Roles;
 using Mimo.Api.Sdk.Tenant;
 using Mimo.Api.Sdk.Tickets;
@@ -76,6 +77,11 @@ namespace Mimo.Api.Sdk
         public global::Mimo.Api.Sdk.Knowledge.KnowledgeRequestBuilder Knowledge
         {
             get => new global::Mimo.Api.Sdk.Knowledge.KnowledgeRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The mcpServers property</summary>
+        public global::Mimo.Api.Sdk.McpServers.McpServersRequestBuilder McpServers
+        {
+            get => new global::Mimo.Api.Sdk.McpServers.McpServersRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>The roles property</summary>
         public global::Mimo.Api.Sdk.Roles.RolesRequestBuilder Roles

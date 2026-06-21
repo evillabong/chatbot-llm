@@ -949,6 +949,140 @@
         }
       }
     },
+    "/mcp-servers": {
+      "get": {
+        "tags": [
+          "McpServers"
+        ],
+        "summary": "Lista los servidores MCP externos del tenant.",
+        "operationId": "ListMcpServers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/McpServerResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "McpServers"
+        ],
+        "summary": "Registra un servidor MCP externo.",
+        "operationId": "CreateMcpServer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMcpServerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "McpServers"
+        ],
+        "summary": "Actualiza un servidor MCP externo (query: id).",
+        "operationId": "UpdateMcpServer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMcpServerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "McpServers"
+        ],
+        "summary": "Elimina un servidor MCP externo (query: id).",
+        "operationId": "DeleteMcpServer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/tenant/configuration": {
       "get": {
         "tags": [
@@ -2605,6 +2739,41 @@
           }
         }
       },
+      "CreateMcpServerRequest": {
+        "required": [
+          "name",
+          "endpoint"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "endpoint": {
+            "type": "string"
+          },
+          "authToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "allowedTools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "timeoutSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32",
+            "default": 30
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "CreateRoleRequest": {
         "required": [
           "name"
@@ -3080,6 +3249,57 @@
             "nullable": true
           },
           "refreshExpiresAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "McpServerResponse": {
+        "required": [
+          "id",
+          "name",
+          "endpoint",
+          "allowedTools",
+          "isEnabled",
+          "timeoutSeconds",
+          "hasAuthToken",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "endpoint": {
+            "type": "string"
+          },
+          "allowedTools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "timeoutSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "hasAuthToken": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true
@@ -3656,6 +3876,43 @@
           }
         }
       },
+      "UpdateMcpServerRequest": {
+        "required": [
+          "name",
+          "endpoint",
+          "authToken",
+          "allowedTools",
+          "timeoutSeconds",
+          "isEnabled"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "endpoint": {
+            "type": "string"
+          },
+          "authToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "allowedTools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "timeoutSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
       "UpdateRoleRequest": {
         "required": [
           "name",
@@ -3835,6 +4092,9 @@
     },
     {
       "name": "KnowledgeSuggestions"
+    },
+    {
+      "name": "McpServers"
     },
     {
       "name": "Tenant"

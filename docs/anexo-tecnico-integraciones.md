@@ -78,10 +78,14 @@ reales**.
 > del cliente del núcleo de CHATBOT/AI CRM y permite que cada organización conecte sus sistemas sin tocar el
 > producto.
 
-**Servidores MCP externos (▹):** además de las herramientas declaradas por el tenant, se podrán
-**registrar servidores MCP de terceros** (catálogo por organización) para sumar capacidades sin
-desarrollarlas en CHATBOT/AI CRM. Cada servidor se habilita con su *endpoint*, autenticación, allowlist de
-herramientas y límites; el gateway sigue mediando y auditando. Aislado por organización.
+**Servidores MCP externos (◐ catálogo hecho; invocación ▹):** además de las herramientas declaradas
+por el tenant, se podrán **registrar servidores MCP de terceros** (catálogo por organización) para
+sumar capacidades sin desarrollarlas en CHATBOT/AI CRM. Cada servidor se habilita con su *endpoint*,
+autenticación, allowlist de herramientas y límites; el gateway sigue mediando y auditando. Aislado por
+organización. ✅ **Corte 1 ([ADR 0024](adr/0024-catalogo-de-servidores-mcp-externos.md)):** catálogo
+`McpServer` + endpoints `/mcp-servers` (TenantAdmin) con token cifrado write-only, allowlist
+deny-by-default y validación de endpoint; UI `/mcp-servers`. **Pendiente:** la invocación mediada por el
+gateway (con anti-SSRF), scopes por herramienta y auditoría/cuotas.
 
 ## 4.bis. Modo de respuesta del bot y agentes de IA — ▹/✅
 

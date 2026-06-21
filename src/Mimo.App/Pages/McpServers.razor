@@ -1,0 +1,265 @@
+@page "/mcp-servers"
+@attribute [Authorize]
+@using Microsoft.Kiota.Abstractions
+@using Mimo.Api.Sdk.Models
+@inject McpServersService Mcp
+
+<PageTitle>Servidores MCP · MIMO</PageTitle>
+
+<MimoPageHeader Title="Servidores MCP"
+                Description="Catálogo de servidores MCP externos que ampliarán las herramientas del asistente. El gateway mediará su uso.">
+    <Actions>
+        <MimoButton Variant="MimoButtonVariant.Primary" OnClick="OpenCreate">Nuevo servidor</MimoButton>
+    </Actions>
+</MimoPageHeader>
+
+@if (_pageError is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Error" Text="@_pageError" OnDismiss="() => _pageError = null" />
+}
+@if (_pageOk is not null)
+{
+    <MimoAlert Variant="MimoAlertVariant.Success" Text="@_pageOk" OnDismiss="() => _pageOk = null" />
+}
+
+<MimoTable Loading="_loading" IsEmpty="@(_servers.Count == 0)" EmptyText="Aún no hay servidores MCP. Registra el primero.">
+    <Header>
+        <MimoTh>Nombre</MimoTh>
+        <MimoTh>Endpoint</MimoTh>
+        <MimoTh>Herramientas</MimoTh>
+        <MimoTh>Auth</MimoTh>
+        <MimoTh>Estado</MimoTh>
+        <MimoTh AlignRight="true">Acciones</MimoTh>
+    </Header>
+    <Body>
+        @foreach (var s in _servers)
+        {
+            <MimoTr>
+                <MimoTd>@s.Name</MimoTd>
+                <MimoTd>@s.Endpoint</MimoTd>
+                <MimoTd>
+                    @if (s.AllowedTools is { Count: > 0 })
+                    {
+                        @string.Join(", ", s.AllowedTools)
+                    }
+                    else
+                    {
+                        <MimoText Muted Small>(ninguna)</MimoText>
+                    }
+                </MimoTd>
+                <MimoTd>
+                    @if (s.HasAuthToken == true)
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Info">Con token</MimoBadge>
+                    }
+                    else
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Neutral">Sin token</MimoBadge>
+                    }
+                </MimoTd>
+                <MimoTd>
+                    @if (s.IsEnabled == true)
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Success">Habilitado</MimoBadge>
+                    }
+                    else
+                    {
+                        <MimoBadge Variant="MimoBadgeVariant.Neutral">Deshabilitado</MimoBadge>
+                    }
+                </MimoTd>
+                <MimoTd AlignRight="true">
+                    <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(s)">Editar</MimoButton>
+                        <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDelete(s)">Eliminar</MimoButton>
+                    </MimoActions>
+                </MimoTd>
+            </MimoTr>
+        }
+    </Body>
+</MimoTable>
+
+@* ── Modal crear/editar ─────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showForm" Title="@(_editingId is null ? "Nuevo servidor MCP" : "Editar servidor MCP")" Size="MimoModalSize.Large">
+    <ChildContent>
+        @if (_formError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_formError" />
+        }
+        <MimoTextField Label="Nombre" @bind-Value="_form.Name" Placeholder="p. ej. Inventario ACME" />
+        <MimoTextField Label="Endpoint" @bind-Value="_form.Endpoint" Placeholder="https://mcp.acme.com" />
+        <MimoTextField Label="@(_editingId is null ? "Token de autenticación (opcional)" : "Token de autenticación (en blanco = sin cambios)")"
+                       Type="password" @bind-Value="_form.AuthToken" Placeholder="Bearer token del servidor" />
+        <MimoTextField Label="Herramientas permitidas (separadas por coma)" @bind-Value="_form.AllowedToolsCsv"
+                       Placeholder="buscar_pedido, crear_ticket" />
+        <MimoTextField Label="Timeout (segundos)" Type="number" @bind-Value="_form.TimeoutSeconds" />
+        <MimoFormGroup>
+            <MimoCheckbox Label="Habilitado" @bind-Checked="_form.IsEnabled" />
+        </MimoFormGroup>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showForm = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Primary" Loading="_saving" OnClick="SaveAsync">Guardar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@* ── Modal eliminar ─────────────────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showDelete" Title="Eliminar servidor MCP" Size="MimoModalSize.Small">
+    <ChildContent>
+        <MimoText>¿Seguro que deseas eliminar «@(_deleteTarget?.Name)»? Esta acción no se puede deshacer.</MimoText>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showDelete = false">Cancelar</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Danger" Loading="_saving" OnClick="ConfirmDeleteAsync">Eliminar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
+@code {
+    private List<McpServerResponse> _servers = [];
+    private bool _loading = true;
+    private string? _pageError;
+    private string? _pageOk;
+
+    private bool _showForm;
+    private bool _saving;
+    private string? _formError;
+    private Guid? _editingId;
+    private readonly ServerForm _form = new();
+
+    private bool _showDelete;
+    private McpServerResponse? _deleteTarget;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _pageError = null;
+        try { _servers = await Mcp.ListAsync(); }
+        catch (Exception ex) { _pageError = Describe(ex); }
+        finally { _loading = false; }
+    }
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form.Reset();
+        _formError = null;
+        _showForm = true;
+    }
+
+    private void OpenEdit(McpServerResponse s)
+    {
+        _editingId = s.Id;
+        _form.Name = s.Name ?? "";
+        _form.Endpoint = s.Endpoint ?? "";
+        _form.AuthToken = "";
+        _form.AllowedToolsCsv = s.AllowedTools is { Count: > 0 } ? string.Join(", ", s.AllowedTools) : "";
+        _form.TimeoutSeconds = (s.TimeoutSeconds ?? 30).ToString();
+        _form.IsEnabled = s.IsEnabled ?? true;
+        _formError = null;
+        _showForm = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.Endpoint))
+        {
+            _formError = "Indica nombre y endpoint.";
+            return;
+        }
+        _saving = true;
+        _formError = null;
+        var tools = _form.AllowedToolsCsv
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+        var timeout = int.TryParse(_form.TimeoutSeconds, out var t) ? t : 30;
+        try
+        {
+            if (_editingId is null)
+            {
+                await Mcp.CreateAsync(new CreateMcpServerRequest
+                {
+                    Name = _form.Name.Trim(),
+                    Endpoint = _form.Endpoint.Trim(),
+                    AuthToken = string.IsNullOrWhiteSpace(_form.AuthToken) ? null : _form.AuthToken,
+                    AllowedTools = tools,
+                    TimeoutSeconds = timeout,
+                    IsEnabled = _form.IsEnabled
+                });
+            }
+            else
+            {
+                await Mcp.UpdateAsync(_editingId.Value, new UpdateMcpServerRequest
+                {
+                    Name = _form.Name.Trim(),
+                    Endpoint = _form.Endpoint.Trim(),
+                    AuthToken = string.IsNullOrWhiteSpace(_form.AuthToken) ? null : _form.AuthToken,
+                    AllowedTools = tools,
+                    TimeoutSeconds = timeout,
+                    IsEnabled = _form.IsEnabled
+                });
+            }
+            _showForm = false;
+            _pageOk = "Servidor MCP guardado.";
+            await LoadAsync();
+        }
+        catch (Exception ex) { _formError = Describe(ex); }
+        finally { _saving = false; }
+    }
+
+    private void OpenDelete(McpServerResponse s)
+    {
+        _deleteTarget = s;
+        _showDelete = true;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteTarget?.Id is null) return;
+        _saving = true;
+        try
+        {
+            await Mcp.DeleteAsync(_deleteTarget.Id.Value);
+            _showDelete = false;
+            _pageOk = "Servidor MCP eliminado.";
+            await LoadAsync();
+        }
+        catch (Exception ex) { _pageError = Describe(ex); _showDelete = false; }
+        finally { _saving = false; }
+    }
+
+    private static string Describe(Exception ex) => ex switch
+    {
+        ApiException { ResponseStatusCode: 400 } => "El endpoint debe ser una URL absoluta http/https.",
+        ApiException { ResponseStatusCode: 409 } => "Ya existe un servidor MCP con ese nombre.",
+        ApiException { ResponseStatusCode: 404 } => "El servidor no existe.",
+        ApiException { ResponseStatusCode: 401 } => "Tu sesión expiró. Inicia sesión de nuevo.",
+        ApiException { ResponseStatusCode: 403 } => "No tienes permisos para esta acción.",
+        ApiException api => $"Error del servidor ({api.ResponseStatusCode}).",
+        _ => $"No se pudo completar la operación: {ex.Message}"
+    };
+
+    private sealed class ServerForm
+    {
+        public string Name { get; set; } = "";
+        public string Endpoint { get; set; } = "";
+        public string AuthToken { get; set; } = "";
+        public string AllowedToolsCsv { get; set; } = "";
+        public string TimeoutSeconds { get; set; } = "30";
+        public bool IsEnabled { get; set; } = true;
+
+        public void Reset()
+        {
+            Name = "";
+            Endpoint = "";
+            AuthToken = "";
+            AllowedToolsCsv = "";
+            TimeoutSeconds = "30";
+            IsEnabled = true;
+        }
+    }
+}
