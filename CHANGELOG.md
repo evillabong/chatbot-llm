@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-06-21
+
+### Added
+
+- **Ventas — corte 1: oportunidades y pipeline (#26)** ([ADR 0027](docs/adr/0027-ventas-oportunidades-y-pipeline.md)): nueva entidad `Opportunity` (esquema del tenant) y endpoints `/opportunities` (política Agent) para **listar** (filtro por etapa y responsable), **crear**, **actualizar** (incluida la etapa) y **eliminar** oportunidades de venta, con contacto (nombre/correo/teléfono), **etapa del pipeline** (`New`/`Qualified`/`Proposal`/`Won`/`Lost`), monto estimado, conversación de origen opcional, responsable y notas. Reglas puras `OpportunityStageRules`: pasar a `Won`/`Lost` fija `ClosedAt` y reabrir lo limpia. El monto es no-nullable (0 = sin monto) para tiparse en el SDK como número (evita `UntypedNode`, #18). Nueva página `/ventas` en `Mimo.App` (bandeja con filtro por etapa, alta/edición y borrado). Capacidad opcional de ventas/CRM; el gating por plan y la sincronización con CRM externo quedan para cortes posteriores. **Verificado E2E** (crear; `Won` fija closedAt; reabrir lo limpia; filtros por etapa; authz 401; 204→404) + unit tests de las reglas de etapa.
+
 ## [0.15.0] - 2026-06-20
 
 ### Added
@@ -290,7 +296,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/evillabong/chatbot-llm/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/evillabong/chatbot-llm/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/evillabong/chatbot-llm/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/evillabong/chatbot-llm/compare/v0.12.0...v0.13.0
