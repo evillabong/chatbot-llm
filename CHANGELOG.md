@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-06-20
+
+### Added
+
+- **Paginación server-side de funcionarios (#16)**: endpoint `GET /agents/paged` (`PagedResult<AgentResponse>`, `page`/`pageSize`/`isActive`) reusando `ToPagedResultAsync`, componente reutilizable `MimoPager` y paginación (20/pág) en la página `/funcionarios`. `GET /agents` plano se conserva para los selectores (chat interno).
+
 ## [0.8.2] - 2026-06-20
 
 ### Changed
@@ -232,7 +238,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.8.3...HEAD
+[0.8.3]: https://github.com/evillabong/chatbot-llm/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/evillabong/chatbot-llm/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/evillabong/chatbot-llm/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/evillabong/chatbot-llm/compare/v0.7.2...v0.8.0
