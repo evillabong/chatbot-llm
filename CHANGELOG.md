@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-06-20
+
+### Added
+
+- **CRUD y UI de categorías de documentos (#17)**: nuevo endpoint `/document-categories` (`DocumentCategoryEndpoints`, sobre el esquema del tenant) — lectura para cualquier funcionario (poblar el desplegable) y alta/borrado para TenantAdmin. El alta valida nombre duplicado y categoría padre inexistente (409); el borrado se bloquea (409) si hay documentos o subcategorías que la referencian. En el front, `DocumentCategoriesService` (cliente Kiota) y la página `/conocimiento` incorporan el desplegable de categoría en el formulario de documento y un modal «Nueva categoría» que la crea y la selecciona al vuelo.
+
 ## [0.8.3] - 2026-06-20
 
 ### Added
@@ -238,7 +244,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.8.3...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.8.4...HEAD
+[0.8.4]: https://github.com/evillabong/chatbot-llm/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/evillabong/chatbot-llm/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/evillabong/chatbot-llm/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/evillabong/chatbot-llm/compare/v0.8.0...v0.8.1
