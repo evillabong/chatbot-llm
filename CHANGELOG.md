@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-06-20
+
+### Added
+
+- **Mejora continua — corte 2: bandeja de curación de conocimiento (#22, Fase 1 — HITL)** ([ADR 0023](docs/adr/0023-instrumentacion-de-vacios-de-conocimiento.md)): nueva entidad `KnowledgeSuggestion` (esquema del tenant) y endpoints `/knowledge/suggestions` (política TenantAdmin) para **listar** (filtro por estado), **crear** (manual o desde un vacío detectado), **aprobar** y **descartar** borradores de conocimiento. **Aprobar publica un `Document`** (visibilidad pública, reutilizando el camino de creación con embedding que degrada si el LLM no está disponible); aprobar/descartar exigen estado pendiente (→ 409 si ya se revisó). Nueva página `/mejora-continua` en `Mimo.App` que muestra los vacíos detectados (con acción "Crear borrador" prellenada) y la bandeja de sugerencias con aprobar/descartar y filtro por estado. El `TopSimilarity` de los vacíos pasa a no-nullable (0 = sin coincidencias) para que el SDK lo tipe como `double` (evita `UntypedNode`, #18). **Verificado E2E** (ciclo crear→aprobar→documento publicado→descartar→409 al re-revisar; filtros por estado; authz 401).
+
 ## [0.9.0] - 2026-06-20
 
 ### Added
@@ -250,7 +256,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/evillabong/chatbot-llm/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/evillabong/chatbot-llm/compare/v0.8.4...v0.9.0
 [0.8.4]: https://github.com/evillabong/chatbot-llm/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/evillabong/chatbot-llm/compare/v0.8.2...v0.8.3
