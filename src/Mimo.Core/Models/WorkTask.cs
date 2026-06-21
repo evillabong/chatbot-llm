@@ -31,6 +31,9 @@ public class WorkTask
     /// <summary>Ticket vinculado (opcional).</summary>
     public Guid? TicketId { get; set; }
 
+    /// <summary>Oportunidad de venta vinculada (opcional, #26): tareas de seguimiento.</summary>
+    public Guid? OpportunityId { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }

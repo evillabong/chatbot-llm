@@ -22,6 +22,7 @@ public class WorkTaskConfiguration : IEntityTypeConfiguration<WorkTask>
         b.Property(t => t.DueAt).HasColumnName("due_at");
         b.Property(t => t.ConversationId).HasColumnName("conversation_id");
         b.Property(t => t.TicketId).HasColumnName("ticket_id");
+        b.Property(t => t.OpportunityId).HasColumnName("opportunity_id");
         b.Property(t => t.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
         b.Property(t => t.UpdatedAt).HasColumnName("updated_at");
         b.Property(t => t.CompletedAt).HasColumnName("completed_at");
@@ -29,5 +30,6 @@ public class WorkTaskConfiguration : IEntityTypeConfiguration<WorkTask>
         // Bandeja de tareas: por estado y por responsable, más recientes primero.
         b.HasIndex(t => new { t.Status, t.CreatedAt }).HasDatabaseName("ix_tasks_status_created");
         b.HasIndex(t => t.AssignedAgentId).HasDatabaseName("ix_tasks_assigned_agent");
+        b.HasIndex(t => t.OpportunityId).HasDatabaseName("ix_tasks_opportunity");
     }
 }

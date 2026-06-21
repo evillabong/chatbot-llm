@@ -4,6 +4,7 @@
 @using Microsoft.Kiota.Abstractions
 @using Mimo.Api.Sdk.Models
 @inject OpportunitiesService Opportunities
+@inject TasksService TasksApi
 @inject AgentsService AgentsApi
 
 <PageTitle>Ventas · MIMO</PageTitle>
@@ -67,6 +68,7 @@
                 <MimoTd>@AgentName(o.AssignedAgentId)</MimoTd>
                 <MimoTd AlignRight="true">
                     <MimoActions AlignRight="true">
+                        <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenTasks(o)">Tareas</MimoButton>
                         <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => OpenEdit(o)">Editar</MimoButton>
                         <MimoButton Variant="MimoButtonVariant.Danger" OnClick="() => OpenDelete(o)">Eliminar</MimoButton>
                     </MimoActions>
@@ -120,6 +122,71 @@
     </FooterContent>
 </MimoModal>
 
+@* ── Modal tareas de seguimiento ────────────────────────────────────────────── *@
+<MimoModal @bind-Show="_showTasks" Title="@($"Tareas · {_tasksOpportunity?.Title}")" Size="MimoModalSize.Large">
+    <ChildContent>
+        @if (_tasksError is not null)
+        {
+            <MimoAlert Variant="MimoAlertVariant.Error" Text="@_tasksError" />
+        }
+        <div class="grid grid-cols-3 gap-3 items-end">
+            <div class="col-span-2">
+                <MimoTextField Label="Nueva tarea de seguimiento" @bind-Value="_newTaskTitle" Placeholder="p. ej. Enviar propuesta" />
+            </div>
+            <MimoTextField Label="Vence" Type="date" @bind-Value="_newTaskDue" />
+        </div>
+        <div class="mb-4">
+            <MimoButton Variant="MimoButtonVariant.Primary" Loading="_addingTask" OnClick="AddTaskAsync">Agregar tarea</MimoButton>
+        </div>
+
+        <MimoTable Loading="_loadingTasks" IsEmpty="@(_oppTasks.Count == 0)" EmptyText="Sin tareas de seguimiento.">
+            <Header>
+                <MimoTh>Tarea</MimoTh>
+                <MimoTh>Vence</MimoTh>
+                <MimoTh>Estado</MimoTh>
+                <MimoTh AlignRight="true">Acciones</MimoTh>
+            </Header>
+            <Body>
+                @foreach (var t in _oppTasks)
+                {
+                    <MimoTr>
+                        <MimoTd>@t.Title</MimoTd>
+                        <MimoTd>@(t.DueAt?.ToString("yyyy-MM-dd") ?? "—")</MimoTd>
+                        <MimoTd>
+                            @switch (t.Status)
+                            {
+                                case 1:
+                                    <MimoBadge Variant="MimoBadgeVariant.Info">En curso</MimoBadge>
+                                    break;
+                                case 2:
+                                    <MimoBadge Variant="MimoBadgeVariant.Success">Completada</MimoBadge>
+                                    break;
+                                case 3:
+                                    <MimoBadge Variant="MimoBadgeVariant.Neutral">Cancelada</MimoBadge>
+                                    break;
+                                default:
+                                    <MimoBadge Variant="MimoBadgeVariant.Warning">Pendiente</MimoBadge>
+                                    break;
+                            }
+                        </MimoTd>
+                        <MimoTd AlignRight="true">
+                            @if (t.Status != 2 && t.Status != 3)
+                            {
+                                <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => CompleteTaskAsync(t)">Completar</MimoButton>
+                            }
+                        </MimoTd>
+                    </MimoTr>
+                }
+            </Body>
+        </MimoTable>
+    </ChildContent>
+    <FooterContent>
+        <MimoActions AlignRight="true">
+            <MimoButton Variant="MimoButtonVariant.Secondary" OnClick="() => _showTasks = false">Cerrar</MimoButton>
+        </MimoActions>
+    </FooterContent>
+</MimoModal>
+
 @code {
     private List<OpportunityResponse> _items = [];
     private bool _loading = true;
@@ -155,6 +222,15 @@
 
     private bool _showDelete;
     private OpportunityResponse? _deleteTarget;
+
+    private bool _showTasks;
+    private OpportunityResponse? _tasksOpportunity;
+    private List<WorkTaskResponse> _oppTasks = [];
+    private bool _loadingTasks;
+    private bool _addingTask;
+    private string? _tasksError;
+    private string _newTaskTitle = "";
+    private string _newTaskDue = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -288,6 +364,71 @@
         }
         catch (Exception ex) { _pageError = Describe(ex); _showDelete = false; }
         finally { _saving = false; }
+    }
+
+    private async Task OpenTasks(OpportunityResponse o)
+    {
+        _tasksOpportunity = o;
+        _newTaskTitle = "";
+        _newTaskDue = "";
+        _tasksError = null;
+        _showTasks = true;
+        await LoadTasksAsync();
+    }
+
+    private async Task LoadTasksAsync()
+    {
+        if (_tasksOpportunity?.Id is null) return;
+        _loadingTasks = true;
+        try { _oppTasks = await TasksApi.ListAsync(opportunityId: _tasksOpportunity.Id.Value); }
+        catch (Exception ex) { _tasksError = Describe(ex); }
+        finally { _loadingTasks = false; }
+    }
+
+    private async Task AddTaskAsync()
+    {
+        if (_tasksOpportunity?.Id is null) return;
+        if (string.IsNullOrWhiteSpace(_newTaskTitle))
+        {
+            _tasksError = "Indica el título de la tarea.";
+            return;
+        }
+        _addingTask = true;
+        _tasksError = null;
+        DateTimeOffset? due = DateTimeOffset.TryParse(_newTaskDue, out var d) ? d : null;
+        try
+        {
+            await TasksApi.CreateAsync(new CreateWorkTaskRequest
+            {
+                Title = _newTaskTitle.Trim(),
+                DueAt = due,
+                OpportunityId = _tasksOpportunity.Id.Value
+            });
+            _newTaskTitle = "";
+            _newTaskDue = "";
+            await LoadTasksAsync();
+        }
+        catch (Exception ex) { _tasksError = Describe(ex); }
+        finally { _addingTask = false; }
+    }
+
+    private async Task CompleteTaskAsync(WorkTaskResponse t)
+    {
+        if (t.Id is null) return;
+        _tasksError = null;
+        try
+        {
+            await TasksApi.UpdateAsync(t.Id.Value, new UpdateWorkTaskRequest
+            {
+                Title = t.Title ?? "",
+                Description = t.Description,
+                Status = 2,
+                AssignedAgentId = t.AssignedAgentId,
+                DueAt = t.DueAt
+            });
+            await LoadTasksAsync();
+        }
+        catch (Exception ex) { _tasksError = Describe(ex); }
     }
 
     private static string? Nullify(string? v) => string.IsNullOrWhiteSpace(v) ? null : v.Trim();

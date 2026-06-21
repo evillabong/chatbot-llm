@@ -47,13 +47,13 @@ public static class WorkTaskEndpoints
     }
 
     private static async Task<IResult> ListAsync(
-        IWorkTaskRepository repo, int? status = null, Guid? assignedAgentId = null, CancellationToken ct = default)
+        IWorkTaskRepository repo, int? status = null, Guid? assignedAgentId = null, Guid? opportunityId = null, CancellationToken ct = default)
     {
         WorkTaskStatus? filter = status is not null && Enum.IsDefined(typeof(WorkTaskStatus), status.Value)
             ? (WorkTaskStatus)status.Value
             : null;
 
-        var items = await repo.ListAsync(filter, assignedAgentId, ct);
+        var items = await repo.ListAsync(filter, assignedAgentId, opportunityId, ct);
         return Results.Ok(items.Select(ToResponse).ToList());
     }
 
@@ -71,6 +71,7 @@ public static class WorkTaskEndpoints
             DueAt           = request.DueAt,
             ConversationId  = request.ConversationId,
             TicketId        = request.TicketId,
+            OpportunityId   = request.OpportunityId,
             CreatedAt       = DateTime.UtcNow
         };
         await repo.AddAsync(task, ct);
@@ -108,5 +109,5 @@ public static class WorkTaskEndpoints
 
     private static WorkTaskResponse ToResponse(WorkTask t) => new(
         t.Id, t.Title, t.Description, t.Status, t.AssignedAgentId, t.DueAt,
-        t.ConversationId, t.TicketId, t.CreatedAt, t.UpdatedAt, t.CompletedAt);
+        t.ConversationId, t.TicketId, t.OpportunityId, t.CreatedAt, t.UpdatedAt, t.CompletedAt);
 }

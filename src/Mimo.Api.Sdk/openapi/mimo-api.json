@@ -1106,6 +1106,14 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "opportunityId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -3415,6 +3423,11 @@
             "type": "string",
             "format": "uuid",
             "nullable": true
+          },
+          "opportunityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         }
       },
@@ -4897,6 +4910,7 @@
           "dueAt",
           "conversationId",
           "ticketId",
+          "opportunityId",
           "createdAt",
           "updatedAt",
           "completedAt"
@@ -4933,6 +4947,11 @@
             "nullable": true
           },
           "ticketId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "opportunityId": {
             "type": "string",
             "format": "uuid",
             "nullable": true

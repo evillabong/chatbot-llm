@@ -9,7 +9,7 @@ namespace Mimo.Core.Interfaces;
 public interface IWorkTaskRepository
 {
     Task<WorkTask?> GetByIdAsync(Guid id, CancellationToken ct = default);
-    Task<IReadOnlyList<WorkTask>> ListAsync(WorkTaskStatus? status = null, Guid? assignedAgentId = null, CancellationToken ct = default);
+    Task<IReadOnlyList<WorkTask>> ListAsync(WorkTaskStatus? status = null, Guid? assignedAgentId = null, Guid? opportunityId = null, CancellationToken ct = default);
     Task<WorkTask> AddAsync(WorkTask task, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
     Task RemoveAsync(WorkTask task, CancellationToken ct = default);

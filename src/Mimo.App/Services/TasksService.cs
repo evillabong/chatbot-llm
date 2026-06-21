@@ -8,12 +8,13 @@ namespace Mimo.App.Services;
 /// </summary>
 public sealed class TasksService(MimoApiClient api)
 {
-    public async Task<List<WorkTaskResponse>> ListAsync(int? status = null, Guid? assignedAgentId = null, CancellationToken ct = default)
+    public async Task<List<WorkTaskResponse>> ListAsync(int? status = null, Guid? assignedAgentId = null, Guid? opportunityId = null, CancellationToken ct = default)
     {
         var result = await api.Tasks.GetAsync(rc =>
         {
             if (status is not null) rc.QueryParameters.Status = status;
             if (assignedAgentId is not null) rc.QueryParameters.AssignedAgentId = assignedAgentId;
+            if (opportunityId is not null) rc.QueryParameters.OpportunityId = opportunityId;
         }, ct);
         return result ?? [];
     }

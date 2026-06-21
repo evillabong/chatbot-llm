@@ -13,6 +13,7 @@ public record WorkTaskResponse(
     DateTime? DueAt,
     Guid? ConversationId,
     Guid? TicketId,
+    Guid? OpportunityId,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
     DateTime? CompletedAt
@@ -25,7 +26,8 @@ public record CreateWorkTaskRequest(
     Guid? AssignedAgentId = null,
     DateTime? DueAt = null,
     Guid? ConversationId = null,
-    Guid? TicketId = null
+    Guid? TicketId = null,
+    Guid? OpportunityId = null
 );
 
 /// <summary>Actualiza una tarea operativa (incluye cambio de estado).</summary>

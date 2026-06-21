@@ -34,6 +34,8 @@ namespace Mimo.Api.Sdk.Models
         public DateTimeOffset? DueAt { get; set; }
         /// <summary>The id property</summary>
         public Guid? Id { get; set; }
+        /// <summary>The opportunityId property</summary>
+        public Guid? OpportunityId { get; set; }
         /// <summary>The status property</summary>
         public int? Status { get; set; }
         /// <summary>The ticketId property</summary>
@@ -80,6 +82,7 @@ namespace Mimo.Api.Sdk.Models
                 { "description", n => { Description = n.GetStringValue(); } },
                 { "dueAt", n => { DueAt = n.GetDateTimeOffsetValue(); } },
                 { "id", n => { Id = n.GetGuidValue(); } },
+                { "opportunityId", n => { OpportunityId = n.GetGuidValue(); } },
                 { "status", n => { Status = n.GetIntValue(); } },
                 { "ticketId", n => { TicketId = n.GetGuidValue(); } },
                 { "title", n => { Title = n.GetStringValue(); } },
@@ -100,6 +103,7 @@ namespace Mimo.Api.Sdk.Models
             writer.WriteStringValue("description", Description);
             writer.WriteDateTimeOffsetValue("dueAt", DueAt);
             writer.WriteGuidValue("id", Id);
+            writer.WriteGuidValue("opportunityId", OpportunityId);
             writer.WriteIntValue("status", Status);
             writer.WriteGuidValue("ticketId", TicketId);
             writer.WriteStringValue("title", Title);

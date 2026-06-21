@@ -14,13 +14,15 @@ public class WorkTaskRepository(TenantDbContext db) : IWorkTaskRepository
         => db.Tasks.FirstOrDefaultAsync(t => t.Id == id, ct);
 
     public async Task<IReadOnlyList<WorkTask>> ListAsync(
-        WorkTaskStatus? status = null, Guid? assignedAgentId = null, CancellationToken ct = default)
+        WorkTaskStatus? status = null, Guid? assignedAgentId = null, Guid? opportunityId = null, CancellationToken ct = default)
     {
         var query = db.Tasks.AsNoTracking().AsQueryable();
         if (status is not null)
             query = query.Where(t => t.Status == status.Value);
         if (assignedAgentId is not null)
             query = query.Where(t => t.AssignedAgentId == assignedAgentId.Value);
+        if (opportunityId is not null)
+            query = query.Where(t => t.OpportunityId == opportunityId.Value);
         return await query.OrderByDescending(t => t.CreatedAt).ToListAsync(ct);
     }
 

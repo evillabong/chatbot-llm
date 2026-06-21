@@ -47,6 +47,17 @@ entrega la **base verificable**: la entidad oportunidad y su pipeline.
   captura asistida **desde la conversación** y la **sincronización con CRM externo** (corte posterior,
   requiere proveedor).
 
+## Corte 2 — Tareas de seguimiento vinculadas
+
+- `WorkTask` (#24) gana `OpportunityId` (opcional), de modo que una tarea puede ser **seguimiento** de
+  una oportunidad. El endpoint `/tasks` acepta el filtro `opportunityId` y `CreateWorkTaskRequest` lo
+  admite al crear.
+- UI `/ventas`: cada oportunidad tiene un panel **«Tareas»** que lista su seguimiento y permite **agregar**
+  una tarea (título + vencimiento) y **completarla** al vuelo, reutilizando el módulo de tareas.
+- **Verificado E2E:** crear oportunidad → crear tarea con `opportunityId` (se persiste el vínculo) →
+  `/tasks?opportunityId=` devuelve solo las suyas (la tarea suelta queda excluida). Migración aditiva
+  `TaskOpportunityLink`.
+
 ## Alternativas consideradas
 
 - **Reusar `Ticket` o `WorkTask` como oportunidad:** descartado; una oportunidad tiene contacto

@@ -22,7 +22,7 @@ namespace Mimo.Api.Sdk.Tasks
         /// </summary>
         /// <param name="pathParameters">Path parameters for the request</param>
         /// <param name="requestAdapter">The request adapter to use to execute the requests.</param>
-        public TasksRequestBuilder(Dictionary<string, object> pathParameters, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/tasks{?assignedAgentId*,status*}", pathParameters)
+        public TasksRequestBuilder(Dictionary<string, object> pathParameters, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/tasks{?assignedAgentId*,opportunityId*,status*}", pathParameters)
         {
         }
         /// <summary>
@@ -30,7 +30,7 @@ namespace Mimo.Api.Sdk.Tasks
         /// </summary>
         /// <param name="rawUrl">The raw URL to use for the request builder.</param>
         /// <param name="requestAdapter">The request adapter to use to execute the requests.</param>
-        public TasksRequestBuilder(string rawUrl, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/tasks{?assignedAgentId*,status*}", rawUrl)
+        public TasksRequestBuilder(string rawUrl, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/tasks{?assignedAgentId*,opportunityId*,status*}", rawUrl)
         {
         }
         /// <summary>
@@ -216,6 +216,8 @@ namespace Mimo.Api.Sdk.Tasks
         {
             [QueryParameter("assignedAgentId")]
             public Guid? AssignedAgentId { get; set; }
+            [QueryParameter("opportunityId")]
+            public Guid? OpportunityId { get; set; }
             [QueryParameter("status")]
             public int? Status { get; set; }
         }
