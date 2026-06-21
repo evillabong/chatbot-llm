@@ -2,10 +2,12 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
+using Mimo.Core.DTOs.AI;
 using Mimo.Core.DTOs.Chatbot;
 using Mimo.Core.Enums;
 using Mimo.Core.Exceptions;
 using Mimo.Core.Interfaces;
+using Mimo.Core.Knowledge;
 using Mimo.Core.Models;
 
 namespace Mimo.Infrastructure.Orchestration;
@@ -29,6 +31,7 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
 {
     private readonly IConversationRepository _conversations;
     private readonly IVectorSearchService    _vectorSearch;
+    private readonly IKnowledgeSignalRepository _knowledgeSignals;
     private readonly IAiGatewayService       _ai;
     private readonly ITicketService         _tickets;
     private readonly IMcpToolProvider       _mcp;
@@ -48,6 +51,7 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
     public ConversationOrchestrator(
         IConversationRepository conversations,
         IVectorSearchService    vectorSearch,
+        IKnowledgeSignalRepository knowledgeSignals,
         IAiGatewayService       ai,
         ITicketService          tickets,
         IMcpToolProvider        mcp,
@@ -58,6 +62,7 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
     {
         _conversations = conversations;
         _vectorSearch  = vectorSearch;
+        _knowledgeSignals = knowledgeSignals;
         _ai            = ai;
         _tickets       = tickets;
         _mcp           = mcp;
@@ -111,20 +116,28 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
         // se degrada a SIN contexto en vez de propagar y devolver 500 al ciudadano. El intento de
         // chat posterior, si también falla, ya tiene su propio fallback con mensaje amable.
         IReadOnlyList<Document> relevantDocs;
+        VectorSearchResult? searchResult = null;
         try
         {
-            relevantDocs = await _vectorSearch.SearchAsync(
+            searchResult = await _vectorSearch.SearchScoredAsync(
                 query:           content,
                 tenantId:        conversation.TenantId,
                 isAuthenticated: conversation.IsAuthenticated,
                 topK:            5,
                 ct:              ct);
+            relevantDocs = searchResult.Documents;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Búsqueda semántica no disponible para conversación {Id}; se continúa sin contexto", conversationId);
             relevantDocs = [];
         }
+
+        // Señal de mejora continua (#22, Fase 1): solo cuando la recuperación se ejecutó (no en la
+        // degradación por LLM caído, que no es un vacío real de conocimiento). Best-effort: nunca
+        // debe romper la atención al ciudadano.
+        if (searchResult is not null)
+            await RecordKnowledgeSignalAsync(conversation, userMessage.Id, content, searchResult, ct);
 
         var history = await _conversations.GetMessagesAsync(conversationId, limit: 10, ct);
 
@@ -264,6 +277,36 @@ public partial class ConversationOrchestrator : IConversationOrchestrator
         }
 
         return await PersistFlowMessageAsync(conversation, Finalize(sb, step.Text), conversation.FlowNodeId, step.Escalate, ct);
+    }
+
+    /// <summary>
+    /// Persiste la señal de recuperación de la consulta (#22). Recorta la consulta y deriva el flag
+    /// <c>knowledge_gap</c> con <see cref="KnowledgeGapEvaluator"/>. Best-effort: un fallo al registrar
+    /// nunca interrumpe la conversación.
+    /// </summary>
+    private async Task RecordKnowledgeSignalAsync(
+        Conversation conversation, Guid messageId, string query, VectorSearchResult result, CancellationToken ct)
+    {
+        try
+        {
+            var signal = new KnowledgeQuerySignal
+            {
+                Id             = Guid.NewGuid(),
+                TenantId       = conversation.TenantId,
+                ConversationId = conversation.Id,
+                MessageId      = messageId,
+                QueryText      = query.Length > 2000 ? query[..2000] : query,
+                TopSimilarity  = result.TopSimilarity,
+                MatchCount     = result.MatchCount,
+                KnowledgeGap   = KnowledgeGapEvaluator.IsGap(result.TopSimilarity, result.MatchCount),
+                CreatedAt      = DateTime.UtcNow
+            };
+            await _knowledgeSignals.AddAsync(signal, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo registrar la señal de conocimiento para conversación {Id}", conversation.Id);
+        }
     }
 
     private static void AppendFlowText(StringBuilder sb, string text)

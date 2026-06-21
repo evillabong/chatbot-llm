@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Mimo.Core.DTOs.AI;
 using Mimo.Core.Enums;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
@@ -26,6 +27,16 @@ public class VectorSearchService(TenantDbContext db, IAiGatewayService ai) : IVe
         Guid? roleId = null,
         int topK = 5,
         CancellationToken ct = default)
+        => (await SearchScoredAsync(query, tenantId, isAuthenticated, roleId, topK, ct)).Documents;
+
+    /// <inheritdoc />
+    public async Task<VectorSearchResult> SearchScoredAsync(
+        string query,
+        Guid tenantId,
+        bool isAuthenticated,
+        Guid? roleId = null,
+        int topK = 5,
+        CancellationToken ct = default)
     {
         var rawEmbedding = await ai.GetEmbeddingAsync(tenantId, query, ct);
         var queryVector = new Vector(rawEmbedding);
@@ -44,10 +55,17 @@ public class VectorSearchService(TenantDbContext db, IAiGatewayService ai) : IVe
 
         // CosineDistance() traduce al operador <=> de pgvector.
         // Requiere el índice HNSW definido en la migración de TenantDbContext.
-        return await queryable
-            .OrderBy(d => d.Embedding!.CosineDistance(queryVector))
+        // Se proyecta la distancia para derivar la similitud de la mejor coincidencia (#22).
+        var scored = await queryable
+            .Select(d => new { Doc = d, Distance = d.Embedding!.CosineDistance(queryVector) })
+            .OrderBy(x => x.Distance)
             .Take(topK)
             .ToListAsync(ct);
+
+        var documents = scored.Select(x => x.Doc).ToList();
+        double? topSimilarity = scored.Count > 0 ? 1.0 - scored[0].Distance : null;
+
+        return new VectorSearchResult(documents, topSimilarity, documents.Count);
     }
 
     /// <summary>

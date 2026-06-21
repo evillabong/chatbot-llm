@@ -26,6 +26,7 @@ public class TenantDbContext(DbContextOptions<TenantDbContext> options) : DbCont
     public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
     public DbSet<ChatbotFlow> ChatbotFlows => Set<ChatbotFlow>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<KnowledgeQuerySignal> KnowledgeQuerySignals => Set<KnowledgeQuerySignal>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,6 +48,7 @@ public class TenantDbContext(DbContextOptions<TenantDbContext> options) : DbCont
         modelBuilder.ApplyConfiguration(new WebhookDeliveryConfiguration());
         modelBuilder.ApplyConfiguration(new ChatbotFlowConfiguration());
         modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
+        modelBuilder.ApplyConfiguration(new KnowledgeQuerySignalConfiguration());
 
         // Habilita la extensión pgvector para el esquema activo
         modelBuilder.HasPostgresExtension("vector");

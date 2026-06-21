@@ -65,6 +65,8 @@ La materia prima ya se captura hoy (esquema por tenant); **no requiere reestruct
 **Señales a añadir (baratas):** *score* de recuperación semántica por consulta y un *flag*
 `knowledge_gap` cuando la recuperación queda por debajo de un umbral o el caso escala por falta de
 información. Es lo único que conviene instrumentar pronto para alimentar la Fase 1.
+**✅ Implementado** (corte 1, [ADR 0023](adr/0023-instrumentacion-de-vacios-de-conocimiento.md)):
+`KnowledgeQuerySignal` por consulta + `GET /knowledge/gaps`.
 
 ---
 
@@ -188,8 +190,11 @@ Definir **línea base** y seguir en el tiempo, **por tenant**:
 
 ## 13. Dependencias / qué falta hoy
 
-- Instrumentar *retrieval score* + *flag* `knowledge_gap` (habilita Fase 1).
-- Worker batch por tenant + bandeja de curación de sugerencias (Fase 1).
+- ✅ **Hecho (corte 1, [ADR 0023](adr/0023-instrumentacion-de-vacios-de-conocimiento.md)):** instrumentar
+  *retrieval score* + *flag* `knowledge_gap`. El orquestador registra una `KnowledgeQuerySignal` por
+  consulta (similitud + nº de coincidencias + flag) en el esquema del tenant; `GET /knowledge/gaps`
+  (TenantAdmin) lista los vacíos recientes. Verificado E2E.
+- Worker batch por tenant + bandeja de curación de sugerencias (Fase 1) — **siguiente corte**.
 - Pipeline de *features* y etiquetas para el clasificador (Fase 2).
 - Pipeline de anonimización + exportación de dataset (Fase 3).
 

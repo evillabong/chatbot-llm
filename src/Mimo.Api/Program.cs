@@ -274,6 +274,7 @@ app.MapAgentEndpoints();
 app.MapRoleEndpoints();
 app.MapDocumentEndpoints();
 app.MapDocumentCategoryEndpoints();
+app.MapKnowledgeInsightsEndpoints();
 app.MapTenantConfigurationEndpoints();
 app.MapIntegrationEndpoints();
 app.MapIntegrationApiEndpoints();

@@ -42,3 +42,4 @@ decisión se revierte o cambia, se crea un ADR nuevo que marca al anterior como
 | [0020](0020-claim-atomico-de-entregas-de-webhook.md) | Claim atómico de entregas de webhook (worker escalable) | Aceptado |
 | [0021](0021-chatbot-por-opciones-flujos-guiados.md) | Chatbot por opciones: flujos guiados deterministas (corte 1) | Aceptado |
 | [0022](0022-refresh-tokens-de-funcionarios.md) | Refresh tokens y revocación de sesión (funcionarios) | Aceptado |
+| [0023](0023-instrumentacion-de-vacios-de-conocimiento.md) | Instrumentación de señales de recuperación y vacíos de conocimiento (#22, Fase 1) | Aceptado |

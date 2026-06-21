@@ -783,6 +783,40 @@
         }
       }
     },
+    "/knowledge/gaps": {
+      "get": {
+        "tags": [
+          "KnowledgeInsights"
+        ],
+        "summary": "Lista los vacíos de conocimiento detectados más recientes (query opcional: limit).",
+        "operationId": "ListKnowledgeGaps",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeGapResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tenant/configuration": {
       "get": {
         "tags": [
@@ -2754,6 +2788,43 @@
           }
         }
       },
+      "KnowledgeGapResponse": {
+        "required": [
+          "id",
+          "conversationId",
+          "query",
+          "topSimilarity",
+          "matchCount",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conversationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "query": {
+            "type": "string"
+          },
+          "topSimilarity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "format": "double",
+            "nullable": true
+          },
+          "matchCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "LoginRequest": {
         "required": [
           "email",
@@ -3557,6 +3628,9 @@
     },
     {
       "name": "DocumentCategories"
+    },
+    {
+      "name": "KnowledgeInsights"
     },
     {
       "name": "Tenant"

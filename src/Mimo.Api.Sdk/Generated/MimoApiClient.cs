@@ -14,6 +14,7 @@ using Mimo.Api.Sdk.DocumentCategories;
 using Mimo.Api.Sdk.Documents;
 using Mimo.Api.Sdk.Integration;
 using Mimo.Api.Sdk.InternalChat;
+using Mimo.Api.Sdk.Knowledge;
 using Mimo.Api.Sdk.Roles;
 using Mimo.Api.Sdk.Tenant;
 using Mimo.Api.Sdk.Tickets;
@@ -70,6 +71,11 @@ namespace Mimo.Api.Sdk
         public global::Mimo.Api.Sdk.InternalChat.InternalChatRequestBuilder InternalChat
         {
             get => new global::Mimo.Api.Sdk.InternalChat.InternalChatRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The knowledge property</summary>
+        public global::Mimo.Api.Sdk.Knowledge.KnowledgeRequestBuilder Knowledge
+        {
+            get => new global::Mimo.Api.Sdk.Knowledge.KnowledgeRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>The roles property</summary>
         public global::Mimo.Api.Sdk.Roles.RolesRequestBuilder Roles

@@ -74,6 +74,7 @@ public static class DependencyInjection
         services.AddScoped<IRoleRepository,            RoleRepository>();
         services.AddScoped<IDocumentRepository,        DocumentRepository>();
         services.AddScoped<IConversationRepository,    ConversationRepository>();
+        services.AddScoped<IKnowledgeSignalRepository, KnowledgeSignalRepository>();
 
         // ── Servicios de dominio ───────────────────────────────────────────────
         services.AddScoped<ITicketService,             TicketService>();

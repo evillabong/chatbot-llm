@@ -1,3 +1,4 @@
+using Mimo.Core.DTOs.AI;
 using Mimo.Core.Enums;
 using Mimo.Core.Models;
 
@@ -14,6 +15,18 @@ public interface IVectorSearchService
     /// Filtra por visibilidad según si el ciudadano está autenticado.
     /// </summary>
     Task<IReadOnlyList<Document>> SearchAsync(
+        string query,
+        Guid tenantId,
+        bool isAuthenticated,
+        Guid? roleId = null,
+        int topK = 5,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Igual que <see cref="SearchAsync"/> pero además devuelve la mejor similitud de recuperación
+    /// (1 - distancia coseno) y el número de coincidencias, para instrumentar vacíos de conocimiento (#22).
+    /// </summary>
+    Task<VectorSearchResult> SearchScoredAsync(
         string query,
         Guid tenantId,
         bool isAuthenticated,
