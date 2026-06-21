@@ -4,6 +4,7 @@ using Microsoft.Kiota.Abstractions.Extensions;
 using Microsoft.Kiota.Abstractions.Serialization;
 using Microsoft.Kiota.Abstractions;
 using Mimo.Api.Sdk.Agents.Detail;
+using Mimo.Api.Sdk.Agents.Paged;
 using Mimo.Api.Sdk.Models;
 using System.Collections.Generic;
 using System.IO;
@@ -22,6 +23,11 @@ namespace Mimo.Api.Sdk.Agents
         public global::Mimo.Api.Sdk.Agents.Detail.DetailRequestBuilder Detail
         {
             get => new global::Mimo.Api.Sdk.Agents.Detail.DetailRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The paged property</summary>
+        public global::Mimo.Api.Sdk.Agents.Paged.PagedRequestBuilder Paged
+        {
+            get => new global::Mimo.Api.Sdk.Agents.Paged.PagedRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>
         /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Agents.AgentsRequestBuilder"/> and sets the default values.
@@ -57,7 +63,7 @@ namespace Mimo.Api.Sdk.Agents
             await RequestAdapter.SendNoContentAsync(requestInfo, default, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
-        /// Lista los funcionarios del tenant.
+        /// Lista los funcionarios del tenant (sin paginar; p. ej. para selectores).
         /// </summary>
         /// <returns>A List&lt;global::Mimo.Api.Sdk.Models.AgentResponse&gt;</returns>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
@@ -134,7 +140,7 @@ namespace Mimo.Api.Sdk.Agents
             return requestInfo;
         }
         /// <summary>
-        /// Lista los funcionarios del tenant.
+        /// Lista los funcionarios del tenant (sin paginar; p. ej. para selectores).
         /// </summary>
         /// <returns>A <see cref="RequestInformation"/></returns>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
@@ -215,7 +221,7 @@ namespace Mimo.Api.Sdk.Agents
             public Guid? Id { get; set; }
         }
         /// <summary>
-        /// Lista los funcionarios del tenant.
+        /// Lista los funcionarios del tenant (sin paginar; p. ej. para selectores).
         /// </summary>
         [global::System.CodeDom.Compiler.GeneratedCode("Kiota", "1.0.0")]
         public partial class AgentsRequestBuilderGetQueryParameters 

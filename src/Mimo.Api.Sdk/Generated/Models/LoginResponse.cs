@@ -42,6 +42,16 @@ namespace Mimo.Api.Sdk.Models
 #endif
         /// <summary>The id property</summary>
         public Guid? Id { get; set; }
+        /// <summary>The refreshExpiresAtUtc property</summary>
+        public DateTimeOffset? RefreshExpiresAtUtc { get; set; }
+        /// <summary>The refreshToken property</summary>
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
+#nullable enable
+        public string? RefreshToken { get; set; }
+#nullable restore
+#else
+        public string RefreshToken { get; set; }
+#endif
         /// <summary>The roles property</summary>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
@@ -80,6 +90,8 @@ namespace Mimo.Api.Sdk.Models
                 { "expiresAtUtc", n => { ExpiresAtUtc = n.GetDateTimeOffsetValue(); } },
                 { "fullName", n => { FullName = n.GetStringValue(); } },
                 { "id", n => { Id = n.GetGuidValue(); } },
+                { "refreshExpiresAtUtc", n => { RefreshExpiresAtUtc = n.GetDateTimeOffsetValue(); } },
+                { "refreshToken", n => { RefreshToken = n.GetStringValue(); } },
                 { "roles", n => { Roles = n.GetCollectionOfPrimitiveValues<string>()?.AsList(); } },
             };
         }
@@ -95,6 +107,8 @@ namespace Mimo.Api.Sdk.Models
             writer.WriteDateTimeOffsetValue("expiresAtUtc", ExpiresAtUtc);
             writer.WriteStringValue("fullName", FullName);
             writer.WriteGuidValue("id", Id);
+            writer.WriteDateTimeOffsetValue("refreshExpiresAtUtc", RefreshExpiresAtUtc);
+            writer.WriteStringValue("refreshToken", RefreshToken);
             writer.WriteCollectionOfPrimitiveValues<string>("roles", Roles);
             writer.WriteAdditionalData(AdditionalData);
         }

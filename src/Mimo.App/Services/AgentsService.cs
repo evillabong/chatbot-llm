@@ -18,6 +18,16 @@ public sealed class AgentsService(MimoApiClient api)
         return result ?? [];
     }
 
+    /// <summary>Lista paginada de funcionarios (#16) para la tabla de gestión.</summary>
+    public Task<PagedResultOfAgentResponse?> ListPagedAsync(
+        int page, int pageSize, bool? isActive = null, CancellationToken ct = default) =>
+        api.Agents.Paged.GetAsync(rc =>
+        {
+            rc.QueryParameters.Page = page;
+            rc.QueryParameters.PageSize = pageSize;
+            if (isActive is not null) rc.QueryParameters.IsActive = isActive;
+        }, ct);
+
     public Task<AgentResponse?> CreateAsync(CreateAgentRequest request, CancellationToken ct = default) =>
         api.Agents.PostAsync(request, cancellationToken: ct);
 

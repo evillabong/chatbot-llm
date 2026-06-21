@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Mimo.Core.Common;
 using Mimo.Core.Interfaces;
 using Mimo.Core.Models;
+using Mimo.Infrastructure.Common;
 
 namespace Mimo.Infrastructure.Data.Repositories;
 
@@ -29,6 +31,19 @@ public class AgentRepository(TenantDbContext db) : IAgentRepository
             query = query.Where(a => a.IsActive == isActive.Value);
 
         return await query.OrderBy(a => a.FullName).ToListAsync(ct);
+    }
+
+    public Task<PagedResult<Agent>> ListPagedAsync(
+        bool? isActive, int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = db.Agents
+            .Include(a => a.AgentRoles).ThenInclude(ar => ar.Role)
+            .AsQueryable();
+
+        if (isActive.HasValue)
+            query = query.Where(a => a.IsActive == isActive.Value);
+
+        return query.OrderBy(a => a.FullName).ToPagedResultAsync(page, pageSize, ct);
     }
 
     public async Task<IReadOnlyList<Agent>> GetByRoleAsync(Guid roleId, CancellationToken ct = default)

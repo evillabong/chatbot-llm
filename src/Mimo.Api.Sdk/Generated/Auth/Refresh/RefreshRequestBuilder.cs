@@ -9,32 +9,32 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
 using System;
-namespace Mimo.Api.Sdk.Auth.Login
+namespace Mimo.Api.Sdk.Auth.Refresh
 {
     /// <summary>
-    /// Builds and executes requests for operations under \auth\login
+    /// Builds and executes requests for operations under \auth\refresh
     /// </summary>
     [global::System.CodeDom.Compiler.GeneratedCode("Kiota", "1.0.0")]
-    public partial class LoginRequestBuilder : BaseRequestBuilder
+    public partial class RefreshRequestBuilder : BaseRequestBuilder
     {
         /// <summary>
-        /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder"/> and sets the default values.
+        /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Auth.Refresh.RefreshRequestBuilder"/> and sets the default values.
         /// </summary>
         /// <param name="pathParameters">Path parameters for the request</param>
         /// <param name="requestAdapter">The request adapter to use to execute the requests.</param>
-        public LoginRequestBuilder(Dictionary<string, object> pathParameters, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/auth/login", pathParameters)
+        public RefreshRequestBuilder(Dictionary<string, object> pathParameters, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/auth/refresh", pathParameters)
         {
         }
         /// <summary>
-        /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder"/> and sets the default values.
+        /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Auth.Refresh.RefreshRequestBuilder"/> and sets the default values.
         /// </summary>
         /// <param name="rawUrl">The raw URL to use for the request builder.</param>
         /// <param name="requestAdapter">The request adapter to use to execute the requests.</param>
-        public LoginRequestBuilder(string rawUrl, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/auth/login", rawUrl)
+        public RefreshRequestBuilder(string rawUrl, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/auth/refresh", rawUrl)
         {
         }
         /// <summary>
-        /// Autentica a un funcionario y emite un access token + refresh token.
+        /// Renueva el access token usando un refresh token (lo rota).
         /// </summary>
         /// <returns>A <see cref="global::Mimo.Api.Sdk.Models.LoginResponse"/></returns>
         /// <param name="body">The request body</param>
@@ -42,11 +42,11 @@ namespace Mimo.Api.Sdk.Auth.Login
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<global::Mimo.Api.Sdk.Models.LoginResponse?> PostAsync(global::Mimo.Api.Sdk.Models.LoginRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.Api.Sdk.Models.LoginResponse?> PostAsync(global::Mimo.Api.Sdk.Models.RefreshTokenRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<global::Mimo.Api.Sdk.Models.LoginResponse> PostAsync(global::Mimo.Api.Sdk.Models.LoginRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task<global::Mimo.Api.Sdk.Models.LoginResponse> PostAsync(global::Mimo.Api.Sdk.Models.RefreshTokenRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
@@ -54,18 +54,18 @@ namespace Mimo.Api.Sdk.Auth.Login
             return await RequestAdapter.SendAsync<global::Mimo.Api.Sdk.Models.LoginResponse>(requestInfo, global::Mimo.Api.Sdk.Models.LoginResponse.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
-        /// Autentica a un funcionario y emite un access token + refresh token.
+        /// Renueva el access token usando un refresh token (lo rota).
         /// </summary>
         /// <returns>A <see cref="RequestInformation"/></returns>
         /// <param name="body">The request body</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public RequestInformation ToPostRequestInformation(global::Mimo.Api.Sdk.Models.LoginRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default)
+        public RequestInformation ToPostRequestInformation(global::Mimo.Api.Sdk.Models.RefreshTokenRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default)
         {
 #nullable restore
 #else
-        public RequestInformation ToPostRequestInformation(global::Mimo.Api.Sdk.Models.LoginRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default)
+        public RequestInformation ToPostRequestInformation(global::Mimo.Api.Sdk.Models.RefreshTokenRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default)
         {
 #endif
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
@@ -78,11 +78,11 @@ namespace Mimo.Api.Sdk.Auth.Login
         /// <summary>
         /// Returns a request builder with the provided arbitrary URL. Using this method means any other path or query parameters are ignored.
         /// </summary>
-        /// <returns>A <see cref="global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder"/></returns>
+        /// <returns>A <see cref="global::Mimo.Api.Sdk.Auth.Refresh.RefreshRequestBuilder"/></returns>
         /// <param name="rawUrl">The raw URL to use for the request builder.</param>
-        public global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder WithUrl(string rawUrl)
+        public global::Mimo.Api.Sdk.Auth.Refresh.RefreshRequestBuilder WithUrl(string rawUrl)
         {
-            return new global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder(rawUrl, RequestAdapter);
+            return new global::Mimo.Api.Sdk.Auth.Refresh.RefreshRequestBuilder(rawUrl, RequestAdapter);
         }
     }
 }

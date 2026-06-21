@@ -1,3 +1,4 @@
+using Mimo.Core.Common;
 using Mimo.Core.Models;
 
 namespace Mimo.Core.Interfaces;
@@ -10,6 +11,7 @@ public interface IAgentRepository
     Task<Agent?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<Agent?> GetByEmailAsync(string email, CancellationToken ct = default);
     Task<IReadOnlyList<Agent>> ListAsync(bool? isActive = null, CancellationToken ct = default);
+    Task<PagedResult<Agent>> ListPagedAsync(bool? isActive, int page, int pageSize, CancellationToken ct = default);
     Task<IReadOnlyList<Agent>> GetByRoleAsync(Guid roleId, CancellationToken ct = default);
     Task<bool> EmailExistsAsync(string email, CancellationToken ct = default);
     Task<Agent> AddAsync(Agent agent, CancellationToken ct = default);

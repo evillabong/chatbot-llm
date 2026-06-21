@@ -9,80 +9,78 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
 using System;
-namespace Mimo.Api.Sdk.Auth.Login
+namespace Mimo.Api.Sdk.Auth.Logout
 {
     /// <summary>
-    /// Builds and executes requests for operations under \auth\login
+    /// Builds and executes requests for operations under \auth\logout
     /// </summary>
     [global::System.CodeDom.Compiler.GeneratedCode("Kiota", "1.0.0")]
-    public partial class LoginRequestBuilder : BaseRequestBuilder
+    public partial class LogoutRequestBuilder : BaseRequestBuilder
     {
         /// <summary>
-        /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder"/> and sets the default values.
+        /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Auth.Logout.LogoutRequestBuilder"/> and sets the default values.
         /// </summary>
         /// <param name="pathParameters">Path parameters for the request</param>
         /// <param name="requestAdapter">The request adapter to use to execute the requests.</param>
-        public LoginRequestBuilder(Dictionary<string, object> pathParameters, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/auth/login", pathParameters)
+        public LogoutRequestBuilder(Dictionary<string, object> pathParameters, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/auth/logout", pathParameters)
         {
         }
         /// <summary>
-        /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder"/> and sets the default values.
+        /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Auth.Logout.LogoutRequestBuilder"/> and sets the default values.
         /// </summary>
         /// <param name="rawUrl">The raw URL to use for the request builder.</param>
         /// <param name="requestAdapter">The request adapter to use to execute the requests.</param>
-        public LoginRequestBuilder(string rawUrl, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/auth/login", rawUrl)
+        public LogoutRequestBuilder(string rawUrl, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/auth/logout", rawUrl)
         {
         }
         /// <summary>
-        /// Autentica a un funcionario y emite un access token + refresh token.
+        /// Revoca un refresh token (cierre de sesión).
         /// </summary>
-        /// <returns>A <see cref="global::Mimo.Api.Sdk.Models.LoginResponse"/></returns>
         /// <param name="body">The request body</param>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public async Task<global::Mimo.Api.Sdk.Models.LoginResponse?> PostAsync(global::Mimo.Api.Sdk.Models.LoginRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task PostAsync(global::Mimo.Api.Sdk.Models.RefreshTokenRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #nullable restore
 #else
-        public async Task<global::Mimo.Api.Sdk.Models.LoginResponse> PostAsync(global::Mimo.Api.Sdk.Models.LoginRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
+        public async Task PostAsync(global::Mimo.Api.Sdk.Models.RefreshTokenRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default, CancellationToken cancellationToken = default)
         {
 #endif
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
             var requestInfo = ToPostRequestInformation(body, requestConfiguration);
-            return await RequestAdapter.SendAsync<global::Mimo.Api.Sdk.Models.LoginResponse>(requestInfo, global::Mimo.Api.Sdk.Models.LoginResponse.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
+            await RequestAdapter.SendNoContentAsync(requestInfo, default, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
-        /// Autentica a un funcionario y emite un access token + refresh token.
+        /// Revoca un refresh token (cierre de sesión).
         /// </summary>
         /// <returns>A <see cref="RequestInformation"/></returns>
         /// <param name="body">The request body</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
-        public RequestInformation ToPostRequestInformation(global::Mimo.Api.Sdk.Models.LoginRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default)
+        public RequestInformation ToPostRequestInformation(global::Mimo.Api.Sdk.Models.RefreshTokenRequest body, Action<RequestConfiguration<DefaultQueryParameters>>? requestConfiguration = default)
         {
 #nullable restore
 #else
-        public RequestInformation ToPostRequestInformation(global::Mimo.Api.Sdk.Models.LoginRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default)
+        public RequestInformation ToPostRequestInformation(global::Mimo.Api.Sdk.Models.RefreshTokenRequest body, Action<RequestConfiguration<DefaultQueryParameters>> requestConfiguration = default)
         {
 #endif
             if(ReferenceEquals(body, null)) throw new ArgumentNullException(nameof(body));
             var requestInfo = new RequestInformation(Method.POST, UrlTemplate, PathParameters);
             requestInfo.Configure(requestConfiguration);
-            requestInfo.Headers.TryAdd("Accept", "application/json");
             requestInfo.SetContentFromParsable(RequestAdapter, "application/json", body);
             return requestInfo;
         }
         /// <summary>
         /// Returns a request builder with the provided arbitrary URL. Using this method means any other path or query parameters are ignored.
         /// </summary>
-        /// <returns>A <see cref="global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder"/></returns>
+        /// <returns>A <see cref="global::Mimo.Api.Sdk.Auth.Logout.LogoutRequestBuilder"/></returns>
         /// <param name="rawUrl">The raw URL to use for the request builder.</param>
-        public global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder WithUrl(string rawUrl)
+        public global::Mimo.Api.Sdk.Auth.Logout.LogoutRequestBuilder WithUrl(string rawUrl)
         {
-            return new global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder(rawUrl, RequestAdapter);
+            return new global::Mimo.Api.Sdk.Auth.Logout.LogoutRequestBuilder(rawUrl, RequestAdapter);
         }
     }
 }

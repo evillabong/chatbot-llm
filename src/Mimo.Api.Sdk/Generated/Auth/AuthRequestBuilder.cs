@@ -3,6 +3,8 @@
 using Microsoft.Kiota.Abstractions.Extensions;
 using Microsoft.Kiota.Abstractions;
 using Mimo.Api.Sdk.Auth.Login;
+using Mimo.Api.Sdk.Auth.Logout;
+using Mimo.Api.Sdk.Auth.Refresh;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -19,6 +21,16 @@ namespace Mimo.Api.Sdk.Auth
         public global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder Login
         {
             get => new global::Mimo.Api.Sdk.Auth.Login.LoginRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The logout property</summary>
+        public global::Mimo.Api.Sdk.Auth.Logout.LogoutRequestBuilder Logout
+        {
+            get => new global::Mimo.Api.Sdk.Auth.Logout.LogoutRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The refresh property</summary>
+        public global::Mimo.Api.Sdk.Auth.Refresh.RefreshRequestBuilder Refresh
+        {
+            get => new global::Mimo.Api.Sdk.Auth.Refresh.RefreshRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>
         /// Instantiates a new <see cref="global::Mimo.Api.Sdk.Auth.AuthRequestBuilder"/> and sets the default values.

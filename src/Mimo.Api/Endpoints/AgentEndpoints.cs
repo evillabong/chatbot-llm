@@ -22,8 +22,13 @@ public static class AgentEndpoints
 
         group.MapGet("/", ListAgentsAsync)
             .WithName("ListAgents")
-            .WithSummary("Lista los funcionarios del tenant.")
+            .WithSummary("Lista los funcionarios del tenant (sin paginar; p. ej. para selectores).")
             .Produces<List<AgentResponse>>();
+
+        group.MapGet("/paged", ListAgentsPagedAsync)
+            .WithName("ListAgentsPaged")
+            .WithSummary("Lista paginada de funcionarios (query: page, pageSize, isActive).")
+            .Produces<Mimo.Core.Common.PagedResult<AgentResponse>>();
 
         group.MapGet("/detail", GetAgentAsync)
             .WithName("GetAgent")
@@ -64,6 +69,17 @@ public static class AgentEndpoints
     {
         var agents = await repo.ListAsync(isActive, ct);
         return Results.Ok(agents.Select(ToResponse).ToList());
+    }
+
+    private static async Task<IResult> ListAgentsPagedAsync(
+        IAgentRepository repo,
+        int page = 1,
+        int pageSize = 20,
+        bool? isActive = null,
+        CancellationToken ct = default)
+    {
+        var paged = await repo.ListPagedAsync(isActive, page, pageSize, ct);
+        return Results.Ok(paged.Map(ToResponse));
     }
 
     private static async Task<IResult> GetAgentAsync(

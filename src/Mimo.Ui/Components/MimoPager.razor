@@ -1,0 +1,22 @@
+@* Controles de paginación reutilizables (#16). Emite PageChanged con el número de página solicitado. *@
+@if (TotalPages > 1)
+{
+    <div class="flex items-center justify-between mt-4">
+        <MimoText Muted Small>@TotalCount resultados · página @Page de @TotalPages</MimoText>
+        <div class="flex gap-2">
+            <MimoButton Variant="MimoButtonVariant.Secondary" Disabled="@(!HasPrevious)"
+                        OnClick="() => PageChanged.InvokeAsync(Page - 1)">Anterior</MimoButton>
+            <MimoButton Variant="MimoButtonVariant.Secondary" Disabled="@(!HasNext)"
+                        OnClick="() => PageChanged.InvokeAsync(Page + 1)">Siguiente</MimoButton>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Page { get; set; } = 1;
+    [Parameter] public int TotalPages { get; set; }
+    [Parameter] public int TotalCount { get; set; }
+    [Parameter] public bool HasPrevious { get; set; }
+    [Parameter] public bool HasNext { get; set; }
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+}

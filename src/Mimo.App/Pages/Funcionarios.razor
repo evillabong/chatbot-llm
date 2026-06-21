@@ -70,6 +70,9 @@
     </Body>
 </MimoTable>
 
+<MimoPager Page="_page" TotalPages="_totalPages" TotalCount="_totalCount"
+           HasPrevious="_hasPrevious" HasNext="_hasNext" PageChanged="GoToPageAsync" />
+
 @* ── Modal crear/editar ─────────────────────────────────────────────────────── *@
 <MimoModal @bind-Show="_showForm" Title="@(_editingId is null ? "Nuevo funcionario" : "Editar funcionario")">
     <EditForm Model="_form" OnValidSubmit="SaveAsync">
@@ -138,6 +141,14 @@
     private bool _loading = true;
     private string? _pageError;
 
+    // Paginación server-side (#16)
+    private const int PageSize = 20;
+    private int _page = 1;
+    private int _totalPages;
+    private int _totalCount;
+    private bool _hasPrevious;
+    private bool _hasNext;
+
     // Formulario crear/editar
     private bool _showForm;
     private bool _saving;
@@ -163,7 +174,20 @@
         _pageError = null;
         try
         {
-            _agents = await Agents.ListAsync();
+            var paged = await Agents.ListPagedAsync(_page, PageSize);
+            _agents      = paged?.Items ?? [];
+            _totalCount  = paged?.TotalCount ?? 0;
+            _totalPages  = paged?.TotalPages ?? 0;
+            _hasPrevious = paged?.HasPrevious ?? false;
+            _hasNext     = paged?.HasNext ?? false;
+
+            // Si la página quedó vacía tras borrar el último elemento, retroceder una.
+            if (_agents.Count == 0 && _page > 1)
+            {
+                _page--;
+                await LoadAsync();
+                return;
+            }
         }
         catch (Exception ex)
         {
@@ -173,6 +197,13 @@
         {
             _loading = false;
         }
+    }
+
+    private async Task GoToPageAsync(int page)
+    {
+        if (page < 1) return;
+        _page = page;
+        await LoadAsync();
     }
 
     private void OpenCreate()

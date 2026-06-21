@@ -15,7 +15,7 @@
         "tags": [
           "Auth"
         ],
-        "summary": "Autentica a un funcionario y emite un token JWT.",
+        "summary": "Autentica a un funcionario y emite un access token + refresh token.",
         "operationId": "AgentLogin",
         "requestBody": {
           "content": {
@@ -44,12 +44,70 @@
         }
       }
     },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Renueva el access token usando un refresh token (lo rota).",
+        "operationId": "AgentRefresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Revoca un refresh token (cierre de sesión).",
+        "operationId": "AgentLogout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/agents": {
       "get": {
         "tags": [
           "Agents"
         ],
-        "summary": "Lista los funcionarios del tenant.",
+        "summary": "Lista los funcionarios del tenant (sin paginar; p. ej. para selectores).",
         "operationId": "ListAgents",
         "parameters": [
           {
@@ -174,6 +232,54 @@
           },
           "404": {
             "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/agents/paged": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Lista paginada de funcionarios (query: page, pageSize, isActive).",
+        "operationId": "ListAgentsPaged",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResultOfAgentResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -923,6 +1029,90 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/chatbot/flows": {
+      "get": {
+        "tags": [
+          "Chatbot"
+        ],
+        "summary": "Lista los flujos guiados del tenant.",
+        "operationId": "ListChatbotFlows",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatbotFlowResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Chatbot"
+        ],
+        "summary": "Crea un flujo guiado (opcionalmente lo activa).",
+        "operationId": "CreateChatbotFlow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChatbotFlowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatbotFlowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/chatbot/flows/activate": {
+      "post": {
+        "tags": [
+          "Chatbot"
+        ],
+        "summary": "Activa un flujo (desactiva los demás) (query: id).",
+        "operationId": "ActivateChatbotFlow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -1876,6 +2066,31 @@
           }
         }
       },
+      "ChatbotFlowResponse": {
+        "required": [
+          "id",
+          "name",
+          "isActive",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ConversationResponse": {
         "required": [
           "id",
@@ -1976,6 +2191,25 @@
         "properties": {
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "CreateChatbotFlowRequest": {
+        "required": [
+          "name",
+          "definition"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/FlowDefinition"
+          },
+          "activate": {
+            "type": "boolean",
+            "default": true
           }
         }
       },
@@ -2218,6 +2452,118 @@
           }
         }
       },
+      "FlowDefinition": {
+        "required": [
+          "entryNodeId",
+          "nodes"
+        ],
+        "type": "object",
+        "properties": {
+          "entryNodeId": {
+            "type": "string"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlowNode"
+            }
+          }
+        }
+      },
+      "FlowNode": {
+        "required": [
+          "id",
+          "type",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/FlowNodeType"
+          },
+          "text": {
+            "type": "string"
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlowOption"
+            },
+            "nullable": true
+          },
+          "variable": {
+            "type": "string",
+            "nullable": true
+          },
+          "validation": {
+            "type": "string",
+            "nullable": true
+          },
+          "validationError": {
+            "type": "string",
+            "nullable": true
+          },
+          "method": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "body": {
+            "type": "string",
+            "nullable": true
+          },
+          "captureVariable": {
+            "type": "string",
+            "nullable": true
+          },
+          "successNext": {
+            "type": "string",
+            "nullable": true
+          },
+          "failureNext": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "FlowNodeType": {
+        "enum": [
+          "Message",
+          "Menu",
+          "Escalate",
+          "Input",
+          "ApiCall"
+        ]
+      },
+      "FlowOption": {
+        "required": [
+          "key",
+          "label",
+          "next"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      },
       "IKeyedServiceProvider": {
         "type": "object"
       },
@@ -2333,6 +2679,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "refreshToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "refreshExpiresAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
@@ -2363,6 +2718,56 @@
       },
       "MessageRole": {
         "type": "integer"
+      },
+      "PagedResultOfAgentResponse": {
+        "required": [
+          "items",
+          "totalCount",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentResponse"
+            }
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "format": "int32"
+          },
+          "hasPrevious": {
+            "type": "boolean"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RefreshTokenRequest": {
+        "required": [
+          "refreshToken"
+        ],
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          }
+        }
       },
       "RoleResponse": {
         "required": [
@@ -3035,6 +3440,9 @@
     },
     {
       "name": "Integration API"
+    },
+    {
+      "name": "Chatbot"
     },
     {
       "name": "Conversations"
