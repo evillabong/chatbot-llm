@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 ## [Unreleased]
 
+## [0.18.6] - 2026-06-21
+
+### Fixed
+
+- **Errores de consola por floating-ui cargado desde CDN.** `index.html` (Mimo.App y Mimo.Admin.App) cargaba `@floating-ui/dom` desde `cdn.jsdelivr.net`, que el navegador bloquea por *Tracking Prevention* y lanzaba `Uncaught TypeError: ... 'detectOverflow'`. Es **redundante**: el paquete Flowbite ya incluye su propio `floating-ui.bundle.js` (lo carga `flowbite.js`) y nada en la app usa el global `FloatingUIDOM`. Se eliminó el `<script>` del CDN de ambos `index.html`; se quita además una dependencia externa (mejor offline/privacidad). El mensaje `Authorization failed: Requires an authenticated user` en consola es esperado (usuario anónimo en ruta protegida → redirección a login).
+
 ## [0.18.5] - 2026-06-21
 
 ### Fixed
@@ -338,7 +344,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y e
 
 - Cerrado un acceso cross-tenant: en peticiones autenticadas el tenant lo dicta el token (claim `tenant_slug`); un `X-Tenant-Slug`/subdominio en conflicto responde 403 (ADR 0008). El acceso al tenant se centraliza en accesores tipados (`HttpContext.GetTenantId()`/`GetTenantSlug()`).
 
-[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.5...HEAD
+[Unreleased]: https://github.com/evillabong/chatbot-llm/compare/v0.18.6...HEAD
+[0.18.6]: https://github.com/evillabong/chatbot-llm/compare/v0.18.5...v0.18.6
 [0.18.5]: https://github.com/evillabong/chatbot-llm/compare/v0.18.4...v0.18.5
 [0.18.4]: https://github.com/evillabong/chatbot-llm/compare/v0.18.3...v0.18.4
 [0.18.3]: https://github.com/evillabong/chatbot-llm/compare/v0.18.2...v0.18.3
