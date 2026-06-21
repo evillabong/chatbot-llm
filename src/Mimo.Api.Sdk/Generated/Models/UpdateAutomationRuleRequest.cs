@@ -14,6 +14,14 @@ namespace Mimo.Api.Sdk.Models
     {
         /// <summary>The actionAssignedAgentId property</summary>
         public Guid? ActionAssignedAgentId { get; set; }
+        /// <summary>The actionEscalateReason property</summary>
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
+#nullable enable
+        public string? ActionEscalateReason { get; set; }
+#nullable restore
+#else
+        public string ActionEscalateReason { get; set; }
+#endif
         /// <summary>The actionTaskTitle property</summary>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 #nullable enable
@@ -22,6 +30,8 @@ namespace Mimo.Api.Sdk.Models
 #else
         public string ActionTaskTitle { get; set; }
 #endif
+        /// <summary>The actionType property</summary>
+        public int? ActionType { get; set; }
         /// <summary>Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.</summary>
         public IDictionary<string, object> AdditionalData { get; set; }
         /// <summary>The conditions property</summary>
@@ -76,7 +86,9 @@ namespace Mimo.Api.Sdk.Models
             return new Dictionary<string, Action<IParseNode>>
             {
                 { "actionAssignedAgentId", n => { ActionAssignedAgentId = n.GetGuidValue(); } },
+                { "actionEscalateReason", n => { ActionEscalateReason = n.GetStringValue(); } },
                 { "actionTaskTitle", n => { ActionTaskTitle = n.GetStringValue(); } },
+                { "actionType", n => { ActionType = n.GetIntValue(); } },
                 { "conditions", n => { Conditions = n.GetCollectionOfObjectValues<global::Mimo.Api.Sdk.Models.RuleCondition>(global::Mimo.Api.Sdk.Models.RuleCondition.CreateFromDiscriminatorValue)?.AsList(); } },
                 { "isEnabled", n => { IsEnabled = n.GetBoolValue(); } },
                 { "name", n => { Name = n.GetStringValue(); } },
@@ -91,7 +103,9 @@ namespace Mimo.Api.Sdk.Models
         {
             if(ReferenceEquals(writer, null)) throw new ArgumentNullException(nameof(writer));
             writer.WriteGuidValue("actionAssignedAgentId", ActionAssignedAgentId);
+            writer.WriteStringValue("actionEscalateReason", ActionEscalateReason);
             writer.WriteStringValue("actionTaskTitle", ActionTaskTitle);
+            writer.WriteIntValue("actionType", ActionType);
             writer.WriteCollectionOfObjectValues<global::Mimo.Api.Sdk.Models.RuleCondition>("conditions", Conditions);
             writer.WriteBoolValue("isEnabled", IsEnabled);
             writer.WriteStringValue("name", Name);

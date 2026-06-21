@@ -11,20 +11,26 @@ public record AutomationRuleResponse(
     string TriggerEvent,
     List<RuleCondition> Conditions,
     AutomationActionType ActionType,
-    string ActionTaskTitle,
+    string? ActionTaskTitle,
     Guid? ActionAssignedAgentId,
+    string? ActionEscalateReason,
     bool IsEnabled,
     DateTime CreatedAt,
     DateTime? UpdatedAt
 );
 
-/// <summary>Crea una regla de automatización.</summary>
+/// <summary>
+/// Crea una regla de automatización. Según <c>ActionType</c>: CreateTask requiere
+/// <c>ActionTaskTitle</c>; Escalate usa <c>ActionEscalateReason</c> (opcional).
+/// </summary>
 public record CreateAutomationRuleRequest(
     [Required, MaxLength(120)] string Name,
     [Required, MaxLength(80)] string TriggerEvent,
     List<RuleCondition>? Conditions,
-    [Required, MaxLength(200)] string ActionTaskTitle,
+    AutomationActionType ActionType,
+    [MaxLength(200)] string? ActionTaskTitle = null,
     Guid? ActionAssignedAgentId = null,
+    [MaxLength(200)] string? ActionEscalateReason = null,
     bool IsEnabled = true
 );
 
@@ -33,7 +39,9 @@ public record UpdateAutomationRuleRequest(
     [Required, MaxLength(120)] string Name,
     [Required, MaxLength(80)] string TriggerEvent,
     List<RuleCondition>? Conditions,
-    [Required, MaxLength(200)] string ActionTaskTitle,
+    AutomationActionType ActionType,
+    [MaxLength(200)] string? ActionTaskTitle,
     Guid? ActionAssignedAgentId,
+    [MaxLength(200)] string? ActionEscalateReason,
     bool IsEnabled
 );

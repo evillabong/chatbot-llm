@@ -24,11 +24,14 @@ public class AutomationRule
 
     public AutomationActionType ActionType { get; set; } = AutomationActionType.CreateTask;
 
-    /// <summary>Título de la tarea a crear (admite marcadores {campo} del evento).</summary>
-    public string ActionTaskTitle { get; set; } = string.Empty;
+    /// <summary>Título de la tarea a crear (acción CreateTask; admite marcadores {campo} del evento).</summary>
+    public string? ActionTaskTitle { get; set; }
 
-    /// <summary>Responsable opcional de la tarea creada.</summary>
+    /// <summary>Responsable opcional de la tarea creada (acción CreateTask).</summary>
     public Guid? ActionAssignedAgentId { get; set; }
+
+    /// <summary>Motivo de escalada (acción Escalate; admite marcadores {campo}).</summary>
+    public string? ActionEscalateReason { get; set; }
 
     public bool IsEnabled { get; set; } = true;
 

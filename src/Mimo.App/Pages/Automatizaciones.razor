@@ -39,7 +39,7 @@
                 <MimoTd>@r.Name</MimoTd>
                 <MimoTd>@EventLabel(r.TriggerEvent)</MimoTd>
                 <MimoTd>@ConditionSummary(r)</MimoTd>
-                <MimoTd>Crear tarea: @r.ActionTaskTitle</MimoTd>
+                <MimoTd>@ActionSummary(r)</MimoTd>
                 <MimoTd>
                     @if (r.IsEnabled == true)
                     {
@@ -74,8 +74,16 @@
             <MimoTextField Label="Condición — campo (opcional)" @bind-Value="_form.ConditionField" Placeholder="p. ej. channel" />
             <MimoTextField Label="Condición — valor" @bind-Value="_form.ConditionValue" Placeholder="p. ej. WhatsApp" />
         </div>
-        <MimoTextField Label="Título de la tarea" @bind-Value="_form.ActionTaskTitle" Placeholder="Admite {campo}, p. ej. Atender a {externalUserId}" />
-        <MimoSelect Label="Responsable de la tarea" @bind-Value="_form.AssignedAgentId" Options="_agentOptions" Placeholder="(sin asignar)" />
+        <MimoSelect Label="Acción" @bind-Value="_form.ActionType" Options="_actionOptions" />
+        @if (_form.ActionType == "0")
+        {
+            <MimoTextField Label="Título de la tarea" @bind-Value="_form.ActionTaskTitle" Placeholder="Admite {campo}, p. ej. Atender a {externalUserId}" />
+            <MimoSelect Label="Responsable de la tarea" @bind-Value="_form.AssignedAgentId" Options="_agentOptions" Placeholder="(sin asignar)" />
+        }
+        else
+        {
+            <MimoTextField Label="Motivo de escalada" @bind-Value="_form.EscalateReason" Placeholder="Admite {campo}, p. ej. Escalada por {channel}" />
+        }
         <MimoFormGroup>
             <MimoCheckbox Label="Regla activa" @bind-Checked="_form.IsEnabled" />
         </MimoFormGroup>
@@ -113,6 +121,11 @@
         new("ticket.assigned", "Ticket asignado"),
         new("ticket.resolved", "Ticket resuelto"),
         new("survey.recorded", "Encuesta registrada")
+    ];
+    private static readonly IReadOnlyList<MimoSelectOption> _actionOptions =
+    [
+        new("0", "Crear tarea"),
+        new("1", "Escalar a funcionario")
     ];
     private IReadOnlyList<MimoSelectOption> _agentOptions = [];
 
@@ -158,6 +171,11 @@
         return c is not null ? $"{c.Field} = {c.Value}" : "—";
     }
 
+    private static string ActionSummary(AutomationRuleResponse r)
+        => r.ActionType == 1
+            ? $"Escalar: {(string.IsNullOrWhiteSpace(r.ActionEscalateReason) ? "(motivo por defecto)" : r.ActionEscalateReason)}"
+            : $"Crear tarea: {r.ActionTaskTitle}";
+
     private void OpenCreate()
     {
         _editingId = null;
@@ -174,7 +192,9 @@
         var c = r.Conditions?.FirstOrDefault();
         _form.ConditionField = c?.Field ?? "";
         _form.ConditionValue = c?.Value ?? "";
+        _form.ActionType = (r.ActionType ?? 0).ToString();
         _form.ActionTaskTitle = r.ActionTaskTitle ?? "";
+        _form.EscalateReason = r.ActionEscalateReason ?? "";
         _form.AssignedAgentId = r.ActionAssignedAgentId?.ToString() ?? "";
         _form.IsEnabled = r.IsEnabled ?? true;
         _formError = null;
@@ -183,15 +203,20 @@
 
     private async Task SaveAsync()
     {
+        var actionType = int.TryParse(_form.ActionType, out var at) ? at : 0;
         if (string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.TriggerEvent)
-            || string.IsNullOrWhiteSpace(_form.ActionTaskTitle))
+            || (actionType == 0 && string.IsNullOrWhiteSpace(_form.ActionTaskTitle)))
         {
-            _formError = "Indica nombre, evento y título de la tarea.";
+            _formError = actionType == 0
+                ? "Indica nombre, evento y título de la tarea."
+                : "Indica nombre y evento.";
             return;
         }
         _saving = true;
         _formError = null;
         Guid? agentId = Guid.TryParse(_form.AssignedAgentId, out var aid) ? aid : null;
+        string? taskTitle = actionType == 0 && !string.IsNullOrWhiteSpace(_form.ActionTaskTitle) ? _form.ActionTaskTitle.Trim() : null;
+        string? escalateReason = actionType == 1 && !string.IsNullOrWhiteSpace(_form.EscalateReason) ? _form.EscalateReason.Trim() : null;
         var conditions = new List<RuleCondition>();
         if (!string.IsNullOrWhiteSpace(_form.ConditionField))
             conditions.Add(new RuleCondition { Field = _form.ConditionField.Trim(), Value = _form.ConditionValue?.Trim() ?? "" });
@@ -204,8 +229,10 @@
                     Name = _form.Name.Trim(),
                     TriggerEvent = _form.TriggerEvent,
                     Conditions = conditions,
-                    ActionTaskTitle = _form.ActionTaskTitle.Trim(),
-                    ActionAssignedAgentId = agentId,
+                    ActionType = actionType,
+                    ActionTaskTitle = taskTitle,
+                    ActionAssignedAgentId = actionType == 0 ? agentId : null,
+                    ActionEscalateReason = escalateReason,
                     IsEnabled = _form.IsEnabled
                 });
             }
@@ -216,8 +243,10 @@
                     Name = _form.Name.Trim(),
                     TriggerEvent = _form.TriggerEvent,
                     Conditions = conditions,
-                    ActionTaskTitle = _form.ActionTaskTitle.Trim(),
-                    ActionAssignedAgentId = agentId,
+                    ActionType = actionType,
+                    ActionTaskTitle = taskTitle,
+                    ActionAssignedAgentId = actionType == 0 ? agentId : null,
+                    ActionEscalateReason = escalateReason,
                     IsEnabled = _form.IsEnabled
                 });
             }
@@ -266,7 +295,9 @@
         public string TriggerEvent { get; set; } = "conversation.created";
         public string ConditionField { get; set; } = "";
         public string ConditionValue { get; set; } = "";
+        public string ActionType { get; set; } = "0";
         public string ActionTaskTitle { get; set; } = "";
+        public string EscalateReason { get; set; } = "";
         public string AssignedAgentId { get; set; } = "";
         public bool IsEnabled { get; set; } = true;
 
@@ -276,7 +307,9 @@
             TriggerEvent = "conversation.created";
             ConditionField = "";
             ConditionValue = "";
+            ActionType = "0";
             ActionTaskTitle = "";
+            EscalateReason = "";
             AssignedAgentId = "";
             IsEnabled = true;
         }

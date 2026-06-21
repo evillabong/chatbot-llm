@@ -2670,6 +2670,7 @@
           "actionType",
           "actionTaskTitle",
           "actionAssignedAgentId",
+          "actionEscalateReason",
           "isEnabled",
           "createdAt",
           "updatedAt"
@@ -2696,11 +2697,16 @@
             "$ref": "#/components/schemas/AutomationActionType"
           },
           "actionTaskTitle": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "actionAssignedAgentId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "actionEscalateReason": {
+            "type": "string",
             "nullable": true
           },
           "isEnabled": {
@@ -2911,7 +2917,7 @@
           "name",
           "triggerEvent",
           "conditions",
-          "actionTaskTitle"
+          "actionType"
         ],
         "type": "object",
         "properties": {
@@ -2928,12 +2934,20 @@
             },
             "nullable": true
           },
+          "actionType": {
+            "$ref": "#/components/schemas/AutomationActionType"
+          },
           "actionTaskTitle": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "actionAssignedAgentId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "actionEscalateReason": {
+            "type": "string",
             "nullable": true
           },
           "isEnabled": {
@@ -4246,8 +4260,10 @@
           "name",
           "triggerEvent",
           "conditions",
+          "actionType",
           "actionTaskTitle",
           "actionAssignedAgentId",
+          "actionEscalateReason",
           "isEnabled"
         ],
         "type": "object",
@@ -4265,12 +4281,20 @@
             },
             "nullable": true
           },
+          "actionType": {
+            "$ref": "#/components/schemas/AutomationActionType"
+          },
           "actionTaskTitle": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "actionAssignedAgentId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "actionEscalateReason": {
+            "type": "string",
             "nullable": true
           },
           "isEnabled": {

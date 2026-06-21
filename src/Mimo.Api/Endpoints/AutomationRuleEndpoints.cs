@@ -64,8 +64,9 @@ public static class AutomationRuleEndpoints
         HttpContext context,
         CancellationToken ct = default)
     {
-        if (!WebhookEventTypes.All.Contains(request.TriggerEvent))
-            return Results.BadRequest(new { error = "Evento disparador no soportado." });
+        var validation = Validate(request.TriggerEvent, request.ActionType, request.ActionTaskTitle);
+        if (validation is not null)
+            return validation;
 
         var rule = new AutomationRule
         {
@@ -74,9 +75,10 @@ public static class AutomationRuleEndpoints
             Name                  = request.Name.Trim(),
             TriggerEvent          = request.TriggerEvent,
             ConditionsJson        = SerializeConditions(request.Conditions),
-            ActionType            = AutomationActionType.CreateTask,
-            ActionTaskTitle       = request.ActionTaskTitle.Trim(),
+            ActionType            = request.ActionType,
+            ActionTaskTitle       = request.ActionTaskTitle?.Trim(),
             ActionAssignedAgentId = request.ActionAssignedAgentId,
+            ActionEscalateReason  = request.ActionEscalateReason?.Trim(),
             IsEnabled             = request.IsEnabled,
             CreatedAt             = DateTime.UtcNow
         };
@@ -95,14 +97,17 @@ public static class AutomationRuleEndpoints
         if (rule is null)
             return Results.NotFound(new { error = "Regla no encontrada." });
 
-        if (!WebhookEventTypes.All.Contains(request.TriggerEvent))
-            return Results.BadRequest(new { error = "Evento disparador no soportado." });
+        var validation = Validate(request.TriggerEvent, request.ActionType, request.ActionTaskTitle);
+        if (validation is not null)
+            return validation;
 
         rule.Name                  = request.Name.Trim();
         rule.TriggerEvent          = request.TriggerEvent;
         rule.ConditionsJson        = SerializeConditions(request.Conditions);
-        rule.ActionTaskTitle       = request.ActionTaskTitle.Trim();
+        rule.ActionType            = request.ActionType;
+        rule.ActionTaskTitle       = request.ActionTaskTitle?.Trim();
         rule.ActionAssignedAgentId = request.ActionAssignedAgentId;
+        rule.ActionEscalateReason  = request.ActionEscalateReason?.Trim();
         rule.IsEnabled             = request.IsEnabled;
         rule.UpdatedAt             = DateTime.UtcNow;
         await repo.SaveChangesAsync(ct);
@@ -118,6 +123,16 @@ public static class AutomationRuleEndpoints
 
         await repo.RemoveAsync(rule, ct);
         return Results.NoContent();
+    }
+
+    /// <summary>Valida el evento y la coherencia acción/parámetros. Devuelve un 400 o null si es válido.</summary>
+    private static IResult? Validate(string triggerEvent, AutomationActionType actionType, string? taskTitle)
+    {
+        if (!WebhookEventTypes.All.Contains(triggerEvent))
+            return Results.BadRequest(new { error = "Evento disparador no soportado." });
+        if (actionType == AutomationActionType.CreateTask && string.IsNullOrWhiteSpace(taskTitle))
+            return Results.BadRequest(new { error = "La acción «crear tarea» requiere un título." });
+        return null;
     }
 
     private static string SerializeConditions(List<RuleCondition>? conditions)
@@ -137,6 +152,6 @@ public static class AutomationRuleEndpoints
 
         return new AutomationRuleResponse(
             r.Id, r.Name, r.TriggerEvent, conditions, r.ActionType, r.ActionTaskTitle,
-            r.ActionAssignedAgentId, r.IsEnabled, r.CreatedAt, r.UpdatedAt);
+            r.ActionAssignedAgentId, r.ActionEscalateReason, r.IsEnabled, r.CreatedAt, r.UpdatedAt);
     }
 }

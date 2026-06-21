@@ -7,5 +7,8 @@ namespace Mimo.Core.Enums;
 public enum AutomationActionType
 {
     /// <summary>Crea una tarea operativa.</summary>
-    CreateTask = 0
+    CreateTask = 0,
+
+    /// <summary>Escala la conversación a un funcionario (crea ticket y lo encola).</summary>
+    Escalate = 1
 }

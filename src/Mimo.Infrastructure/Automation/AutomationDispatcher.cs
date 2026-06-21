@@ -15,6 +15,7 @@ namespace Mimo.Infrastructure.Automation;
 public sealed class AutomationDispatcher(
     IAutomationRuleRepository rules,
     IWorkTaskRepository tasks,
+    IMcpToolProvider mcp,
     ILogger<AutomationDispatcher> logger) : IAutomationDispatcher
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -49,7 +50,7 @@ public sealed class AutomationDispatcher(
         switch (rule.ActionType)
         {
             case AutomationActionType.CreateTask:
-                var title = TemplateRenderer.Render(rule.ActionTaskTitle, data);
+                var title = TemplateRenderer.Render(rule.ActionTaskTitle ?? "", data);
                 var task = new WorkTask
                 {
                     Id              = Guid.NewGuid(),
@@ -64,6 +65,18 @@ public sealed class AutomationDispatcher(
                 };
                 await tasks.AddAsync(task, ct);
                 logger.LogInformation("Automatización: regla {RuleId} creó la tarea {TaskId}.", rule.Id, task.Id);
+                break;
+
+            case AutomationActionType.Escalate:
+                var conversationId = TryGuid(data, "id", "conversationId");
+                if (conversationId is null)
+                {
+                    logger.LogWarning("Automatización: regla {RuleId} (Escalate) sin conversación en el evento {Trigger}; se omite.", rule.Id, rule.TriggerEvent);
+                    break;
+                }
+                var reason = TemplateRenderer.Render(rule.ActionEscalateReason ?? "Escalada automática", data);
+                await mcp.RequestHumanAgentAsync(conversationId.Value, reason, ct);
+                logger.LogInformation("Automatización: regla {RuleId} escaló la conversación {ConversationId}.", rule.Id, conversationId);
                 break;
 
             default:

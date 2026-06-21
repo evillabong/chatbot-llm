@@ -54,6 +54,21 @@ la llamada en cada sitio ni acoplar webhooks con reglas.
   estructuras anidadas no se evalúan todavía.
 - Las **campañas** salientes del §5 siguen pendientes (dependen de proveedores de canal reales, #25).
 
+## Corte 3 — Acción «escalar a funcionario»
+
+Amplía el motor con una segunda acción, sin tocar el diseño del fan-out:
+
+- **`AutomationActionType.Escalate`**: la regla, ante su evento (típicamente `conversation.created`),
+  escala la conversación llamando a `IMcpToolProvider.RequestHumanAgentAsync(conversationId, reason)`
+  —que crea el ticket, lo encola y, si aplica, lo asigna— con un **motivo** que admite marcadores
+  `{campo}`. Si el evento no trae conversación, se omite (log).
+- El `AutomationRule` gana `ActionEscalateReason` (y `ActionTaskTitle` pasa a ser opcional: aplica solo
+  a CreateTask). El endpoint valida la coherencia acción/parámetros (CreateTask exige título → 400).
+- `RequestHumanAgentAsync` **no** republica eventos de dominio, así que escalar no reentra en el motor.
+- **Verificado E2E:** regla Escalate + `conversation.created` → se crea el ticket, la conversación pasa
+  a `InQueue` y el motivo queda renderizado (`Escalada automatica por {channel}` → `…por WebChat`);
+  crear una regla CreateTask sin título → 400. UI `/automatizaciones` con selector de acción.
+
 ## Alternativas consideradas
 
 - **Llamar al dispatcher en cada endpoint junto al webhook:** descartado; duplica la llamada en 5 sitios
